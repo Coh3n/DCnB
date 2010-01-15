@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 2]                        ]
+[                         Draynor Chop N' Bank [Rev. 3]                        ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.2';
+  SCRIPT_VERSION = 'Rev.3';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -68,12 +68,13 @@ const
   STATS_LINK = 'http://scriptmanager.freehostia.com/submit.php';
   
   STATS_LOGINS  = 1;
-  STATS_LOGS    = 2;
-  STATS_LOADS   = 3;
-  STATS_BREAKS  = 4;
-  STATS_RANDOMS = 5;
+  STATS_WILLOWS = 2;
+  STATS_OAKS    = 3;
+  STATS_LOADS   = 4;
+  STATS_BREAKS  = 5;
   STATS_EXP     = 6;
   STATS_LEVELS  = 7;
+  STATS_RANDOMS = 8;
   
 { const Players.Integers Indexes;
   Description: Constants representing the DeclarePlayers integers. }
@@ -1255,7 +1256,10 @@ begin
     Players[CurrentPlayer].Integers[P_EXP] := Round(Players[CurrentPlayer].Integers[P_LOGS] * Tree.Exp);
     
     Inc(Stats_CustomVars[STATS_LOADS]);
-    IncEx(Stats_CustomVars[STATS_LOGS], logsInInv);
+    if (Tree.Name = 'Willow') then
+      IncEx(Stats_CustomVars[STATS_WILLOWS], logsInInv)
+    else
+      IncEx(Stats_CustomVars[STATS_OAKS], logsInInv);
     IncEx(Stats_CustomVars[STATS_EXP], Round(logsInInv * Tree.Exp));
     Stats_SendReport;
     Stats_ManageAccounts;
