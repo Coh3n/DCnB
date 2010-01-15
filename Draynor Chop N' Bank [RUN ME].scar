@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                           Draynor Chop N' Bank V.3.3                         ]
+[                         Draynor Chop N' Bank [Rev. 2]                        ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,8 +60,8 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'V.3.3';
-
+  SCRIPT_VERSION = 'Rev.2';
+  
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
 const
@@ -185,15 +185,15 @@ begin
   
   with Players[0] do
   begin
-    Name   := 'pkr navastar';
-    Pass   := 'jackaster';
-    Nick   := 'ava'; // 3-4 LOWERCASE letters from your username.
+    Name   := 'Username';
+    Pass   := 'Password';
+    Nick   := 'Nickname'; // 3-4 LOWERCASE letters from your username.
     Active := True; // True = use this player.
     Pin    := '';   // Leave blank if you don't have a bank pin.
-    Integers[P_TOTAL_LOGS]  := 1000;  // Total logs to cut.
+    Integers[P_TOTAL_LOGS]  := 000;  // Total logs to cut.
     Booleans[P_TAKE_BREAKS] := True; // True = the script will take breaks.
-    Booleans[P_EQUIPPED]    := True; // True = you hatchet is equipped.
-    Strings[P_TREE]         := 'willow';   // Either 'willow' or 'oak'.
+    Booleans[P_EQUIPPED]    := True; // True = your hatchet is equipped.
+    Strings[P_TREE]         := '';   // Either 'willow' or 'oak'.
     Strings[P_LAMP_SKILL]   := 'Woodcutting';
     BoxRewards := ['amp', 'mote', 'ostume', 'oins', 'unes', 're', 'ems'];
   end;
