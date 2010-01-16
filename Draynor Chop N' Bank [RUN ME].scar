@@ -729,7 +729,7 @@ begin
     end;
     
     UseRewardBox;
-    Writeln('Found Random!' + soundStr);
+    Writeln('Found Random! ' + soundStr);
   end;
 end;
 
@@ -1433,7 +1433,7 @@ begin
 
     if (AllPlayersInactive) then
     begin
-      srl_Warn('Setup_MainLoop', 'All Players are now inactive, stopping script. ',
+      srl_Warn('Setup_MainLoop', 'All Players are now inactive, terminating script. ',
                warn_AllVersions);
       TerminateScript;
     end;
