@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 3]                        ]
+[                         Draynor Chop N' Bank [Rev. 6]                        ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -55,12 +55,12 @@
 [==============================================================================}
 
 program DraynorChopNBank;
-  {.Include srl\srl\Misc\Smart.scar}  { <-- Remove the '//' to use SMART! }
+  {.Include srl\srl\Misc\Smart.scar}
   {.Include srl\srl.scar}
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.3';
+  SCRIPT_VERSION = 'Rev.6';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -146,7 +146,7 @@ type
 { var Global;
   Description: Global variables used throughout the script. }
 var
-  trackPoint: TPoint;
+  tP: TPoint;
   srl_MMTPA: TPointArray;
   startLevel: Integer;
   
@@ -296,7 +296,8 @@ begin
 
 end;
 
-function Stats_GetScriptInfo(out Version, News, Link: string; out OutDated: Boolean; out LastUpdate_HoursAgo: Integer): Boolean;
+function Stats_GetScriptInfo(out Version, News, Link: string;
+         out OutDated: Boolean; out LastUpdate_HoursAgo: Integer): Boolean;
 var
   Client: Integer;
   s: string;
@@ -367,7 +368,8 @@ begin
 
     for i := Low(Stats_CustomVars) to High(Stats_CustomVars) do
     begin
-      AddPostVariable(Client, 'rndCustom' + IntToStr(i), IntToStr(Stats_CustomVars[i]));
+      AddPostVariable(Client, 'rndCustom' + IntToStr(i),
+                      IntToStr(Stats_CustomVars[i]));
       Stats_CustomVars[i] := 0;
     end;
   end
@@ -417,7 +419,8 @@ begin
 
   SetLength(Accounts, HowManyPlayers);
   for i := 0 to HowManyPlayers - 1 do
-    Accounts[i] := Implode('.|€stat€|.', [Players[i].Name, Players[i].Loc, IntToStr(Integer(Players[i].Active))]);
+    Accounts[i] := Implode('.|€stat€|.', [Players[i].Name, Players[i].Loc,
+                   IntToStr(Integer(Players[i].Active))]);
 
   AddPostVariable(Client, 'accInfo', Implode(#10'ACC'#10, Accounts));
   Stats_CheckOutput(PostHTTPPageEx(Client, STATS_LINK));
@@ -527,7 +530,8 @@ begin
   Wait(250);
   Writeln('                             \/___________________/      ');
   Wait(250);
-  Writeln(PadR('                       Draynor Chop N'' Bank ' + SCRIPT_VERSION + '!', 57));
+  Writeln(PadR('                       Draynor Chop N'' Bank ' + SCRIPT_VERSION
+                                                               + '!', 57));
 end;
 
 procedure Load_Antiban;
@@ -614,7 +618,8 @@ begin
       end;
       
   else
-    srl_Warn('Load_TreeRecords', 'Invalid Tree Type in DeclarePlayers. ', warn_AllVersions);
+    srl_Warn('Load_TreeRecords', 'Invalid Tree Type in DeclarePlayers. ',
+             warn_AllVersions);
     
   end;
 end;
@@ -626,8 +631,10 @@ begin
   if (not LoggedIn) then
     Exit;
   
-  Result := FindNPCChatText('ongrat', Nothing) or FindNPCChatText('dvanced', Nothing) or
-            FindNPCChatText('ulatio', Nothing) or FindNPCChatText('oodcuti', Nothing);
+  Result := FindNPCChatText('ongrat', Nothing) or
+            FindNPCChatText('dvanced', Nothing) or
+            FindNPCChatText('ulatio', Nothing) or
+            FindNPCChatText('oodcuti', Nothing);
             
   if (Result) then
   begin
@@ -688,7 +695,6 @@ begin
   if (HowManyPlayers > 1) then
   begin
     Writeln('Specified playing time has passed, switching Players...');
-    Players[CurrentPlayer].Integers[P_BREAKS] := Players[CurrentPlayer].Integers[P_BREAKS] + 1;
     NextPlayer(Players[CurrentPlayer].Active);
   end else
 
@@ -699,10 +705,12 @@ begin
 
     Writeln('Break over, logging back in.');
     LoginPlayer;
-    Inc(Stats_CustomVars[STATS_LOGINS]);
-    Players[CurrentPlayer].Integers[P_BREAKS] := Players[CurrentPlayer].Integers[P_BREAKS] + 1;
   end;
   
+  with Players[CurrentPlayer] do
+    Integers[P_BREAKS] := Integers[P_BREAKS] + 1;
+  
+  Inc(Stats_CustomVars[STATS_LOGINS]);
   Stats_SendReport;
   Stats_ManageAccounts;
 end;
@@ -858,13 +866,16 @@ begin
   ColorToleranceSpeed(2);
   SetColorSpeed2Modifiers(Tree.Hue, Tree.Sat);
   
-  FindColorsTolerance(inBox, Tree.Color, trackPoint.x - 15, trackPoint.y - 15,
-                                         trackPoint.x + 15, trackPoint.y + 15, Tree.Tol);
-  Result := Length(inBox) < 20;
+  FindColorsTolerance(inBox, Tree.Color, tP.x - 15, tP.y - 15, tP.x + 15,
+                                         tP.y + 15, Tree.Tol);
+  Result := (Length(inBox) < 20);
 { Writeln('Length inside Box: ' + IntToStr(Length(inBox)) + '.'); }
   
   if Result then
+  begin
     Writeln('Tree has been cut down!');
+    Find_Randoms;
+  end;
   
   SetColorSpeed2Modifiers(0.2, 0.2);
   ColorToleranceSpeed(1);
@@ -906,7 +917,8 @@ begin
     h := High(boxesArr);
     for i := 0 to h do
     begin
-    { Writeln('Length BoxArr[' + IntToStr(i) + ']: ' + IntToStr(Length(boxesArr[i])) + '.'); }
+    { Writeln('Length BoxArr[' + IntToStr(i) + ']: '
+                               + IntToStr(Length(boxesArr[i])) + '.'); }
       
       if (Length(boxesArr[i]) < 80) then
         Continue;
@@ -921,18 +933,25 @@ begin
         wrongUptext := 0;
         Mouse(x, y, 0, 0, True);
         
-       { Waits while the player moves to the tree before getting tracking point. }
+        {
+          Waits while the player moves to the tree before getting tracking
+          point.
+        }
         Wait(RandomRange(2000, 3000));
 
-       { Assuming the player has stopped moving, gets the tracking point. }
+        {
+          Assuming the player has stopped moving, gets the tracking point.
+        }
         GetMousePos(x, y);
-        trackPoint := IntToPoint(x, y);
-      { Writeln('Tracking Tree Point: (' + IntToStr(x) + ', ' + IntToStr(y) + ').'); }
+        tP := IntToPoint(x, y);
+      { Writeln('Tracking Tree Point: (' + IntToStr(x) + ', '
+                                      + IntToStr(y) + ').'); }
         
         t := GetSystemTime + RandomRange(15000, 20000);
         repeat
           if Level_Gained then
-            Players[CurrentPlayer].Integers[P_LEVELS] := Players[CurrentPlayer].Integers[P_LEVELS] + 1;
+            with Players[CurrentPlayer] do
+              Integers[P_LEVELS] := Integers[P_LEVELS] + 1;
             
           Result := Chop_IsTreeDown;
           if Result or (GetSystemTime > t) then
@@ -942,7 +961,7 @@ begin
           Find_Randoms;
         until(InvFull or not LoggedIn);
         
-        if InvFull or Result then
+        if (InvFull) or (Result) then
           Break;
           
       end else
@@ -972,13 +991,15 @@ begin
   
   if (Tries >= 50) then
   begin
-    srl_Warn('Chop_Trees', 'Couldn''t find trees after 50 tries, logging out. ', warn_AllVersions);
+    srl_Warn('Chop_Trees', 'Couldn''t find trees after 50 tries, logging out. ',
+             warn_AllVersions);
     Next_Player;
   end;
   
   if (wrongUptext > 55) then
   begin
-    srl_warn('Chop_Trees', 'Couldn''t find uptext after 50 tries, logging out. ', warn_AllVersions);
+    srl_warn('Chop_Trees', 'Couldn''t find uptext after 50 tries, logging out. ',
+             warn_AllVersions);
     Next_Player;
   end;
     
@@ -1021,13 +1042,15 @@ begin
           end else
           
           begin
-            srl_Warn('Walk_ToFrom', 'Error Finding Dungeon Symbol. ', warn_AllVersions);
+            srl_Warn('Walk_ToFrom', 'Error Finding Dungeon Symbol. ',
+                     warn_AllVersions);
             Next_Player;
           end;
 
         end else
         begin
-          srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_BANK_TO_OAKS. ', warn_AllVersions);
+          srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_BANK_TO_OAKS. ',
+                   warn_AllVersions);
           Next_Player;
         end;
       end;
@@ -1054,7 +1077,8 @@ begin
           end else
           
           begin
-            srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_OAKS_TO_BANK[2]. ', warn_AllVersions);
+            srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_OAKS_TO_BANK[2]. ',
+                     warn_AllVersions);
             
             if FindSymbolIn(x, y, 'bank', MMX1, MMY1, MMCX, MMY2) then
             begin
@@ -1064,7 +1088,8 @@ begin
             end else
             
             begin
-              srl_Warn('Walk_ToFrom', 'Error Finding Bank Symbol. ', warn_AllVersions);
+              srl_Warn('Walk_ToFrom', 'Error Finding Bank Symbol. ',
+                       warn_AllVersions);
               MouseBox(566, 75, 601, 111, CLICK_LEFT);
               Break;
             end;
@@ -1072,7 +1097,8 @@ begin
             
         end else
         begin
-          srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_OAKS_TO_BANK[1]. ', warn_AllVersions);
+          srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_OAKS_TO_BANK[1]. ',
+                   warn_AllVersions);
 
           if FindSymbolIn(x, y, 'dungeon', MMCX, MMY1, MMX2, MMY2) then
           begin
@@ -1089,7 +1115,8 @@ begin
           end else
           
           begin
-            srl_Warn('Walk_ToFrom', 'Error Finding Dungeon Symbol. ', warn_AllVersions);
+            srl_Warn('Walk_ToFrom', 'Error Finding Dungeon Symbol. ',
+                     warn_AllVersions);
             MouseBox(564, 84, 591, 122, CLICK_LEFT);
           end;
         end;
@@ -1251,24 +1278,28 @@ begin
       
     CloseBank;
 
-    Players[CurrentPlayer].Integers[P_LOGS] := Players[CurrentPlayer].Integers[P_LOGS] + logsInInv;
-    Players[CurrentPlayer].Integers[P_LOADS] := Players[CurrentPlayer].Integers[P_LOADS] + 1;
-    Players[CurrentPlayer].Integers[P_EXP] := Round(Players[CurrentPlayer].Integers[P_LOGS] * Tree.Exp);
+    with Players[CurrentPlayer] do
+    begin
+      Integers[P_LOGS] := Integers[P_LOGS] + logsInInv;
+      Integers[P_LOADS] := Integers[P_LOADS] + 1;
+      Integers[P_EXP] := Round(Integers[P_LOGS] * Tree.Exp);
+    ebd;
     
-    Inc(Stats_CustomVars[STATS_LOADS]);
     if (Tree.Name = 'Willow') then
       IncEx(Stats_CustomVars[STATS_WILLOWS], logsInInv)
     else
       IncEx(Stats_CustomVars[STATS_OAKS], logsInInv);
     IncEx(Stats_CustomVars[STATS_EXP], Round(logsInInv * Tree.Exp));
+    Inc(Stats_CustomVars[STATS_LOADS]);
     Stats_SendReport;
     Stats_ManageAccounts;
 
-    if (Players[CurrentPlayer].Integers[P_LOGS] >= Players[CurrentPlayer].Integers[P_TOTAL_LOGS]) then
-    begin
-      Writeln('Cut desired number of logs, logging out...');
-      Next_Player;
-    end;
+    with Players[CurrentPlayer] do
+      if (Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) then
+      begin
+        Writeln('Cut desired number of logs, logging out...');
+        Next_Player;
+      end;
   end;
   
   FreeDTM(Tree.DTM);
@@ -1283,31 +1314,32 @@ begin
   Writeln('[============================= ' + SCRIPT_VERSION + ' =============================]');
   Writeln('[                                                                 ]');
   
-  if (HowManyPlayers <= 1) then
-  begin
-    Writeln(PadR('[      You have chosen to cut ' + Capitalize(Players[CurrentPlayer].Strings[P_TREE]) + ' trees.', 66) + ']');
-    Writeln('[                                                                 ]');
-    Writeln(PadR('[      Ran For: ' + TimeRunning, 66) + ']');
-    Writeln(PadR('[      Loads Done: ' + IntToStr(Players[CurrentPlayer].Integers[P_LOADS]), 66) + ']');
-    Writeln(PadR('[      Logs Chopped: ' + IntToStr(Players[CurrentPlayer].Integers[P_LOGS]), 66) + ']');
-    Writeln(PadR('[      Levels Gained: ' + IntToStr(Players[CurrentPlayer].Integers[P_LEVELS]), 66) + ']');
-    Writeln(PadR('[      Exp Gained: ' + FloatToStr(Players[CurrentPlayer].Integers[P_EXP]), 66) + ']');
-    Writeln(PadR('[      Breaks: ' + IntToStr(Players[CurrentPlayer].Integers[P_BREAKS]), 66) + ']');
-  end else
-  
-  begin
-    Writeln(PadR('[      Ran For: ' + TimeRunning, 66) + ']');
-    Writeln('[                                                                 ]');
-    Writeln('[     Nick      Loads      Logs      Lvls      Exp.      Brks     ]');
-    Writeln('[     ¯¯¯¯      ¯¯¯¯¯      ¯¯¯¯      ¯¯¯¯      ¯¯¯¯      ¯¯¯¯     ]');
-    
-    for i := 0 to High(Players) do
-      Writeln('[    ' + PadR(IntToStr(Players[i].Integers[P_LOADS]), 9)
-                      + PadR(IntToStr(Players[i].Integers[P_LOGS]), 10)
-                      + PadR(IntToStr(Players[i].Integers[P_LEVELS]), 7)
-                      + PadR(FloatToStr(Players[i].Extendeds[P_EXP]), 10)
-                      + PadR(IntToStr(Players[i].Integers[P_BREAKS]), 7) + ']');
-  end;
+  with Players[CurrentPlayer] do
+    if (HowManyPlayers <= 1) then
+    begin
+      Writeln(PadR('[      You have chosen to cut ' + Capitalize(Strings[P_TREE]) + ' trees.', 66) + ']');
+      Writeln('[                                                                 ]');
+      Writeln(PadR('[      Ran For: ' + TimeRunning, 66) + ']');
+      Writeln(PadR('[      Loads Done: ' + IntToStr(Integers[P_LOADS]), 66) + ']');
+      Writeln(PadR('[      Logs Chopped: ' + IntToStr(Integers[P_LOGS]), 66) + ']');
+      Writeln(PadR('[      Levels Gained: ' + IntToStr(Integers[P_LEVELS]), 66) + ']');
+      Writeln(PadR('[      Exp Gained: ' + FloatToStr(Integers[P_EXP]), 66) + ']');
+      Writeln(PadR('[      Breaks: ' + IntToStr(Integers[P_BREAKS]), 66) + ']');
+    end else
+
+    begin
+      Writeln(PadR('[      Ran For: ' + TimeRunning, 66) + ']');
+      Writeln('[                                                                 ]');
+      Writeln('[     Nick      Loads      Logs      Lvls      Exp.      Brks     ]');
+      Writeln('[     ¯¯¯¯      ¯¯¯¯¯      ¯¯¯¯      ¯¯¯¯      ¯¯¯¯      ¯¯¯¯     ]');
+
+      for i := 0 to High(Players) do
+        Writeln('[    ' + PadR(IntToStr(Players[i].Integers[P_LOADS]), 9)
+                        + PadR(IntToStr(Players[i].Integers[P_LOGS]), 10)
+                        + PadR(IntToStr(Players[i].Integers[P_LEVELS]), 7)
+                        + PadR(FloatToStr(Players[i].Extendeds[P_EXP]), 10)
+                        + PadR(IntToStr(Players[i].Integers[P_BREAKS]), 7) + ']');
+    end;
   
   Writeln('[                                                                 ]');
   Writeln('[=================================================================]');
@@ -1346,7 +1378,8 @@ begin
     Writeln('Found Hatchet!')
   else
   begin
-    srl_Warn('Find_Hatchet', 'Didn''t find hatchet, logging out. ', warn_AllVersions);
+    srl_Warn('Find_Hatchet', 'Didn''t find hatchet, logging out. ',
+             warn_AllVersions);
     Next_Player;
   end;
 end;
@@ -1415,13 +1448,15 @@ begin
       begin
         Writeln('Sucessfully Banked Logs!');
         Setup_Report;
-        Disguise('Logs Chopped: ' + IntToStr(Players[CurrentPlayer].Integers[P_LOGS]));
+        Disguise('Logs Chopped: ' +
+                 IntToStr(Players[CurrentPlayer].Integers[P_LOGS]));
         
         Writeln('Player: ' + Players[CurrentPlayer].Nick + ': Logged in For: '
                            + IntToStr(TimeFromMark(sinceLogin)) + ' ms.');
 
         if (Players[CurrentPlayer].Booleans[P_TAKE_BREAKS]) then
-          if (TimeFromMark(sinceLogin) >= ((60 * 60000) + RandomRange(-5000, 5000))) then
+          if (TimeFromMark(sinceLogin) >=
+             ((60 * 60000) + RandomRange(-5000, 5000))) then
           begin
             Next_Break;
             MarkTime(sinceLogin);
