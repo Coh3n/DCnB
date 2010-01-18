@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 7]                        ]
+[                         Draynor Chop N' Bank [Rev. 10]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.7';
+  SCRIPT_VERSION = 'Rev.10';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -883,7 +883,7 @@ end;
 
 function Chop_Trees: Boolean;
 var
-  wrongUptext, Tries, i, h, t, x, y, sX, sY: Integer;
+  wrongUptext, Tries, i, h, t, x, y, sX, sY, wT: Integer;
   colorsArr: TPointArray;
   boxesArr: T2DPointArray;
   Tree: TTree;
@@ -931,6 +931,7 @@ begin
       if (WaitUpTextMulti(Tree.UpText, 200)) then
       // if WaitOptionMulti(Tree.UpText, 200) then
       begin
+        Writeln('Uptext found!');
         wrongUptext := 0;
         Mouse(x, y, 0, 0, True);
         
@@ -970,22 +971,26 @@ begin
         srl_Warn('Chop_Tree', 'Error Finding Uptext. ', warn_AllVersions);
         Inc(wrongUptext);
       end;
-      
+
       if ((wrongUptext >= 50))  then
       begin
         Find_Randoms;
-      
+
         if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'oak') then
         begin
           SymbolAccuracy := 0.5;
-          if FindSymbolIn(sX, sY, 'dungeon', MMCX, MMY1, MMX2, MMY2) then
-            Mouse(sX, sY, 3, 3, True);
+          if (FindSymbolIn(sX, sY, 'dungeon', MMCX, MMY1, MMX2, MMY2)) then
+          begin
+            wrongUptext := 0;
+            Mouse(x - Random(3), y - 15, 3, 3, True);
+          end;
 
-          if Flag then
-            Wait(RandomRange(500, 1000));
+          wT := GetSystemTime + 10000;
+          while ((wT > GetSystemTime) and (IsMoving)) do
+            Find_Randoms;
         end;
       end;
-      
+
     end; // of boxesArr loop.
     
   until(InvFull or (not LoggedIn) or (Tries >= 50) or (wrongUptext > 60));
@@ -1031,11 +1036,11 @@ begin
       { FindColorsTolerance(TPA, roadColor, MMX1, MMY1, MMX2, MMY2, 10);
         DebugTPA(TPA, ''); }
         
-        if RadialWalkTolerance(roadColor, 85, 105, 60, 2, 1, 10) then
+        if (RadialWalkTolerance(roadColor, 85, 105, 60, 2, 1, 10)) then
         begin
           Writeln('Raidal Walk Successful: WALK_BANK_TO_OAKS.');
 
-          if FindSymbolIn(x, y, 'dungeon', MMCX, MMY1, MMX2, MMY2) then
+          if (FindSymbolIn(x, y, 'dungeon', MMCX, MMY1, MMX2, MMY2)) then
           begin
             Writeln('Found Dungeon Symbol!');
             Mouse(x - Random(3), y - 15, 3, 3, True);
@@ -1066,12 +1071,12 @@ begin
       repeat
         roadColor := Find_MMColors(MM_ROAD);
         
-        if RadialWalkTolerance(roadColor, 275, 240, 70, 2, 1, 10) then
+        if (RadialWalkTolerance(roadColor, 275, 240, 70, 2, 1, 10)) then
         begin
           Writeln('Radial Walk Successful: WALK_OAKS_TO_BANK[1].');
           bankColor := Find_MMColors(MM_BANK);
           
-          if RadialWalkTolerance(bankColor, 295, 240, 70, 2, 1, 10) then
+          if (RadialWalkTolerance(bankColor, 295, 240, 70, 2, 1, 10)) then
           begin
             Writeln('Radial Walk Successful: WALK_OAKS_TO_BANK[2].');
             Break;
@@ -1081,7 +1086,7 @@ begin
             srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_OAKS_TO_BANK[2]. ',
                      warn_AllVersions);
             
-            if FindSymbolIn(x, y, 'bank', MMX1, MMY1, MMCX, MMY2) then
+            if (FindSymbolIn(x, y, 'bank', MMX1, MMY1, MMCX, MMY2)) then
             begin
               Writeln('Found Bank Symbol!');
               Mouse(x, y, 3, 3, True);
@@ -1108,11 +1113,8 @@ begin
             Inc(Tries);
             
             t := GetSystemTime + 10000;
-            while (t > GetSystemTime) do
-              if (Result) then
-                Break
-              else
-                Find_Randoms;
+            while ((t > GetSystemTime) and (IsMoving)) do
+              Find_Randoms;
           end else
           
           begin
@@ -1130,11 +1132,8 @@ begin
   Result := (not IsMoving);
 
   t := GetSystemTime + 10000;
-  while (t > GetSystemTime) do
-    if (Result) then
-      Exit
-    else
-      Find_Randoms;
+  while ((t > GetSystemTime) and (not Result)) do
+    Find_Randoms;
   
   SymbolAccuracy := 0.8;
 end;
@@ -1312,7 +1311,7 @@ var
 begin
   Writeln('[=================================================================]');
   Writeln(PadR('[                 Coh3n''s Draynor Chop N'' Bank!', 66) + ']');
-  Writeln('[============================= ' + SCRIPT_VERSION + ' =============================]');
+  Writeln('[============================ ' + SCRIPT_VERSION + ' =============================]');
   Writeln('[                                                                 ]');
   
   with Players[CurrentPlayer] do
