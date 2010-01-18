@@ -30,5 +30,8 @@
 [      - Made some of the code much more readable.                             ]
 [      - Slightly improved the Oak cutting.                                    ]
 [                                                                              ]
+[    Rev. 7:                                                                   ]
+[      - Made some adjustments to the chopping procedure.                      ]
+[                                                                              ]
 [==============================================================================]
 [==============================================================================]

@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 6]                        ]
+[                         Draynor Chop N' Bank [Rev. 7]                        ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.6';
+  SCRIPT_VERSION = 'Rev.7';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -649,7 +649,6 @@ begin
     while (GetSystemTime < t) do
     begin
       Wait(100);
-
       {
         Closes the Woodcutting information window.
       }
@@ -895,7 +894,7 @@ begin
   SetColorSpeed2Modifiers(Tree.Hue, Tree.Sat);
   
   repeat
-    if InvFull then
+    if (InvFull) then
       Break;
       
     FindColorsSpiralTolerance(MSCX, MSCY, colorsArr, Tree.Color, MSX1, MSY1,
@@ -987,7 +986,7 @@ begin
       
     end; // of boxesArr loop.
     
-  until(InvFull or (not LoggedIn) or (Tries >= 55) or (wrongUptext > 50));
+  until(InvFull or (not LoggedIn) or (Tries >= 50) or (wrongUptext > 60));
   
   if (Tries >= 50) then
   begin
@@ -996,7 +995,7 @@ begin
     Next_Player;
   end;
   
-  if (wrongUptext > 55) then
+  if (wrongUptext > 60) then
   begin
     srl_warn('Chop_Trees', 'Couldn''t find uptext after 50 tries, logging out. ',
              warn_AllVersions);
