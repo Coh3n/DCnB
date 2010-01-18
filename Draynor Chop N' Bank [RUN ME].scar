@@ -1284,7 +1284,7 @@ begin
       Integers[P_LOGS] := Integers[P_LOGS] + logsInInv;
       Integers[P_LOADS] := Integers[P_LOADS] + 1;
       Integers[P_EXP] := Round(Integers[P_LOGS] * Tree.Exp);
-    ebd;
+    end;
     
     if (Tree.Name = 'Willow') then
       IncEx(Stats_CustomVars[STATS_WILLOWS], logsInInv)

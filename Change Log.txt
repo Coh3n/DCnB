@@ -37,5 +37,8 @@
 [      - Added a Writeln procedure in my Find_Randoms function to make sure    ] 
 [        the procedure is actually being run.                                  ] 
 [                                                                              ]
+[    Rev. 9:                                                                   ]
+[      - Fixed a compiling error.                                              ]
+[                                                                              ]
 [==============================================================================]
 [==============================================================================]
