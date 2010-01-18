@@ -722,6 +722,7 @@ begin
     Exit;
     
   LampSkill := Lowercase(Players[CurrentPlayer].Strings[P_LAMP_SKILL]);
+  Writeln('Scanning for random events...');
   
   if (FindNormalRandoms) then
   begin
@@ -887,7 +888,8 @@ var
   boxesArr: T2DPointArray;
   Tree: TTree;
 begin
-  if not LoggedIn then Exit;
+  if (not LoggedIn) then
+    Exit;
   Tree := Load_TreeRecords;
   
   ColorToleranceSpeed(2);
@@ -926,7 +928,7 @@ begin
       MMouse(x, y, 4, 4);
       // Mouse(x, y, 4, 4, False);
       
-      if WaitUpTextMulti(Tree.UpText, 200) then
+      if (WaitUpTextMulti(Tree.UpText, 200)) then
       // if WaitOptionMulti(Tree.UpText, 200) then
       begin
         wrongUptext := 0;
