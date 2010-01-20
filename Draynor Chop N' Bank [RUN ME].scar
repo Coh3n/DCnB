@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 10]                       ]
+[                         Draynor Chop N' Bank [Rev. 11]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.10';
+  SCRIPT_VERSION = 'Rev.11';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -1017,7 +1017,8 @@ function Walk_ToFrom(Where: Integer): Boolean;
 var
   Tries, roadColor, bankColor, x, y, t: Integer;
 begin
-  if not LoggedIn then Exit;
+  if (not LoggedIn) then
+    Exit;
 
   SymbolAccuracy := 0.5;
   MakeCompass('N');
@@ -1114,7 +1115,10 @@ begin
             
             t := GetSystemTime + 10000;
             while ((t > GetSystemTime) and (IsMoving)) do
+            begin
               Find_Randoms;
+              Wait(800 + RandomRange(200, 400));
+            end;
           end else
           
           begin
@@ -1133,7 +1137,10 @@ begin
 
   t := GetSystemTime + 10000;
   while ((t > GetSystemTime) and (not Result)) do
+  begin
     Find_Randoms;
+    Wait(800 + RandomRange(200, 400));
+  end;
   
   SymbolAccuracy := 0.8;
 end;
