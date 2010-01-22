@@ -736,9 +736,10 @@ begin
       soundStr := 'Playing Random Sound.';
     end;
     
-    UseRewardBox;
     Writeln('Found Random! ' + soundStr);
   end;
+  
+  UseRewardBox;
 end;
 
 function Find_Hatchet: Boolean;
