@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 11]                       ]
+[                         Draynor Chop N' Bank [Rev. 13]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.11';
+  SCRIPT_VERSION = 'Rev.13';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -740,6 +740,7 @@ begin
   end;
   
   UseRewardBox;
+  FindLamp(LampSkill);
 end;
 
 function Find_Hatchet: Boolean;
