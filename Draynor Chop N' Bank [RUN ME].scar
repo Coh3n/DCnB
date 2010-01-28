@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 13]                       ]
+[                         Draynor Chop N' Bank [Rev. 14]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.13';
+  SCRIPT_VERSION = 'Rev.14';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -172,9 +172,9 @@ const
 { const Setup;
   Description: Constants used to setup the script. }
 const
-  STATS_ID   = ''; // Your SRL Stats ID.
-  STATS_PASS = ''; // Your SRL Stats Password.
-  RANDOM_SOUND = True; // True = a sound when a random is found.
+  STATS_ID   = '24'; // Your SRL Stats ID.
+  STATS_PASS = '304002'; // Your SRL Stats Password.
+  RANDOM_SOUND = False; // True = a sound when a random is found.
   BREAK_TIME   = 15;   // How long to break for (in minutes).
                        // Script will +/- a random 5 minutes.
   
@@ -586,7 +586,7 @@ begin
       with Result do
       begin
         Name   := 'Oak';
-        UpText := ['Oak', 'Oa', 'ak'];
+        UpText := ['ak'];
         Color  := 4425336;
         Hue    := 0.06;
         Sat    := 0.77;
@@ -1115,9 +1115,11 @@ begin
             Mouse(x - Random(3), y + Random(2), 3, 3, True);
             Inc(Tries);
             
-            t := GetSystemTime + 10000;
-            while ((t > GetSystemTime) and (IsMoving)) do
+            t := GetSystemTime + 5000;
+            while (t > GetSystemTime) do
             begin
+              if (FFlag(5)) then
+                Break;
               Find_Randoms;
               Wait(800 + RandomRange(200, 400));
             end;
@@ -1134,12 +1136,15 @@ begin
   else
     srl_Warn('Walk_ToFrom', 'Invalid Walk Number. ', warn_AllVersions);
   end; // of Where case.
-  
-  Result := (not IsMoving);
 
-  t := GetSystemTime + 10000;
-  while ((t > GetSystemTime) and (not Result)) do
+  t := GetSystemTime + 5000;
+  while (t > GetSystemTime) do
   begin
+    if FFlag(5) then
+    begin
+      Result := True;
+      Exit;
+    end;
     Find_Randoms;
     Wait(800 + RandomRange(200, 400));
   end;
@@ -1178,7 +1183,7 @@ begin
   h := High(boxArr);
   for i := 0 to h do
   begin
-    if (Length(boxArr[i]) < 50) then
+    if (not InRange(Length(boxArr[i]), 80, 200)) then
       Continue;
       
     MiddleTPAEx(boxArr[i], x, y);
@@ -1189,6 +1194,7 @@ begin
     if WaitUpTextMulti(['Bank booth', 'ank boo', 'ooth'], 200) then
     begin
       Mouse(x, y, 0, 0, False);
+      Writeln('Length: ' + IntToStr(Length(boxArr[i])));
       if (not ChooseOptionMultiEx(['uick'], 'Action',  ClickLeft)) then
         srl_Warn('Bank_Open', 'Couldn''t Choose Bank Option: Use-quickly. ',
                  warn_AllVersions)
@@ -1491,6 +1497,8 @@ begin
   Setup_Report;
 end;
 
+var
+  i: Integer;
 begin
   //Setup_Script;
   Setup_MainLoop;
