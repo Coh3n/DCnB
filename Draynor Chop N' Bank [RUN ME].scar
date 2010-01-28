@@ -172,8 +172,8 @@ const
 { const Setup;
   Description: Constants used to setup the script. }
 const
-  STATS_ID   = '24'; // Your SRL Stats ID.
-  STATS_PASS = '304002'; // Your SRL Stats Password.
+  STATS_ID   = ''; // Your SRL Stats ID.
+  STATS_PASS = ''; // Your SRL Stats Password.
   RANDOM_SOUND = False; // True = a sound when a random is found.
   BREAK_TIME   = 15;   // How long to break for (in minutes).
                        // Script will +/- a random 5 minutes.
