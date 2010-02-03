@@ -1531,7 +1531,6 @@ end;
 var
   i: Integer;
 begin
-  Setup_Script;
-  //Setup_MainLoop;
-  Bank_Logs;
+  //Setup_Script;
+  Setup_MainLoop;
 end.
