@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 16]                       ]
+[                         Draynor Chop N' Bank [Rev. 18]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.16';
+  SCRIPT_VERSION = 'Rev.18';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -586,7 +586,7 @@ begin
       with Result do
       begin
         Name   := 'Oak';
-        UpText := ['ak'];
+        UpText := ['Oak'];
         Color  := 4425336;
         Hue    := 0.06;
         Sat    := 0.77;
