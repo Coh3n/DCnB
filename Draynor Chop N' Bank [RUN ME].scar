@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 18]                       ]
+[                         Draynor Chop N' Bank [Rev. 19]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.18';
+  SCRIPT_VERSION = 'Rev.19';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -1380,7 +1380,8 @@ begin
       Writeln('[     ¯¯¯¯      ¯¯¯¯¯      ¯¯¯¯      ¯¯¯¯      ¯¯¯¯      ¯¯¯¯     ]');
 
       for i := 0 to High(Players) do
-        Writeln('[    ' + PadR(IntToStr(Players[i].Integers[P_LOADS]), 9)
+        Writeln('[    ' + PadR(Players[i].Nick, 7)
+                        + PadR(IntToStr(Players[i].Integers[P_LOADS]), 9)
                         + PadR(IntToStr(Players[i].Integers[P_LOGS]), 10)
                         + PadR(IntToStr(Players[i].Integers[P_LEVELS]), 7)
                         + PadR(FloatToStr(Players[i].Extendeds[P_EXP]), 10)
