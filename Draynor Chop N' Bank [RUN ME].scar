@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 19]                       ]
+[                         Draynor Chop N' Bank [Rev. 20]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.19';
+  SCRIPT_VERSION = 'Rev.20';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -757,9 +757,9 @@ begin
        'B2EB22013553806A2EE3570300C2B90C0B');
 
   dtm_Hatchet[HATCHET_DRAGON] :=
-    DTMFromString('78DA63F464626050636440061EFC5C0CFC401' +
-       'A24FA1F0818BD806A7451D54064612490B605AA3126A0C60CA8C6' +
-       '94801A3BA01A15026A3C806AE4F1AB01007E2B071A');
+    DTMFromString('78DA63CC66666058C7C8800CFC05B819A6016' +
+       '99828630A50CD6A54350C0C4C1039989A02A09A5504D41401D5AC' +
+       '21A0260DA8661301352540355BF0AB0100FB0307CF');
 
   if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
     GameTab(tab_Equip)
@@ -1146,7 +1146,7 @@ begin
       Exit;
     end;
     Find_Randoms;
-    Wait(800 + RandomRange(200, 400));
+    Wait(RandomRange(2000, 3000));
   end;
   
   SymbolAccuracy := 0.8;
