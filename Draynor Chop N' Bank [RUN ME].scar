@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 20]                       ]
+[                         Draynor Chop N' Bank [Rev. 21]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.20';
+  SCRIPT_VERSION = 'Rev.21';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -874,10 +874,7 @@ begin
 { Writeln('Length inside Box: ' + IntToStr(Length(inBox)) + '.'); }
   
   if Result then
-  begin
     Writeln('Tree has been cut down!');
-    Find_Randoms;
-  end;
   
   SetColorSpeed2Modifiers(0.2, 0.2);
   ColorToleranceSpeed(1);
@@ -911,9 +908,14 @@ begin
     if (Length(boxesArr) = 0) then
     begin
       srl_Warn('Chop_Trees', 'Trees Not Found.', warn_AllVersions);
-      Wait(RandomRange(1000, 2000));
-      Find_Randoms;
+      Wait(RandomRange(2000, 4000));
+      
+      if (Random(20) = 1) then
+        Find_Randoms;
       Inc(Tries);
+      
+      if (Tries >= 50) then
+        Find_Randoms;
     end;
     
     SortATPAFrom(boxesArr, Point(MSCX, MSCY));
@@ -962,7 +964,8 @@ begin
             Break;
             
           Load_Antiban;
-          Find_Randoms;
+          if (Random(20) = 1) then
+            Find_Randoms;
         until(InvFull or not LoggedIn);
         
         if (InvFull) or (Result) then
@@ -989,15 +992,16 @@ begin
 
           wT := GetSystemTime + 10000;
           while ((wT > GetSystemTime) and (IsMoving)) do
-            Find_Randoms;
+            if (Random(20) = 1) then
+              Find_Randoms;
         end;
       end;
 
     end; // of boxesArr loop.
     
-  until(InvFull or (not LoggedIn) or (Tries >= 50) or (wrongUptext > 60));
+  until(InvFull or (not LoggedIn) or (Tries >= 60) or (wrongUptext > 60));
   
-  if (Tries >= 50) then
+  if (Tries >= 60) then
   begin
     srl_Warn('Chop_Trees', 'Couldn''t find trees after 50 tries, logging out. ',
              warn_AllVersions);
@@ -1120,7 +1124,9 @@ begin
             begin
               if (FFlag(5)) then
                 Break;
-              Find_Randoms;
+                
+              if (Random(20) = 1) then
+                Find_Randoms;
               Wait(800 + RandomRange(200, 400));
             end;
           end else
@@ -1145,8 +1151,10 @@ begin
       Result := True;
       Exit;
     end;
-    Find_Randoms;
-    Wait(RandomRange(2000, 3000));
+
+    if (Random(20) = 1) then
+      Find_Randoms;
+    Wait(RandomRange(500, 1000));
   end;
   
   SymbolAccuracy := 0.8;
