@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 22]                       ]
+[                         Draynor Chop N' Bank [Rev. 23]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.22';
+  SCRIPT_VERSION = 'Rev.23';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -1377,7 +1377,7 @@ begin
       Writeln(PadR('[      Loads Done: ' + IntToStr(Integers[P_LOADS]), 66) + ']');
       Writeln(PadR('[      Logs Chopped: ' + IntToStr(Integers[P_LOGS]), 66) + ']');
       Writeln(PadR('[      Levels Gained: ' + IntToStr(Integers[P_LEVELS]), 66) + ']');
-      Writeln(PadR('[      Exp Gained: ' + FloatToStr(Integers[P_EXP]), 66) + ']');
+      Writeln(PadR('[      Exp Gained: ' + IntToStr(Integers[P_EXP]), 66) + ']');
       Writeln(PadR('[      Breaks: ' + IntToStr(Integers[P_BREAKS]), 66) + ']');
     end else
 
@@ -1392,7 +1392,7 @@ begin
                          + PadR(IntToStr(Players[i].Integers[P_LOADS]), 10)
                          + PadR(IntToStr(Players[i].Integers[P_LOGS]), 11)
                          + PadR(IntToStr(Players[i].Integers[P_LEVELS]), 8)
-                         + PadR(FloatToStr(Players[i].Extendeds[P_EXP]), 12)
+                         + PadR(IntToStr(Players[i].Integers[P_EXP]), 12)
                          + PadR(IntToStr(Players[i].Integers[P_BREAKS]), 8) + ']');
     end;
   
