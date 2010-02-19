@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 23]                       ]
+[                         Draynor Chop N' Bank [Rev. 24]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.23';
+  SCRIPT_VERSION = 'Rev.24';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -694,7 +694,7 @@ begin
   if (HowManyPlayers > 1) then
   begin
     Writeln('Specified playing time has passed, switching Players...');
-    NextPlayer(Players[CurrentPlayer].Active);
+    NextPlayer(True);
   end else
 
   begin
@@ -1527,7 +1527,7 @@ begin
       TerminateScript;
     end;
     
-    NextPlayer(Players[CurrentPlayer].Active);
+    NextPlayer(False);
   until(AllPlayersInactive);
 end;
 
