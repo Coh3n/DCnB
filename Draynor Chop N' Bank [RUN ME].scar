@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 21]                       ]
+[                         Draynor Chop N' Bank [Rev. 22]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.21';
+  SCRIPT_VERSION = 'Rev.22';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -166,7 +166,6 @@ var
 const
   SMART_WORLD          = 152;   // World to load.
   SMART_MEMBERS_WORLD  = False; // True = Members world.
-  SMART_HIGH_DETAIL    = False; // True = High detail.
   SMART_SIGNED_CLIENT  = True;  // True = Signed client.
   
 { const Setup;
@@ -177,6 +176,7 @@ const
   RANDOM_SOUND = False; // True = a sound when a random is found.
   BREAK_TIME   = 15;   // How long to break for (in minutes).
                        // Script will +/- a random 5 minutes.
+                       // If using multiplayer, will just switch players, not break.
   
 procedure DeclarePlayers;
 begin
@@ -192,7 +192,7 @@ begin
     Active := True; // True = use this player.
     Pin    := '';   // Leave blank if you don't have a bank pin.
     Integers[P_TOTAL_LOGS]  := 000;  // Total logs to cut.
-    Booleans[P_TAKE_BREAKS] := True; // True = the script will take breaks.
+    Booleans[P_TAKE_BREAKS] := True; // True = the player will take breaks.
     Booleans[P_EQUIPPED]    := True; // True = your hatchet is equipped.
     Strings[P_TREE]         := '';   // Either 'willow' or 'oak'.
     Strings[P_LAMP_SKILL]   := 'Woodcutting';
@@ -261,7 +261,7 @@ begin
     BoxRewards := ['amp', 'mote', 'ostume', 'oins', 'unes', 're', 'ems'];
   end;
   
-}
+//}
 end;
 
 {==============================================================================]
@@ -700,7 +700,7 @@ begin
   begin
     Writeln('Taking a ' + IntToStr(BREAK_TIME) + ' minute break.');
     Logout;
-    Wait((BREAK_TIME * 60000) + RandomRange(-5000, 5000));
+    Wait((BREAK_TIME * 60000) + RandomRange(-120000, 120000));
 
     Writeln('Break over, logging back in.');
     LoginPlayer;
@@ -1369,7 +1369,7 @@ begin
   Writeln('[                                                                 ]');
   
   with Players[CurrentPlayer] do
-    if (HowManyPlayers <= 1) then
+    if (HowManyPlayers = 1) then
     begin
       Writeln(PadR('[      You have chosen to cut ' + Capitalize(Strings[P_TREE]) + ' trees.', 66) + ']');
       Writeln('[                                                                 ]');
@@ -1388,12 +1388,12 @@ begin
       Writeln('[     ¯¯¯¯      ¯¯¯¯¯      ¯¯¯¯      ¯¯¯¯      ¯¯¯¯      ¯¯¯¯     ]');
 
       for i := 0 to High(Players) do
-        Writeln('[    ' + PadR(Players[i].Nick, 7)
-                        + PadR(IntToStr(Players[i].Integers[P_LOADS]), 9)
-                        + PadR(IntToStr(Players[i].Integers[P_LOGS]), 10)
-                        + PadR(IntToStr(Players[i].Integers[P_LEVELS]), 7)
-                        + PadR(FloatToStr(Players[i].Extendeds[P_EXP]), 10)
-                        + PadR(IntToStr(Players[i].Integers[P_BREAKS]), 7) + ']');
+        Writeln('[     ' + PadR(Players[i].Nick, 11)
+                         + PadR(IntToStr(Players[i].Integers[P_LOADS]), 10)
+                         + PadR(IntToStr(Players[i].Integers[P_LOGS]), 11)
+                         + PadR(IntToStr(Players[i].Integers[P_LEVELS]), 8)
+                         + PadR(FloatToStr(Players[i].Extendeds[P_EXP]), 12)
+                         + PadR(IntToStr(Players[i].Integers[P_BREAKS]), 8) + ']');
     end;
   
   Writeln('[                                                                 ]');
@@ -1446,7 +1446,7 @@ begin
   Smart_Server := SMART_WORLD;
   Smart_Members := SMART_MEMBERS_WORLD;
   Smart_Signed := SMART_SIGNED_CLIENT;
-  Smart_SuperDetail := SMART_HIGH_DETAIL;
+  Smart_SuperDetail := False;
   
   Stats_UserID := STATS_ID;
   Stats_Password := STATS_PASS;
@@ -1510,8 +1510,7 @@ begin
                            + IntToStr(TimeFromMark(sinceLogin)) + ' ms.');
 
         if (Players[CurrentPlayer].Booleans[P_TAKE_BREAKS]) then
-          if (TimeFromMark(sinceLogin) >=
-             ((60 * 60000) + RandomRange(-5000, 5000))) then
+          if (TimeFromMark(sinceLogin) >= ((60 * 60000) + RandomRange(-300000, 300000))) then
           begin
             Next_Break;
             MarkTime(sinceLogin);
