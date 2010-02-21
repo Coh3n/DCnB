@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 25]                       ]
+[                         Draynor Chop N' Bank [Rev. 26]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.25';
+  SCRIPT_VERSION = 'Rev.26';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -148,7 +148,7 @@ type
 var
   tP: TPoint;
   srl_MMTPA: TPointArray;
-  startLevel: Integer;
+  startLevel, breakAfterLoads: Integer;
   
 { var Stat variables;
   Description: Variables used for SRL Stats. }
@@ -1240,7 +1240,7 @@ end;
 
 function Bank_Logs: Boolean;
 var
-  breakAfterLoads, logsInInv, Tries, dX, dY, sX, sY, t: Integer;
+  logsInInv, Tries, dX, dY, sX, sY, t: Integer;
   Tree: TTree;
 begin
   if (not LoggedIn) or (Bank_InvCount <= 1) then
