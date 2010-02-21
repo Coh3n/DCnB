@@ -13,7 +13,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 24]                       ]
+[                         Draynor Chop N' Bank [Rev. 25]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -60,7 +60,7 @@ program DraynorChopNBank;
   {.Include srl\srl\Misc\Debug.scar}
 
 const
-  SCRIPT_VERSION = 'Rev.24';
+  SCRIPT_VERSION = 'Rev.25';
   
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables. }
@@ -164,19 +164,16 @@ var
 { const Standard Constants;
   Description: Constants representing SMART settings. }
 const
-  SMART_WORLD          = 152;   // World to load.
-  SMART_MEMBERS_WORLD  = False; // True = Members world.
-  SMART_SIGNED_CLIENT  = True;  // True = Signed client.
+  SMART_WORLD          = 152;   // World to load
+  SMART_MEMBERS_WORLD  = False; // True = Members world
   
 { const Setup;
   Description: Constants used to setup the script. }
 const
-  STATS_ID   = ''; // Your SRL Stats ID.
-  STATS_PASS = ''; // Your SRL Stats Password.
-  RANDOM_SOUND = False; // True = a sound when a random is found.
-  BREAK_TIME   = 15;   // How long to break for (in minutes).
-                       // Script will +/- a random 5 minutes.
-                       // If using multiplayer, will just switch players, not break.
+  STATS_ID   = ''; // Your SRL Stats ID
+  STATS_PASS = ''; // Your SRL Stats Password
+  RANDOM_SOUND = False; // True = a sound plays when a random is found
+  BREAK_AFTER  = 15;    // Loads until break/switch player
   
 procedure DeclarePlayers;
 begin
@@ -507,31 +504,36 @@ begin
     Result := srl_MMTPA;
 end;
 
-procedure Load_Signature;
+procedure DCnB_Signature;
 begin
   ClearDebug;
   Writeln('                                            ___          ');
-  Wait(250);
+  Wait(125);
   Writeln('                       ____                /\__\         ');
-  Wait(250);
+  Wait(125);
   Writeln('                      /\___\     ____      \/ _/         ');
-  Wait(250);
+  Wait(125);
   Writeln('       _____          \/_  /    /\___\      \/ _____     ');
-  Wait(250);
+  Wait(125);
   Writeln('      /\____\  _______/ / /___ _\/___ \_____  /\____\    ');
-  Wait(250);
+  Wait(125);;
   Writeln('     / /  ___\/\______\/ /____\\____/ /_____\/ / ____\   ');
-  Wait(250);
+  Wait(125);
   Writeln('    / /  /__ / / ___  / ____  //___  / ____  \/ /___\    ');
-  Wait(250);
+  Wait(125);
   Writeln('   / /  /___\ / /__/ / / / / /____/ / /  / / /____  /    ');
-  Wait(250);
+  Wait(125);
   Writeln('   \/_______//______/_/ /_/_/______/_/__/_/_/____/ /     ');
-  Wait(250);
+  Wait(125);
   Writeln('                             \/___________________/      ');
-  Wait(250);
+  Wait(125);
   Writeln(PadR('                       Draynor Chop N'' Bank ' + SCRIPT_VERSION
                                                                + '!', 57));
+end;
+
+procedure DCnB_Debug(proc, msg: String);
+begin
+  Writeln('-> ' + proc + ': ' + msg);
 end;
 
 procedure Load_Antiban;
@@ -617,9 +619,8 @@ begin
                     '71D0ABD');
       end;
       
-  else
-    srl_Warn('Load_TreeRecords', 'Invalid Tree Type in DeclarePlayers. ',
-             warn_AllVersions);
+    else
+      DCnB_Debug('Load_TreeRecords', 'Invalid tree type in DeclarePlayers.');
     
   end;
 end;
@@ -679,8 +680,7 @@ begin
 
   if (HowManyPlayers <= 1) then
   begin
-    srl_Warn('Next_Player', 'Your Player Is Inactive, Terminating Script. ',
-             warn_AllVersions);
+    DCnB_Debug('Next_Player', 'Your player is inactive, terminating script...');
     TerminateScript;
   end;
 end;
@@ -693,16 +693,16 @@ begin
 
   if (HowManyPlayers > 1) then
   begin
-    Writeln('Specified playing time has passed, switching Players...');
+    Writeln('Switching players...');
     NextPlayer(True);
   end else
 
   begin
-    Writeln('Taking a ' + IntToStr(BREAK_TIME) + ' minute break.');
+    Writeln('Taking a short minute break...');
     Logout;
-    Wait((BREAK_TIME * 60000) + RandomRange(-120000, 120000));
-
-    Writeln('Break over, logging back in.');
+    Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
+    
+    Writeln('Break over, logging back in...');
     LoginPlayer;
   end;
   
@@ -714,33 +714,36 @@ begin
   Stats_ManageAccounts;
 end;
 
-procedure Find_Randoms;
+procedure Find_Randoms(randomOnly: Boolean);
 var
-  soundStr: String;
+  temp: Integer;
 begin
   if (not LoggedIn) then
     Exit;
+
+  if (randomOnly) then
+    temp := Random(20)
+  else
+    temp := 10;
     
-  LampSkill := Lowercase(Players[CurrentPlayer].Strings[P_LAMP_SKILL]);
-  Writeln('Scanning for random events...');
-  
-  if (FindNormalRandoms) then
+  if (temp = 10) then
   begin
-    Inc(Stats_CustomVars[STATS_RANDOMS]);
-    Stats_SendReport;
-    Stats_ManageAccounts;
-    
-    if (RANDOM_SOUND) then
+    LampSkill := Lowercase(Players[CurrentPlayer].Strings[P_LAMP_SKILL]);
+    Writeln('Scanning for random events...');
+
+    if (FindNormalRandoms) then
     begin
-      PlaySound(ScriptPath + 'RandomSound.wav');
-      soundStr := 'Playing Random Sound.';
+      Inc(Stats_CustomVars[STATS_RANDOMS]);
+      Stats_SendReport;
+      Stats_ManageAccounts;
+
+      if (RANDOM_SOUND) then
+        PlaySound(ScriptPath + 'RandomSound.wav');
     end;
-    
-    Writeln('Found Random! ' + soundStr);
+
+    UseRewardBox;
+    FindLamp(LampSkill);
   end;
-  
-  UseRewardBox;
-  FindLamp(LampSkill);
 end;
 
 function Find_Hatchet: Boolean;
@@ -808,7 +811,7 @@ begin
         minB := 47; maxB := 60;
       end;
   else
-    srl_Warn('Find_MMColors', 'Invalid Color Parameters. ', warn_AllVersions);
+    DCnB_Debug('Find_MMColors', 'Invalid Color Parameters.');
   end;
   
   { Get all the colours in the minimap. }
@@ -853,8 +856,7 @@ begin
     Result := newCols[j];
     Writeln('Found Color: ' + IntToStr(Result));
   end else
-    srl_Warn('Find_MMColors', 'Failed to Find MM Color Index: ' + IntToStr(Which)
-             + '. ', warn_AllVersions);
+    DCnB_Debug('Find_MMColors', 'Failed to find color: ' + IntToStr(Which));
 end;
 
 function Chop_IsTreeDown: Boolean;
@@ -907,15 +909,13 @@ begin
 
     if (Length(boxesArr) = 0) then
     begin
-      srl_Warn('Chop_Trees', 'Trees Not Found.', warn_AllVersions);
+      DCnB_Debug('Chop_Trees', 'Failed to find tree.');
       Wait(RandomRange(2000, 4000));
-      
-      if (Random(20) = 1) then
-        Find_Randoms;
+      Find_Randoms(True);
       Inc(Tries);
       
       if (Tries >= 50) then
-        Find_Randoms;
+        Find_Randoms(False);
     end;
     
     SortATPAFrom(boxesArr, Point(MSCX, MSCY));
@@ -964,8 +964,7 @@ begin
             Break;
             
           Load_Antiban;
-          if (Random(20) = 1) then
-            Find_Randoms;
+          Find_Randoms(True);
         until(InvFull or not LoggedIn);
         
         if (InvFull) or (Result) then
@@ -973,13 +972,13 @@ begin
           
       end else
       begin
-        srl_Warn('Chop_Tree', 'Error Finding Uptext. ', warn_AllVersions);
+        DCnB_Debug('Chop_Tree', 'Failed to find uptext.');
         Inc(wrongUptext);
       end;
 
       if ((wrongUptext >= 50))  then
       begin
-        Find_Randoms;
+        Find_Randoms(False);
 
         if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'oak') then
         begin
@@ -992,8 +991,7 @@ begin
 
           wT := GetSystemTime + 10000;
           while ((wT > GetSystemTime) and (IsMoving)) do
-            if (Random(20) = 1) then
-              Find_Randoms;
+            Find_Randoms(True);
         end;
       end;
 
@@ -1003,15 +1001,13 @@ begin
   
   if (Tries >= 60) then
   begin
-    srl_Warn('Chop_Trees', 'Couldn''t find trees after 50 tries, logging out. ',
-             warn_AllVersions);
+    DCnB_Debug('Chop_Trees', 'Failed to find trees 60 times, logging out...');
     Next_Player;
   end;
   
   if (wrongUptext > 60) then
   begin
-    srl_warn('Chop_Trees', 'Couldn''t find uptext after 50 tries, logging out. ',
-             warn_AllVersions);
+    DCnB_Debug('Chop_Trees', 'Failed to find uptext 60 times, logging out...');
     Next_Player;
   end;
     
@@ -1045,25 +1041,23 @@ begin
         
         if (RadialWalkTolerance(roadColor, 85, 105, 60, 2, 1, 10)) then
         begin
-          Writeln('Raidal Walk Successful: WALK_BANK_TO_OAKS.');
+          Writeln('Raidal walk successful: WALK_BANK_TO_OAKS.');
 
           if (FindSymbolIn(x, y, 'dungeon', MMCX, MMY1, MMX2, MMY2)) then
           begin
-            Writeln('Found Dungeon Symbol!');
+            Writeln('Found dungeon symbol!');
             Mouse(x - Random(3), y - 15, 3, 3, True);
             Wait(RandomRange(300, 500));
           end else
           
           begin
-            srl_Warn('Walk_ToFrom', 'Error Finding Dungeon Symbol. ',
-                     warn_AllVersions);
+            DCnB_Debug('Walk_ToFrom', 'Faled to find dungeon symbol.');
             Next_Player;
           end;
 
         end else
         begin
-          srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_BANK_TO_OAKS. ',
-                   warn_AllVersions);
+          DCnB_Debug('Walk_ToFrom', 'Failed to radial walk: WALK_BANK_TO_OAKS');
           Next_Player;
         end;
       end;
@@ -1080,29 +1074,27 @@ begin
         
         if (RadialWalkTolerance(roadColor, 275, 240, 70, 2, 1, 10)) then
         begin
-          Writeln('Radial Walk Successful: WALK_OAKS_TO_BANK[1].');
+          Writeln('Radial walk successful: WALK_OAKS_TO_BANK[1].');
           bankColor := Find_MMColors(MM_BANK);
           
           if (RadialWalkTolerance(bankColor, 295, 240, 70, 2, 1, 10)) then
           begin
-            Writeln('Radial Walk Successful: WALK_OAKS_TO_BANK[2].');
+            Writeln('Radial walk successful: WALK_OAKS_TO_BANK[2].');
             Break;
           end else
           
           begin
-            srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_OAKS_TO_BANK[2]. ',
-                     warn_AllVersions);
+            DCnB_Debug('Walk_ToFrom', 'Failed to radial walk: WALK_OAKS_TO_BANK[2]');
             
             if (FindSymbolIn(x, y, 'bank', MMX1, MMY1, MMCX, MMY2)) then
             begin
-              Writeln('Found Bank Symbol!');
+              Writeln('Found bank symbol!');
               Mouse(x, y, 3, 3, True);
               Break;
             end else
             
             begin
-              srl_Warn('Walk_ToFrom', 'Error Finding Bank Symbol. ',
-                       warn_AllVersions);
+              DCnB_Debug('Walk_ToFrom', 'Failed to find bank symbol.');
               MouseBox(566, 75, 601, 111, CLICK_LEFT);
               Break;
             end;
@@ -1110,12 +1102,11 @@ begin
             
         end else
         begin
-          srl_Warn('Walk_ToFrom', 'Error Radial Walking: WALK_OAKS_TO_BANK[1]. ',
-                   warn_AllVersions);
+          DCnB_Debug('Walk_ToFrom', 'Failed to radial walk: WALK_OAKS_TO_BANK[1]');
 
           if FindSymbolIn(x, y, 'dungeon', MMCX, MMY1, MMX2, MMY2) then
           begin
-            Writeln('Found Dungeon Symbol!');
+            Writeln('Found dungeon symbol!');
             Mouse(x - Random(3), y + Random(2), 3, 3, True);
             Inc(Tries);
             
@@ -1125,22 +1116,20 @@ begin
               if (FFlag(5)) then
                 Break;
                 
-              if (Random(20) = 1) then
-                Find_Randoms;
+              Find_Randoms(True);
               Wait(800 + RandomRange(200, 400));
             end;
           end else
           
           begin
-            srl_Warn('Walk_ToFrom', 'Error Finding Dungeon Symbol. ',
-                     warn_AllVersions);
+            DCnB_Debug('Walk_ToFrom', 'Failed to find dungeon symbol.');
             MouseBox(564, 84, 591, 122, CLICK_LEFT);
           end;
         end;
         
       until((not LoggedIn) or (Tries >= 10));
   else
-    srl_Warn('Walk_ToFrom', 'Invalid Walk Number. ', warn_AllVersions);
+    DCnB_Debug('Walk_ToFrom', 'Invalid walk number.');
   end; // of Where case.
 
   t := GetSystemTime + 5000;
@@ -1152,8 +1141,7 @@ begin
       Exit;
     end;
 
-    if (Random(20) = 1) then
-      Find_Randoms;
+    Find_Randoms(True);
     Wait(RandomRange(500, 1000));
   end;
   
@@ -1208,7 +1196,7 @@ begin
   
   if (Length(bankArr) = 0) then
   begin
-    srl_Warn('Bank_Open', 'Error Finding Banker/Booth. ', warn_AllVersions);
+    DCnB_Debug('Bank_Open', 'Failed to find banker/booth.');
     Exit;
   end;
   
@@ -1230,10 +1218,10 @@ begin
     if WaitUpTextMulti(['Bank booth', 'ank boo', 'ooth'], 200) then
     begin
       Mouse(x, y, 0, 0, False);
-      Writeln('Length: ' + IntToStr(Length(boxArr[i])));
+      // Writeln('Length: ' + IntToStr(Length(boxArr[i])));
+      
       if (not ChooseOptionMultiEx(['uick'], 'Action',  ClickLeft)) then
-        srl_Warn('Bank_Open', 'Couldn''t Choose Bank Option: Use-quickly. ',
-                 warn_AllVersions)
+        DCnB_Debug('Bank_Open', 'Failed to choose option: Use-quickly')
       else
       begin
         t := GetSystemTime + 5000;
@@ -1252,7 +1240,7 @@ end;
 
 function Bank_Logs: Boolean;
 var
-  logsInInv, Tries, dX, dY, sX, sY, t: Integer;
+  breakAfterLoads, logsInInv, Tries, dX, dY, sX, sY, t: Integer;
   Tree: TTree;
 begin
   if (not LoggedIn) or (Bank_InvCount <= 1) then
@@ -1260,13 +1248,12 @@ begin
     
   t := GetSystemTime + RandomRange(8000, 12000);
   Tree := Load_TreeRecords;
-  Find_Randoms;
+  Find_Randoms(False);
   
   repeat
     if (not Bank_Open) then
     begin
-      srl_Warn('Bank_Logs', 'Error Opening Bank ... Retrying ... ',
-               warn_AllVersions);
+      DCnB_Debug('Bank_Logs', 'Failed to open bank, retrying...');
       Inc(Tries);
 
       if (Tries >= 5) then
@@ -1275,15 +1262,13 @@ begin
 
         if FindSymbol(sX, sY, 'bank') then
         begin
-          Writeln('Found Bank Symbol! Relocating ...');
+          Writeln('Found bank symbol! Relocating...');
           Mouse(sX, sY, 4, 4, True);
 
           while (IsMoving and (GetSystemTime < t)) do
             Wait(RandomRange(100, 300));
-
         end else
-          srl_Warn('Bank_Logs', 'Error Finding Bank Symbol. ', warn_AllVersions);
-
+          DCnB_Debug('Bank_Logs', 'Failed to find bank symbol.');
       end;
     end;
     
@@ -1299,8 +1284,7 @@ begin
         logsInInv := Bank_CountItems('dtm', Tree.DTM, [])
         Writeln('Found ' + IntToStr(logsInInv) + ' logs in inventory.');
       end else
-        srl_Warn('Bank_Logs', 'Error Finding DTM: ''' + Tree.Name + '''. ',
-                 warn_AllVersions);
+        DCnB_Debug('Bank_Logs', 'Failed to find DTM: ''' + Tree.Name + '''. ');
 
       if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
       begin
@@ -1314,19 +1298,21 @@ begin
       end;
       
     end else
-      srl_Warn('Bank_Logs', 'Error Finding Bank Screen. ', warn_AllVersions);
+      DCnB_Debug('Bank_Logs', 'Failed to find bank screen.');
 
   until(Result or (not LoggedIn) or (Tries >= 20));
 
   if (Tries >= 20) then
   begin
-    srl_Warn('Bank_Logs', 'Couldn''t open bank after 20 tries, logging out.',
-             warn_AllVersions);
+    DCnB_Debug('Bank_Logs', 'Failed to open bank after 20 tries.');
     Next_Player;
   end;
 
   if (Result) then
   begin
+    Writeln('Successfully banked logs!');
+    Inc(breakAfterLoads);
+    
     while ((not Bank_InvCount <= 1) and (GetSystemTime < t)) do
       Wait(RandomRange(200, 500));
       
@@ -1347,13 +1333,19 @@ begin
     Inc(Stats_CustomVars[STATS_LOADS]);
     Stats_SendReport;
     Stats_ManageAccounts;
-
+    
     with Players[CurrentPlayer] do
       if (Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) then
       begin
         Writeln('Cut desired number of logs, logging out...');
         Next_Player;
       end;
+      
+    if (breakAfterLoads >= BREAK_AFTER) then
+    begin
+      Next_Break;
+      breakAfterLoads := 0;
+    end;
   end;
   
   FreeDTM(Tree.DTM);
@@ -1418,34 +1410,33 @@ begin
   Tree := Load_TreeRecords;
   
   startLevel := GetSkillLevel('woodcutting');
-  Writeln('Current Woodcutting Level: ' + IntToStr(startLevel) + '.');
+  Writeln('Current Woodcutting level: ' + IntToStr(startLevel) + '.');
   
   if (startLevel < Tree.Req) then
   begin
-    srl_Warn('Setup_Player', 'You need at least ' + IntToStr(Tree.Req)
-             + ' in Woodcutting to cut ' + Capitalize(Players[CurrentPlayer].Strings[P_TREE])
-             + 's. ', warn_AllVersions);
+    DCnB_Debug('Setup_Player', 'You need at least ' + IntToStr(Tree.Req) +
+              ' in Woodcutting to cut ' +
+              Capitalize(Players[CurrentPlayer].Strings[P_TREE]) + ' trees.');
              
     Next_Player;
   end;
   
   if (Find_Hatchet) then
-    Writeln('Found Hatchet!')
+    Writeln('Found hatchet!')
   else
   begin
-    srl_Warn('Find_Hatchet', 'Didn''t find hatchet, logging out. ',
-             warn_AllVersions);
+    DCnB_Debug('Find_Hatchet', 'Failed to find hatchet.');
     Next_Player;
   end;
 end;
 
 procedure Setup_Script;
 begin
-  Load_Signature;
+  DCnB_Signature;
   
   Smart_Server := SMART_WORLD;
   Smart_Members := SMART_MEMBERS_WORLD;
-  Smart_Signed := SMART_SIGNED_CLIENT;
+  Smart_Signed := True;
   Smart_SuperDetail := False;
   
   Stats_UserID := STATS_ID;
@@ -1465,65 +1456,46 @@ end;
 
 procedure Setup_MainLoop;
 var
-  sinceLogin: Integer;
+  temp, i: Integer;
 begin
   Setup_Script;
-  sinceLogin := 0;
   
   repeat
     Setup_Player;
-    MarkTime(sinceLogin);
     
-    repeat
-      if Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow' then
-      begin
-        if Walk_ToFrom(WALK_BANK_TO_WILLOWS) then
-          Writeln('We have arrived at the Willow trees!')
-      end else
-      begin
-        if Walk_ToFrom(WALK_BANK_TO_OAKS) then
-          Writeln('We have arrived at the Oak trees!');
-      end;
-        
-      while not InvFull and LoggedIn do
-        Chop_Trees;
-        
-      if InvFull then
-        if Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow' then
+    with Players[CurrentPlayer] do
+      repeat
+        if (Lowercase(Strings[P_TREE]) = 'willow') then
+          Walk_ToFrom(WALK_BANK_TO_WILLOWS)
+        else
+          Walk_ToFrom(WALK_BANK_TO_OAKS);
+
+        while (not InvFull) and (LoggedIn) do
+          Chop_Trees;
+
+        if (InvFull) then
+          if (Lowercase(Strings[P_TREE]) = 'willow') then
+            Walk_ToFrom(WALK_WILLOWS_TO_BANK)
+          else
+            Walk_ToFrom(WALK_OAKS_TO_BANK);
+
+        if (Bank_Logs) then
         begin
-          if Walk_ToFrom(WALK_WILLOWS_TO_BANK) then
-            Writeln('We have arrived at the bank!')
-        end else
-        begin
-          if Walk_ToFrom(WALK_OAKS_TO_BANK) then
-            Writeln('We have arrived at the bank!');
-        end;
+          Setup_Report;
           
-      if (Bank_Logs) then
-      begin
-        Writeln('Sucessfully Banked Logs!');
-        Setup_Report;
-        Disguise('Logs Chopped: ' +
-                 IntToStr(Players[CurrentPlayer].Integers[P_LOGS]));
-        
-        Writeln('Player: ' + Players[CurrentPlayer].Nick + ': Logged in For: '
-                           + IntToStr(TimeFromMark(sinceLogin)) + ' ms.');
-
-        if (Players[CurrentPlayer].Booleans[P_TAKE_BREAKS]) then
-          if (TimeFromMark(sinceLogin) >= ((60 * 60000) + RandomRange(-300000, 300000))) then
-          begin
-            Next_Break;
-            MarkTime(sinceLogin);
-          end;
-      end;
-
-    until((Players[CurrentPlayer].Integers[P_LOGS] >=
-           Players[CurrentPlayer].Integers[P_TOTAL_LOGS]) or (not LoggedIn));
+          if (HowManyPlayers > 1) then
+            temp := Integers[P_LOGS]
+          else
+            for i := 0 to High(Players) do
+              temp := temp + Integers[P_LOGS];
+              
+          Disguise('Logs Chopped: ' + IntToStr(temp))
+        end;
+      until((Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) or (not LoggedIn));
 
     if (AllPlayersInactive) then
     begin
-      srl_Warn('Setup_MainLoop', 'All Players are now inactive, terminating script. ',
-               warn_AllVersions);
+      DCnB_Debug('Setup_MainLoop', 'All players, terminating...');
       TerminateScript;
     end;
     
