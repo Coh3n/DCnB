@@ -870,7 +870,7 @@ end;
 
 function Chop_Trees: Boolean;
 var
-  Tries, i, h, t, x, y: Integer;
+  notFindTrees, notFindUptext, i, h, t, x, y: Integer;
   colorsArr: TPointArray;
   boxesArr: T2DPointArray;
   Tree: TTree;
@@ -886,8 +886,7 @@ begin
     if (InvFull) then
       Break;
 
-    FindColorsSpiralTolerance(MSCX, MSCY, colorsArr, Tree.Color, MSX1, MSY1,
-                              MSX2, MSY2, Tree.Tol);
+    FindColorsSpiralTolerance(MSCX, MSCY, colorsArr, Tree.Color, MSX1, MSY1, MSX2, MSY2, Tree.Tol);
     boxesArr := TPAToATPAEx(colorsArr, 60, 60);
     //DebugATPA(boxesArr, '');
     //Writeln('Boxes Found: ' + IntToStr(Length(boxesArr)) + '.');
@@ -897,11 +896,12 @@ begin
       DCnB_Debug('Chop_Trees', 'Failed to find tree');
       Wait(RandomRange(2000, 4000));
       Find_Randoms(True);
-      Inc(Tries);
+      Inc(notFindTrees);
 
-      if (Tries >= 50) then
+      if (notFindTrees >= 50) then
         Find_Randoms(False);
-    end;
+    end else
+      notFindTrees := 0;
 
     SortATPAFrom(boxesArr, Point(MSCX, MSCY));
     h := High(boxesArr);
@@ -918,6 +918,7 @@ begin
       if (WaitUpTextMulti(Tree.UpText, 200)) then
       begin
         //Writeln('Uptext found!');
+        notFindUptext := 0;
         Mouse(x, y, 0, 0, True);
         Wait(RandomRange(2000, 3000));
         GetMousePos(x, y);
@@ -945,21 +946,32 @@ begin
       begin
         DCnB_Debug('Chop_Tree', 'Failed to find uptext');
         Wait(RandomRange(350, 750));
+        Inc(notFindUptext);
+        Find_Randoms(True);
       end;
     end; //of boxesArr loop.
     
-    if (Tries >= 40) then
+    if (notFindTrees >= 40) then
       if (FindSymbol(x, y, 'fish')) or (FindSymbol(x, y, 'dungeon')) then
       begin
         Mouse(x, y, 4, 4, True);
         FFlag(5);
       end;
+      
+    if (notFindUptext >= 40) then
+      Find_Randoms(False);
         
-  until(InvFull or (not LoggedIn) or (Tries >= 60));
+  until(InvFull or (not LoggedIn) or (notFindTrees >= 60) or (notFindUptext >= 60));
   
-  if (Tries >= 60) then
+  if (notFindTrees >= 60) then
   begin
     DCnB_Debug('Chop_Trees', 'Failed to find trees 60 times, logging out...');
+    Next_Player(False);
+  end;
+  
+  if (notFindUptext >= 60) then
+  begin
+    DCnB_Debug('Chop_Trees', 'Failed to find uptext 60 times, logging out...');
     Next_Player(False);
   end;
     

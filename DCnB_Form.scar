@@ -348,7 +348,7 @@ begin
   for i := 0 to tabCount - 1 do
     if (Sender = tTabLabels[i]) or (Sender = tTabs[i]) then
     begin
-      // Writeln('Sedner: ' + IntToStr(i));
+      //Writeln('Sender: ' + IntToStr(i));
       theSender := i;
       Break;
     end;
@@ -670,6 +670,7 @@ begin
         tTabEdits[EDIT_LOGS].Text := Logs;
         tTabCombos[BOX_HATCHET].Text := Hatchet;
         tTabCombos[BOX_BREAKS].Text := Breaks;
+        currPlayer := i;
       end;
     end;
 
