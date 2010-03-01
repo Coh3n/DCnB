@@ -116,5 +116,8 @@
 [        tab after loading a player list                                       ]
 [      - Added a notFindUptext logout failsafe                                 ]
 [                                                                              ]
+[    Rev. 29:                                                                  ]
+[      - Adjusted the randoms finding, hopefully it'll work better now.        ]
+[                                                                              ]
 [==============================================================================]
 [==============================================================================]

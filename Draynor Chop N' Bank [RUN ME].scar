@@ -11,7 +11,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 27]                       ]
+[                         Draynor Chop N' Bank [Rev. 29]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -54,12 +54,12 @@
 [==============================================================================}
 
 program DraynorChopNBank;
-  {.Include srl\srl\Misc\Smart.scar} //Add '//' to the beginning of the line to disable SMART
-  {.Include DCnB_Form.scar}
+  {.include SRL\SRL\misc\Smart.scar} //Add '//' to the beginning of the line to disable SMART
+  {.include DCnB_Form.scar}
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = 'Rev.27';
+  SCRIPT_VERSION = 'Rev.29';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -700,36 +700,28 @@ begin
   Stats_ManageAccounts;
 end;
 
-procedure Find_Randoms(doRandom: Boolean);
-var
-  temp: Integer;
+procedure Find_Randoms(waitFrom, waitTo: Integer);
 begin
   if (not LoggedIn) then
     Exit;
-
-  if (doRandom) then
-    temp := Random(20)
-  else
-    temp := 10;
     
-  if (temp = 10) then
+  LampSkill := Lowercase(Players[CurrentPlayer].Strings[P_LAMP_SKILL]);
+  //Writeln('Scanning for random events...');
+
+  if (FindNormalRandoms) then
   begin
-    LampSkill := Lowercase(Players[CurrentPlayer].Strings[P_LAMP_SKILL]);
-    //Writeln('Scanning for random events...');
+    Inc(Stats_CustomVars[STATS_RANDOMS]);
+    Stats_SendReport;
+    Stats_ManageAccounts;
 
-    if (FindNormalRandoms) then
-    begin
-      Inc(Stats_CustomVars[STATS_RANDOMS]);
-      Stats_SendReport;
-      Stats_ManageAccounts;
-
-      if (playSnd) then
-        PlaySound(ScriptPath + 'RandomSound.wav');
-    end;
-
-    UseRewardBox;
-    FindLamp(LampSkill);
+    if (playSnd) then
+      PlaySound(ScriptPath + 'RandomSound.wav');
   end;
+
+  UseRewardBox;
+  FindLamp(LampSkill);
+  
+  Wait(RandomRange(waitFrom, waitTo));
 end;
 
 function Find_Hatchet: Boolean;
@@ -894,26 +886,24 @@ begin
     if (Length(boxesArr) = 0) then
     begin
       DCnB_Debug('Chop_Trees', 'Failed to find tree');
-      Wait(RandomRange(2000, 4000));
-      Find_Randoms(True);
+      Find_Randoms(2000, 4000);
       Inc(notFindTrees);
 
       if (notFindTrees >= 50) then
-        Find_Randoms(False);
-    end else
-      notFindTrees := 0;
+        Find_Randoms(0, 0);
+    end;
 
     SortATPAFrom(boxesArr, Point(MSCX, MSCY));
     h := High(boxesArr);
     for i := 0 to h do
     begin
     //Writeln('boxesArr[' + IntToStr(i) + ']): ' + IntToStr(Length(boxesArr[i])));
-
       if (Length(boxesArr[i]) < 80) then
         Continue;
 
       MiddleTPAEx(boxesArr[i], x, y);
       MMouse(x, y, 4, 4);
+      notFindTrees := 0;
       
       if (WaitUpTextMulti(Tree.UpText, 200)) then
       begin
@@ -936,7 +926,7 @@ begin
             Break;
             
           Load_Antiban;
-          Find_Randoms(True);
+          Find_Randoms(500, 1000);
         until(InvFull or (not LoggedIn));
         
         if (InvFull or Result) then
@@ -945,9 +935,8 @@ begin
       end else
       begin
         DCnB_Debug('Chop_Tree', 'Failed to find uptext');
-        Wait(RandomRange(350, 750));
+        Find_Randoms(500, 1000);
         Inc(notFindUptext);
-        Find_Randoms(True);
       end;
     end; //of boxesArr loop.
     
@@ -957,9 +946,6 @@ begin
         Mouse(x, y, 4, 4, True);
         FFlag(5);
       end;
-      
-    if (notFindUptext >= 40) then
-      Find_Randoms(False);
         
   until(InvFull or (not LoggedIn) or (notFindTrees >= 60) or (notFindUptext >= 60));
   
@@ -1080,7 +1066,7 @@ begin
               if (FFlag(5)) then
                 Break;
                 
-              Find_Randoms(True);
+              Find_Randoms(600, 1200);
               Wait(800 + RandomRange(200, 400));
             end;
           end else
@@ -1105,8 +1091,7 @@ begin
       Exit;
     end;
 
-    Find_Randoms(True);
-    Wait(RandomRange(500, 1000));
+    Find_Randoms(500, 1500);
   end;
   
   SymbolAccuracy := 0.8;
@@ -1182,7 +1167,7 @@ begin
     
   t := GetSystemTime + RandomRange(8000, 12000);
   Tree := Load_TreeRecords;
-  Find_Randoms(False);
+  Find_Randoms(0, 0);
   
   repeat
     if (not Bank_Open) then
