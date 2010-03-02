@@ -11,7 +11,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 29]                       ]
+[                         Draynor Chop N' Bank [Rev. 30]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -59,7 +59,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = 'Rev.29';
+  SCRIPT_VERSION = 'Rev.30';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -667,6 +667,7 @@ begin
     TerminateScript;
   end;
   
+  Logout;
   NextPlayer(active);
   breakAfterLoads := 0;
 end;
