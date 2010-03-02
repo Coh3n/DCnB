@@ -251,7 +251,11 @@ begin
           bmp := frmBitmaps[TAB_ACTIVE];
           GetBitmapSize(bmp, w, h);
           SetBounds({L} 50 + (i * 74), {T} 161, {W} w, {H} h);
+          {$ifdef Simba}
+          DrawBitmap(Bmp,canvas,0,0);
+          {$else}
           SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
+          {$endif}
           isActiveTab[i] := True;
 
           if (isActiveImage[IMG_TAB_SCPT_NORM]) then
@@ -325,8 +329,12 @@ begin
       if (not isActiveImage[intArr[0]]) then
         Exit;
       GetBitmapSize(intArr[1], w, h);
+      {$ifdef Simba}
+      DrawBitmap(intarr[1],tImages[intArr[0]].Canvas,0,0);
+      {$else}
       SafeCopyCanvas(GetBitmapCanvas(intArr[1]), tImages[intArr[0]].Canvas,
                      0, 0, w, h, 0, 0, w, h);
+      {$endif}
       isActiveImage[intArr[0]] := False;
     end;
   end;
@@ -368,8 +376,12 @@ begin
   begin
     bmp := intArr[INACTIVE];
     GetBitmapSize(bmp, w, h);
+    {$ifdef Simba}
+    DrawBitmap(bmp,tTabs[currTab].Canvas,0,0);
+    {$else}
     SafeCopyCanvas(GetBitmapCanvas(bmp), tTabs[currTab].Canvas,
                    0, 0, w, h, 0, 0, w, h);
+    {$endif}
     tTabLabels[currTab].Font.Color := 1068418;
     isActiveTab[currTab] := False;
     frm_PlayerInfo(currTab, True);
@@ -382,7 +394,11 @@ begin
   }
   bmp := intArr[ACTIVE];
   GetBitmapSize(bmp, w, h);
+  {$ifdef Simba}
+  DrawBitmap(bmp,tTabs[theSender].Canvas,0,0);
+  {$else}
   SafeCopyCanvas(GetBitmapCanvas(bmp), tTabs[theSender].Canvas, 0, 0, w, h, 0, 0, w, h);
+  {$endif}
   tTabLabels[theSender].Font.Color := 2070783;
   isActiveTab[theSender] := True;
   frm_PlayerInfo(theSender, True);
@@ -451,7 +467,7 @@ begin
   end;
 
   Inc(tabCount);
-  
+
   if (not loaded) then
     SetLength(formPlayers, tabCount);
   {
@@ -476,8 +492,12 @@ begin
 
         bmp := frmBitmaps[TAB_INACTIVE];
         GetBitmapSize(bmp, w, h);
+        {$ifdef Simba}
+        DrawBitmap(bmp,canvas,0,0);
+        {$else}
         SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas,
                        0, 0, w, h, 0, 0, w, h);
+        {$endif}
         isActiveTab[i] := False;
         //frm_Debug('tab_Add', 'Tab ' + IntToStr(i + 1) + ' is now inactive.');
       end;
@@ -520,7 +540,11 @@ begin
         frm_PlayerInfo(hi - 1, False);
         bmp := frmBitmaps[TAB_ACTIVE];
         GetBitmapSize(bmp, w, h);
+        {$ifdef Simba}
+        DrawBitmap(bmp,canvas,0,0);
+        {$else}
         SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
+        {$endif}
         tTabLabels[hi - 1].Font.Color := 2070783;
         isActiveTab[hi - 1] := True;
         //frm_Debug('tab_Delete', 'Tab ' + IntToStr(hi - 1) + ' is now active.');
@@ -596,7 +620,7 @@ begin
       WriteINI('Player List', 'Hatchet' + IntToStr(i), ' ' + Hatchet, ScriptPath + 'DCnB_PlayerList');
       WriteINI('Player List', 'Breaks' + IntToStr(i), ' ' + Breaks, ScriptPath + 'DCnB_PlayerList');
     end;
-    
+
   WriteINI('Setup Info', 'Play Sound', tCombos[BOX_SND].Text, ScriptPath + 'DCnB_PlayerList');
   WriteINI('Setup Info', 'Break After', tEdits[EDIT_BRK_AFTER].Text, ScriptPath + 'DCnB_PlayerList');
   WriteINI('Setup Info', 'Stats ID', tEdits[EDIT_STAT_ID].Text, ScriptPath + 'DCnB_PlayerList');
@@ -775,14 +799,14 @@ begin
     end;
 
   startReady := True;
-  
+
   if (startReady) then
   begin
     Smart_Server := StrToInt(tEdits[EDIT_SMRT_WLD].Text);
     Smart_Members := frm_BoolToBool(tCombos[BOX_SMRT_MEM].Text);
     Smart_Signed := frm_BoolToBool(tCombos[BOX_SMRT_CLNT].Text);
     Smart_SuperDetail := frm_BoolToBool(tCombos[BOX_SMRT_DTL].Text);
-    
+
     statsID := tEdits[EDIT_STAT_ID].Text;
     statsPass := tEdits[EDIT_STAT_PASS].Text;
     playSnd := frm_BoolToBool(tCombos[BOX_SND].Text);
@@ -876,8 +900,12 @@ begin
         for i := 0 to hi do
         begin
           GetBitmapSize(bmpArr[i], w, h);
+          {$ifdef Simba}
+          DrawBitmap(bmpArr[i],tImages[imgArr[i]].Canvas,0,0);
+          {$else}
           SafeCopyCanvas(GetBitmapCanvas(bmpArr[i]), tImages[imgArr[i]].Canvas,
                      0, 0, w, h, 0, 0, w, h);
+          {$endif}
         end;
 
         hi := High(tTabs);
@@ -1009,8 +1037,12 @@ begin
 
           bmp := frmBitmaps[bmpArr[i]];
           GetBitmapSize(bmp, w, h);
+          {$ifdef Simba}
+          DrawBitmap(bmp,tImages[imgArr[i]].Canvas,0,0);
+          {$else}
           SafeCopyCanvas(GetBitmapCanvas(bmp), tImages[imgArr[i]].Canvas,
                          0, 0, w, h, 0, 0, w, h);
+          {$endif}
           isActiveImage[imgArr[i]] := False;
         end;
 
@@ -1052,8 +1084,12 @@ begin
         if (not isActiveImage[intArr[0]]) then
           Exit;
         GetBitmapSize(intArr[1], w, h);
+        {$ifdef Simba}
+        DrawBitmap(intArr[1],tImages[intArr[0]].Canvas,0,0);
+        {$else}
         SafeCopyCanvas(GetBitmapCanvas(intArr[1]), tImages[intArr[0]].Canvas,
                        0, 0, w, h, 0, 0, w, h);
+        {$endif}
         isActiveImage[intArr[0]] := False;
       end;
 
@@ -1100,8 +1136,12 @@ begin
         if (isActiveImage[intArr[0]]) then
           Exit;
         GetBitmapSize(intArr[1], w, h);
+        {$ifdef Simba}
+        DrawBitmap(intArr[1],tImages[intArr[0]].Canvas,0,0);
+        {$else}
         SafeCopyCanvas(GetBitmapCanvas(intArr[1]), tImages[intArr[0]].Canvas,
                        0, 0, w, h, 0, 0, w, h);
+        {$endif}
         isActiveImage[intArr[0]] := True;
       end;
 
@@ -1134,11 +1174,16 @@ begin
 
           bmp := frmBitmaps[bmpArr[i]];
           GetBitmapSize(bmp, w, h);
+          {$ifdef Simba}
+          DrawBitmap(bmp,tImages[imgArr[i]].Canvas,0,0);
+          {$else}
           SafeCopyCanvas(GetBitmapCanvas(bmp), tImages[imgArr[i]].Canvas,
                          0, 0, w, h, 0, 0, w, h);
-
+          {$endif}
           if (Sender = tImages[IMG_TAB_LABELS]) then
+          begin
             isActiveImage[imgArr[i]] := False;
+          end;
         end;
 
         isActiveImage[imgArr[2]] := True;
@@ -1197,7 +1242,7 @@ begin
   with frmMain do
   begin
     SetBounds({L} 100, {T} 100, {W} 555, {H} 433);
-    BorderStyle := nsNone;
+    BorderStyle := bsNone;
   end;
 
   useSmart := TCheckBox.Create(frmMain);
@@ -1399,7 +1444,11 @@ begin
       end;
 
       GetBitmapSize(bmp, w, h);
+      {$ifdef Simba}
+      DrawBitmap(bmp,Canvas,0,0);
+      {$else}
       SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
+      {$endif}
     end;
   end;
 
@@ -1421,7 +1470,7 @@ begin
             SetBounds({L} 382, {T} 285, {W} 100, {H} 20);
             MaxLength := 3;
             comboItems := ['Yes', 'No'];
-            
+
             if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
               Text := ReadINI('Setup Info', 'Play Sound', ScriptPath + 'DCnB_PlayerList');
           end;
@@ -1500,7 +1549,7 @@ begin
             if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
               Text := ReadINI('Setup Info', 'Break After', ScriptPath + 'DCnB_PlayerList');
           end;
-          
+
         else begin
           frm_Debug('frm_InitForm', 'Invalid mainEdit!');
           Exit;
@@ -1552,7 +1601,11 @@ begin
       isActiveImage[helpImage] := False;
       OnMouseMove := @frm_OnMouseMove;
       GetBitmapSize(bmp, w, h);
+      {$ifdef Simba}
+      DrawBitmap(bmp,Canvas,0,0);
+      {$else}
       SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
+      {$endif}
     end;
   end;
   {
@@ -1600,7 +1653,11 @@ begin
       isActiveImage[introImage] := False;
       OnMouseMove := @frm_OnMouseMove;
       GetBitmapSize(bmp, w, h);
+      {$ifdef Simba}
+      DrawBitmap(bmp,Canvas,0,0);
+      {$else}
       SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
+      {$endif}
     end;
   end;
 
@@ -1622,7 +1679,11 @@ begin
     isActiveImage[IMG_FRM_CREDITS] := False;
     OnMouseMove := @frm_OnMouseMove;
     GetBitmapSize(bmp, w, h);
+    {$ifdef Simba}
+    DrawBitmap(bmp,Canvas,0,0);
+    {$else}
     SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
+    {$endif}
   end;
   {
     Everything to do with the intro form (frmIntro) ends here, and everything
