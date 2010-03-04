@@ -158,9 +158,7 @@ type
 var
   statsID, statsPass: String;
   playSnd: Boolean;
-  breakAfter, tX, tY: Integer;
-  startPos, startMousePos: TPoint;
-  areMoving: Boolean;
+  breakAfter: Integer;
 
   tabCount, currPlayer: Integer;
   formPlayers: Array of TPlayer;

@@ -11,7 +11,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 31]                       ]
+[                         Draynor Chop N' Bank [Rev. 32]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -59,7 +59,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = 'Rev.31';
+  SCRIPT_VERSION = 'Rev.32';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -175,7 +175,7 @@ begin
     BoxRewards := ['amp', 'mote', 'ostume', 'oins', 'unes', 're', 'ems'];
   end;
 
-{ // <-- Remove the '{' to use multiple players!
+{ // <-- Remove the curly brace to use multiple players!
 
   with Players[1] do
   begin
@@ -1356,7 +1356,12 @@ end;
 
 procedure Setup_Script;
 begin
-  DCnB_Signature;
+  {$ifdef Simba}
+    ClearDebug;
+    Writeln('Thank you for using Draynor Chop N'' Bank - Simba version!');
+  {$else}
+    DCnB_Signature;
+  {$endif}
   
   if (USE_FORM) then
   begin
