@@ -712,10 +712,10 @@ end;
 
 function frm_BoolToBool(s: String): Boolean;
 var
-  options: TStringArray;
+  boolOptions: TStringArray;
 begin
-  options := ['Yes', 'Equipped', 'Members', 'High', 'Signed'];
-  Result := InStrArr(s, options, False);
+  boolOptions := ['Yes', 'Equipped', 'Members', 'High', 'Signed'];
+  Result := InStrArr(s, boolOptions, False);
 end;
 
 procedure frm_StartScript;
