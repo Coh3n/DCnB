@@ -11,7 +11,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 32]                       ]
+[                         Draynor Chop N' Bank [Rev. 34]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -59,7 +59,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = 'Rev.32';
+  SCRIPT_VERSION = 'Rev.34';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -533,20 +533,29 @@ var
   i, x, y: Integer;
 begin
   case Random(40) of
-    0: begin // Boredhuman without camera movement
-         //DCnB_Debug('Load_Antiban', 'Boredhuman');
-         if not LoggedIn then Exit;
-         for i := 1 to (1 + Random(5)) do
+    0: begin
+         //DCnB_Debug('Load_Antiban', 'RandomMovement');
+         RandomMovement;
+       end;
+   { begin // Boredhuman without camera movement
+       //DCnB_Debug('Load_Antiban', 'Boredhuman');
+       if not LoggedIn then Exit;
+       for i := 1 to (1 + Random(5)) do
+       begin
+         MMouse(Random(MSX2), Random(MSY2), 0, 0);
+         if IsUpText('opti') then
          begin
-           MMouse(Random(MSX2), Random(MSY2), 0, 0);
-           if IsUpText('opti') then
-           begin
-             GetMousePos(x, y);
-             Mouse(x, y, 0, 0, False);
-             ChooseOption('Examine');
-           end;
+           GetMousePos(x, y);
+           Mouse(x, y, 0, 0, False);
+           ChooseOption('Examine');
          end;
        end;
+     end; }
+     
+    10: begin
+          //DCnB_Debug('Load_Antiban', 'Boredhuman');
+          BoredHuman;
+        end;
 
     10: begin
           //DCnB_Debug('Load_Antiban', 'HoverSkill[Random]');
@@ -975,6 +984,7 @@ begin
 
   SymbolAccuracy := 0.5;
   MakeCompass('N');
+  SetAngle(True);
   RunEnergy(50);
   
   case Where of
@@ -1267,10 +1277,27 @@ begin
   FreeDTM(Tree.DTM);
 end;
 
-procedure Setup_Report;
+function Report_GetTotals: TIntegerArray;
+var
+  i: Integer;
+begin
+  SetLength(Result, 5);
+  for i := 0 to High(Players) do
+    with Players[i] do
+    begin
+      IncEx(Result[0], Integers[P_LOADS]);
+      IncEx(Result[1], Integers[P_LOGS]);
+      IncEx(Result[2], Integers[P_LEVELS]);
+      IncEx(Result[3], Integers[P_EXP]);
+      IncEx(Result[4], Integers[P_BREAKS]);
+    end;
+end;
+  
+procedure Report_Print;
 var
   i: Integer;
   activity: String;
+  t: TIntegerArray;
 begin
   Writeln('[=================================================================]');
   Writeln(PadR('[                 Coh3n''s Draynor Chop N'' Bank!', 66) + ']');
@@ -1291,6 +1318,8 @@ begin
     end else
 
     begin
+      t := Report_GetTotals;
+    
       Writeln(PadR('[     Ran For: ' + TimeRunning, 66) + ']');
       Writeln('[                                                                 ]');
       Writeln('[     Nick    T/F    Loads     Logs     Lvls     Exp.     Brks    ]');
@@ -1310,6 +1339,11 @@ begin
                          + PadR(IntToStr(Players[i].Integers[P_EXP]), 11)
                          + PadR(IntToStr(Players[i].Integers[P_BREAKS]), 7) + ']');
       end;
+      
+      Writeln('[     ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯    ]');
+      Writeln('[     Totals:         ' + PadR(IntToStr(t[0]), 9) + PadR(IntToStr(t[1]), 10)
+                                       + PadR(IntToStr(t[2]), 7) + PadR(IntToStr(t[3]), 11)
+                                       + PadR(IntToStr(t[4]), 7) + ']');
     end;
   
   Writeln('[                                                                 ]');
@@ -1431,7 +1465,7 @@ begin
 
         if (Bank_Logs) then
         begin
-          Setup_Report;
+          Report_Print;
           
           for i := 0 to High(Players) do
             totalLogs := totalLogs + Players[i].Integers[P_LOGS];
@@ -1455,7 +1489,7 @@ end;
 
 procedure ScriptTerminate;
 begin
-  Setup_Report;
+  Report_Print;
 end;
 
 begin
