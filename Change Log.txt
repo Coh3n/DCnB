@@ -134,4 +134,8 @@ Rev. 33:
 
 Rev. 34:
   - Added camera movement to my antiban procedure.
-  - Added a totals element to the multiplayer progress report.                                                                            
+  - Added a totals element to the multiplayer progress report.                
+
+Rev. 35:
+  - Adjusted banking a little.  It won't try to relocate nearly as much anymore.
+  - Changed breaking for single player.  It now uses ExitToLobby, insead of Logout.                                                            

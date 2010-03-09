@@ -11,7 +11,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 34]                       ]
+[                         Draynor Chop N' Bank [Rev. 35]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -24,7 +24,7 @@
 [                                 Instructions                                 ]
 [==============================================================================]
 [                                                                              ]
-[       1. Determine whether or not you're using SMART (line 56)               ]
+[       1. Determine whether or not you're using SMART (line 57)               ]
 [       2. Determine whether or not you're using the PlayerForm (line 61)      ]
 [       3. Have hatchet in FIRST inventory slot or equipped                    ]
 [       4. Start in Draynor bank                                               ]
@@ -59,7 +59,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = 'Rev.34';
+  SCRIPT_VERSION = 'Rev.35';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -698,11 +698,12 @@ begin
 
   begin
     Writeln('Taking a short break...');
-    Logout;
+    ExitToLobby;
     Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
     
     Writeln('Break over, logging back in...');
-    LoginPlayer;
+    if (AtLobbyScreen) then
+      MouseBox(80, 450, 560, 470, 1);
   end;
   
   Inc(Stats_CustomVars[STATS_LOGINS]);
@@ -1128,13 +1129,13 @@ begin
   
   if (Length(bankArr) = 0) then
   begin
-    DCnB_Debug('Bank_Open', 'Failed to find banker/booth.');
+    DCnB_Debug('Bank_Open', 'Failed to find banker/booth');
     Exit;
   end;
   
   boxArr := TPAToATPAEx(bankArr, 30, 30);
   SortATPAFrom(boxArr, Point(MSCX, MSCY));
-  //DebugATPA(boxArr, '');
+  // DebugATPA(boxArr, '');
   
   h := High(boxArr);
   for i := 0 to h do
@@ -1148,7 +1149,7 @@ begin
     if WaitUpTextMulti(['Bank booth', 'ank boo', 'ooth'], 200) then
     begin
       Mouse(x, y, 0, 0, False);
-      // Writeln('Length: ' + IntToStr(Length(boxArr[i])));
+      Writeln('Length: ' + IntToStr(Length(boxArr[i])));
       
       if (not ChooseOptionMultiEx(['uick'], 'Action',  ClickLeft)) then
         DCnB_Debug('Bank_Open', 'Failed to choose option: Use-quickly')
@@ -1186,7 +1187,7 @@ begin
       DCnB_Debug('Bank_Logs', 'Failed to open bank, retrying...');
       Inc(Tries);
 
-      if (Tries >= 5) then
+      if (Tries >= 20) then
       begin
         SymbolAccuracy := 0.5;
 
@@ -1215,7 +1216,7 @@ begin
         logsInInv := CountItems('dtm', Tree.DTM, [])
         Writeln('Found ' + IntToStr(logsInInv) + ' logs in inventory.');
       end else
-        DCnB_Debug('Bank_Logs', 'Failed to find DTM: ''' + Tree.Name + '''. ');
+        DCnB_Debug('Bank_Logs', 'Failed to find DTM: ' + Tree.Name);
 
       if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
       begin
@@ -1231,11 +1232,11 @@ begin
     end else
       DCnB_Debug('Bank_Logs', 'Failed to find bank screen.');
 
-  until(Result or (not LoggedIn) or (Tries >= 20));
+  until(Result or (not LoggedIn) or (Tries >= 40));
 
-  if (Tries >= 20) then
+  if (Tries >= 40) then
   begin
-    DCnB_Debug('Bank_Logs', 'Failed to open bank after 20 tries.');
+    DCnB_Debug('Bank_Logs', 'Failed to open bank after 40 tries');
     Next_Player(False);
   end;
 
