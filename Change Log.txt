@@ -138,4 +138,9 @@ Rev. 34:
 
 Rev. 35:
   - Adjusted banking a little.  It won't try to relocate nearly as much anymore.
-  - Changed breaking for single player.  It now uses ExitToLobby, insead of Logout.                                                            
+  - Changed breaking for single player.  It now uses ExitToLobby, insead of Logout.    
+
+Rev. 36:
+  - Fixed the unknown identifier AtLobbyScreen since it was changed in SRL.
+
+                                                        

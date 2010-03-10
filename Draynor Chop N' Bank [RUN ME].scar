@@ -11,7 +11,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 35]                       ]
+[                         Draynor Chop N' Bank [Rev. 36]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -59,7 +59,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = 'Rev.35';
+  SCRIPT_VERSION = 'Rev.36';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -529,28 +529,12 @@ begin
 end;
 
 procedure Load_Antiban;
-var
-  i, x, y: Integer;
 begin
   case Random(40) of
     0: begin
          //DCnB_Debug('Load_Antiban', 'RandomMovement');
          RandomMovement;
        end;
-   { begin // Boredhuman without camera movement
-       //DCnB_Debug('Load_Antiban', 'Boredhuman');
-       if not LoggedIn then Exit;
-       for i := 1 to (1 + Random(5)) do
-       begin
-         MMouse(Random(MSX2), Random(MSY2), 0, 0);
-         if IsUpText('opti') then
-         begin
-           GetMousePos(x, y);
-           Mouse(x, y, 0, 0, False);
-           ChooseOption('Examine');
-         end;
-       end;
-     end; }
      
     10: begin
           //DCnB_Debug('Load_Antiban', 'Boredhuman');
@@ -702,7 +686,7 @@ begin
     Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
     
     Writeln('Break over, logging back in...');
-    if (AtLobbyScreen) then
+    if (LobbyScreen) then
       MouseBox(80, 450, 560, 470, 1);
   end;
   
