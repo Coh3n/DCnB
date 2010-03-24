@@ -11,7 +11,7 @@
 [                                       \/___________________/                 ]
 [                                                                              ]
 [==============================================================================]
-[                         Draynor Chop N' Bank [Rev. 36]                       ]
+[                         Draynor Chop N' Bank [Rev. 37]                       ]
 [==============================================================================]
 [                                                                              ]
 [          Written By: Coh3n                                                   ]
@@ -59,7 +59,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = 'Rev.36';
+  SCRIPT_VERSION = 'Rev.37';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -682,12 +682,11 @@ begin
 
   begin
     Writeln('Taking a short break...');
-    ExitToLobby;
+    Logout;
     Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
     
     Writeln('Break over, logging back in...');
-    if (LobbyScreen) then
-      MouseBox(80, 450, 560, 470, 1);
+    LoginPlayer;
   end;
   
   Inc(Stats_CustomVars[STATS_LOGINS]);
@@ -1355,15 +1354,6 @@ begin
   startLevel := GetSkillLevel('woodcutting');
   Writeln('Current Woodcutting level: ' + IntToStr(startLevel));
   
-  if (startLevel < Tree.Req) then
-  begin
-    DCnB_Debug('Setup_Player', 'You need at least ' + IntToStr(Tree.Req) +
-              ' in Woodcutting to cut ' +
-              Capitalize(Players[CurrentPlayer].Strings[P_TREE]) + ' trees');
-             
-    Next_Player(False);
-  end;
-  
   if (Find_Hatchet) then
     Writeln('Found hatchet!')
   else
@@ -1375,12 +1365,12 @@ end;
 
 procedure Setup_Script;
 begin
-  {$ifdef Simba}
+  {$IFDEF SIMBA}
     ClearDebug;
     Writeln('Thank you for using Draynor Chop N'' Bank - Simba version!');
-  {$else}
+  {$ELSE}
     DCnB_Signature;
-  {$endif}
+  {$ENDIF}
   
   if (USE_FORM) then
   begin
@@ -1396,6 +1386,7 @@ begin
     if (not startReady) then
       TerminateScript;
   end else
+  
   begin
     Smart_Server := SMART_WORLD;
     Smart_Members := SMART_MEMBERS_WORLD;
@@ -1459,7 +1450,7 @@ begin
           totalLogs := 0;
           
           if (Booleans[P_TAKE_BREAKS]) then
-            if (breakAfterLoads >= breakAfter) then
+            if (breakAfterLoads >= (breakAfter + RandomRange(-2, 2))) then
             begin
               Next_Break;
               breakAfterLoads := 0;

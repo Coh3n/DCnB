@@ -143,4 +143,6 @@ Rev. 35:
 Rev. 36:
   - Fixed the unknown identifier AtLobbyScreen since it was changed in SRL.
 
-                                                        
+rev. 37:
+  - Single player breaking should be fixed.  
+  - If the script doesn't detect the right wcing level, it will no longer logout.                                                        
