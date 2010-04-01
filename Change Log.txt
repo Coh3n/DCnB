@@ -143,6 +143,16 @@ Rev. 35:
 Rev. 36:
   - Fixed the unknown identifier AtLobbyScreen since it was changed in SRL.
 
-rev. 37:
+Rev. 37:
   - Single player breaking should be fixed.  
-  - If the script doesn't detect the right wcing level, it will no longer logout.                                                        
+  - If the script doesn't detect the right wcing level, it will no longer logout.      
+
+Rev. 38: 
+  - Redesigned the headers/progress reports
+  - Made the progress reports more detailed
+  - The report now prints in the report box, so you can see at any time
+  - Added the SRL randoms progress report
+  - Did a lot of reorganizing
+  - Improved debugging A LOT
+  - Rewrote the entire Oak walking system
+  - Added to the antiban procedure                                                 
