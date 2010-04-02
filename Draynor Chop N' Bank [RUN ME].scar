@@ -1337,7 +1337,7 @@ begin
   begin
     Report_AddTo(PadR('|    Program: ' + theProgram, right) + '|');
     Report_AddTo(PadR('|    SMART:   ' + useSMART, right) + '|');
-    Report_AddTo(theRunTime);
+    Report_AddTo(PadR('|    ' + theRunTime, right) + '|');
   end else
   begin
     Report_AddTo(PadR('|                    ' + theRunTime, right) + '|');

@@ -155,4 +155,10 @@ Rev. 38:
   - Did a lot of reorganizing
   - Improved debugging A LOT
   - Rewrote the entire Oak walking system
-  - Added to the antiban procedure                                                 
+  - Added to the antiban procedure   
+
+Rev. 39: 
+  - Adjusted Next_Player
+
+Rev. 40:
+  - Fixed a bug on the proggy                                              
