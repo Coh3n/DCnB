@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 38 -                                |
+|                               - Revision 39 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '38';
+  SCRIPT_VERSION = '39';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -664,16 +664,15 @@ begin
   with Players[CurrentPlayer] do
     if ((finalLevel - startLevel) > Integers[P_LEVELS]) then
       Integers[P_LEVELS] := (finalLevel - startLevel);
-
+  
+  NextPlayer(active);
+  breakAfterLoads := 0;
+  
   if (AllPlayersInactive) then
   begin
     DCnB_Debug('Next_Player', 'All players inactive', DEBUG_SUCCESS);
     TerminateScript;
   end;
-  
-  Logout;
-  NextPlayer(active);
-  breakAfterLoads := 0;
 end;
 
 procedure Next_Break;
