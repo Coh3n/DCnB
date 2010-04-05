@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 39 -                                |
+|                               - Revision 41 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '39';
+  SCRIPT_VERSION = '41';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -665,6 +665,7 @@ begin
     if ((finalLevel - startLevel) > Integers[P_LEVELS]) then
       Integers[P_LEVELS] := (finalLevel - startLevel);
   
+  Logout; //just an extra precaution
   NextPlayer(active);
   breakAfterLoads := 0;
   
@@ -1457,7 +1458,6 @@ begin
   begin
     tabCount := 1;
     SetLength(formPlayers, tabCount);
-    SetLength(falseReason, Length(formPlayers));
 
     frm_ShowPlayerForm;
     frm_KillForm;
@@ -1491,9 +1491,11 @@ begin
   Writeln('Loading, please wait...');
   SymbolAccuracy := 0.5;
   
+  SetLength(falseReason, HowManyPlayers);
   for i := 0 to High(Players) do
   with Players[i] do
   begin
+    falseReason[i] := '';
     BoxRewards := ['amp', 'mote', 'ostume', 'oins', 'unes', 're', 'ems'];
     Loc := 'Bank';
   end;
