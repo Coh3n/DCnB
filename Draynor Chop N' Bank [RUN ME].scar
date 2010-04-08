@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 42 -                                |
+|                               - Revision 43 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '42';
+  SCRIPT_VERSION = '43';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -1115,7 +1115,7 @@ begin
   ColorToleranceSpeed(2);
 
   SetColorSpeed2Modifiers(0.45, 0.50);
-  FindColorsTolerance(bankArr, 6909561, MSX1, MSY1, MSC2, MSY2, 7);
+  FindColorsTolerance(bankArr, 6909561, MSX1, MSY1, MSCX, MSY2, 7);
   
   SetColorSpeed2Modifiers(0.2, 0.2);
   ColorToleranceSpeed(curCTS);
