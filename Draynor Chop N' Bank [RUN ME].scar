@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 41 -                                |
+|                               - Revision 42 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -49,12 +49,12 @@
  \_____________________________________________________________________________}
 
 program DraynorChopNBank;
-  {.include SRL\SRL\misc\Smart.scar} //Add '//' to the beginning of the line to disable SMART
-  {.include DCnB_Form.scar}
+{.include SRL\SRL\misc\Smart.scar} //Add '//' to the beginning of the line to disable SMART
+{.include DCnB_Form.scar}
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '41';
+  SCRIPT_VERSION = '42';
    
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -382,7 +382,7 @@ begin
       1: s := IntToStr(SRL_Logs - Stats_GlobalVars[i]);
       2: s := IntToStr(Banks - Stats_GlobalVars[i]);
       3: s := IntToStr(RandSolved[rand_Death] - Stats_GlobalVars[i]);
-      else if ((i - 3) < Length(RandSolved) - 1 {for Death}) then
+      else if ((i - 3) < Length(RandSolved) - 1) then
         s := IntToStr(RandSolved[i - 3] - Stats_GlobalVars[i]);
     end;
     AddPostVariable(Client, 'rndGlobal' + IntToStr(i), s);
@@ -1115,7 +1115,7 @@ begin
   ColorToleranceSpeed(2);
 
   SetColorSpeed2Modifiers(0.45, 0.50);
-  FindColorsTolerance(bankArr, 6909561, MSX1, MSY1, MSX2, MSY2, 7);
+  FindColorsTolerance(bankArr, 6909561, MSX1, MSY1, MSC2, MSY2, 7);
   
   SetColorSpeed2Modifiers(0.2, 0.2);
   ColorToleranceSpeed(curCTS);

@@ -161,4 +161,12 @@ Rev. 39:
   - Adjusted Next_Player
 
 Rev. 40:
-  - Fixed a bug on the proggy                                              
+  - Fixed a bug on the proggy     
+
+Rev. 41:
+  - Fixed the Out of range error  
+
+Rev. 42:
+  - Made a small adjustment to bank finding 
+
+                                        
