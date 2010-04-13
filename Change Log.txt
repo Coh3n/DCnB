@@ -170,4 +170,13 @@ Rev. 42:
   - Made a small adjustment to bank finding 
 
 Rev. 43:
-  - Fixed a compiling error                                        
+  - Fixed a compiling error      
+
+Rev. 44:
+  - Rewrote all the object finding routines
+  - Expanded on player locations so you can how start at the bank or trees
+  - Improved the leveling up detection system; it will now check if you've gained a level when it checks for randoms 
+  - Slightly modified walking, the player *shouldn't* get lost any more
+  - Expanded on debugging
+  - Script doesn't check for an initial woodcutting level any more
+  - Fixed a bunch of memory leaks                                  
