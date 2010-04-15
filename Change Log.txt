@@ -179,4 +179,7 @@ Rev. 44:
   - Slightly modified walking, the player *shouldn't* get lost any more
   - Expanded on debugging
   - Script doesn't check for an initial woodcutting level any more
-  - Fixed a bunch of memory leaks                                  
+  - Fixed a bunch of memory leaks      
+
+Rev. 45:
+  - Added a couple extra randoms checks                            

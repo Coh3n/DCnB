@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 44 -                                |
+|                               - Revision 45 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '44';
+  SCRIPT_VERSION = '45';
    
   //used for the temporary stats system
   STATS_LINK = 'http://scriptmanager.freehostia.com/submit.php'; //needed to record stats
@@ -773,7 +773,10 @@ begin
     for i := 0 to High(boxes) do
     begin
       if (Length(boxes[i]) < obj.minLen) then
+      begin
+        Find_Randoms(50, 150);
         Continue;
+      end;
 
       MiddleTPAEx(boxes[i], x, y);
       MMouse(x, y, 4, 4);
@@ -1433,6 +1436,7 @@ begin
   Players[CurrentPlayer].Loc := 'Bank';
   hasLoggedIn[CurrentPlayer] := True;
   SetAngle(True);
+  Find_Randoms(250, 500);
   
   if (Find_Hatchet) then
     DCnB_Debug('Setup_Player', 'Found hatchet!', DEBUG_SUCCESS)
