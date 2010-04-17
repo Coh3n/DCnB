@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 45 -                                |
+|                               - Revision 46 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '45';
+  SCRIPT_VERSION = '46';
    
   //used for the temporary stats system
   STATS_LINK = 'http://scriptmanager.freehostia.com/submit.php'; //needed to record stats
@@ -675,7 +675,7 @@ begin
   begin
     DCnB_Debug(proc, msg, DEBUG_PLAYER);
     Players[CurrentPlayer].Loc := 'Lost';
-    DCnB_Debug('Walk_WaitWhile', 'Location - ' + Players[CurrentPlayer].Loc, DEBUG_PLAYER);
+    DCnB_Debug('Next_Player', 'Location - ' + Players[CurrentPlayer].Loc, DEBUG_PLAYER);
     falseReason[CurrentPlayer] := msg;
   end else
     DCnB_Debug(proc, msg, DEBUG_DETAILS);
@@ -752,6 +752,8 @@ begin
   if (not LoggedIn) then
     Exit;
   obj := Load_MSObject(which);
+  notFindObj := 0;
+  notFindUptext := 0;
 
   ColorToleranceSpeed(2);
   SetColorSpeed2Modifiers(obj.hueMod, obj.satMod);
@@ -797,10 +799,10 @@ begin
   until(Result or (not LoggedIn) or (notFindUptext >= 55) or (notFindObj >= 55));
 
   if (notFindObj >= 55) then
-    Next_Player(False, 'Find_Object', 'Failed to find object: ' + obj.name + ' 60 times');
+    Next_Player(False, 'Find_Object', 'Failed to find object: ' + obj.name + ' 55 times');
 
   if (notFindUptext >= 55) then
-    Next_Player(False, 'Find_Object', 'Failed to find uptext: ' + obj.name + ' 60 times');
+    Next_Player(False, 'Find_Object', 'Failed to find uptext: ' + obj.name + ' 55 times');
 
   SetColorSpeed2Modifiers(0.2, 0.2);
   ColorToleranceSpeed(1);

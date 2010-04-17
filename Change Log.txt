@@ -182,4 +182,7 @@ Rev. 44:
   - Fixed a bunch of memory leaks      
 
 Rev. 45:
-  - Added a couple extra randoms checks                            
+  - Added a couple extra randoms checks       
+
+Rev. 46:
+  - Added a few things that may fix the can't find trees error                     
