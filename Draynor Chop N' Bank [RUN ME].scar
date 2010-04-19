@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 46 -                                |
+|                               - Revision 47 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '46';
+  SCRIPT_VERSION = '47';
    
   //used for the temporary stats system
   STATS_LINK = 'http://scriptmanager.freehostia.com/submit.php'; //needed to record stats
@@ -120,8 +120,7 @@ var
   srl_MMTPA: TPointArray;         //used in autocoloring
   breakAfterLoads: Integer;       //used for breaking
   falseReason: Array of String;   //holds reasons why players are inactive
-  hasLoggedIn: Array of Boolean;  //determines whether the player has been logged in yet
-
+  
   //used in the stats system
   Stats_UserID, Stats_Password, Stats_ScriptID: String;
   Stats_LastTime: Integer;
@@ -1104,13 +1103,13 @@ begin
       if (Players[CurrentPlayer].Loc = 'Bank') then
         Result := Walk_PerformIndex(WALK_TREES_WILLOWS)
       else
-        Result := True;
+        Result := Players[CurrentPlayer].Loc = 'Willows';
 
     PATH_WILLOWS_TO_BANK:
       if (Players[CurrentPlayer].Loc = 'Willows') then
         Result := Walk_PerformIndex(WALK_BANK_WILLOWS)
       else
-        Result := True;
+        Result := Players[CurrentPlayer].Loc = 'Bank';
 
     PATH_BANK_TO_OAKS:
       case Players[CurrentPlayer].Loc of
@@ -1436,7 +1435,6 @@ begin
   Stats_ManageAccounts;
   
   Players[CurrentPlayer].Loc := 'Bank';
-  hasLoggedIn[CurrentPlayer] := True;
   SetAngle(True);
   Find_Randoms(250, 500);
   
@@ -1495,7 +1493,6 @@ begin
   SymbolAccuracy := 0.5;
   
   SetLength(falseReason, HowManyPlayers);
-  SetLength(hasLoggedIn, HowManyPlayers);
   for i := 0 to High(Players) do
   with Players[i] do
   begin
@@ -1514,8 +1511,7 @@ begin
   repeat
     with Players[CurrentPlayer] do
       repeat
-        if (not hasLoggedIn[CurrentPlayer]) then
-          Setup_Player;
+        Setup_Player;
       
         if (Lowercase(Strings[P_TREE]) = 'willow') then
           Walk_ToLoc(PATH_BANK_TO_WILLOWS)
