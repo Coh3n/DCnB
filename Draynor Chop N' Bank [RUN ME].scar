@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 47 -                                |
+|                               - Revision 48 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -50,81 +50,10 @@
 
 program DraynorChopNBank;
 {.include SRL/SRL/misc/Smart.scar} //Add '//' to the beginning of the line to disable SMART
-{.include DCnB_Form.scar}
+{.include DCnB_Includes.scar}
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '47';
-   
-  //used for the temporary stats system
-  STATS_LINK = 'http://scriptmanager.freehostia.com/submit.php'; //needed to record stats
-  STATS_LOGINS  = 1;
-  STATS_WILLOWS = 2;
-  STATS_OAKS    = 3;
-  STATS_LOADS   = 4;
-  STATS_BREAKS  = 5;
-  STATS_EXP     = 6;
-  STATS_LEVELS  = 7;
-  STATS_RANDOMS = 8;
-
-  //for all the dtms used in the script
-  DTM_HATCHET_NORMAL = 0;
-  DTM_HATCHET_DRAGON = 1;
-
-  //represents all the different walking points
-  WALK_TREES_WILLOWS = 0;
-  WALK_TREES_OAKS_1  = 1;
-  WALK_TREES_OAKS_2  = 2;
-  WALK_BANK_WILLOWS  = 3;
-  WALK_BANK_OAKS_1   = 4;
-  WALK_BANK_OAKS_2   = 5;
-  WALK_BANK_RELOCATE = 6;
-  
-  //all the walking paths
-  PATH_BANK_TO_WILLOWS = 0;
-  PATH_BANK_TO_OAKS    = 1;
-  PATH_OAKS_TO_BANK    = 2;
-  PATH_WILLOWS_TO_BANK = 3;
-
-  //different types of mouse clicks
-  CLICK_LEFT  = 1;
-  CLICK_RIGHT = 2;
-  HOVER       = 3;
-
-  //used in the autocoloring functions
-  MM_ROAD    = 0;
-  MM_BANK    = 1;
-  MM_DUNGEON = 2;
-  
-  //used for all the main screen objects
-  OBJ_TREE       = 0;
-  OBJ_BANK_BOOTH = 1;
-    
-  //used for the debugging specifics
-  DEBUG_ERROR   = 0;
-  DEBUG_SUCCESS = 1;
-  DEBUG_DETAILS = 2;
-  DEBUG_PLAYER  = 3;
-
-//stores the necessary information for objects found on the main screen
-type
-  TMSObject = record
-    name: String;
-    upText: TStringArray;
-    color, width, height, minLen, tol, dtm: Integer;
-    hueMod, satMod, exp: Extended;
-  end;
-
-var
-  tP: TPoint;                     //used as the tree tracking point
-  srl_MMTPA: TPointArray;         //used in autocoloring
-  breakAfterLoads: Integer;       //used for breaking
-  falseReason: Array of String;   //holds reasons why players are inactive
-  
-  //used in the stats system
-  Stats_UserID, Stats_Password, Stats_ScriptID: String;
-  Stats_LastTime: Integer;
-  Stats_CustomVars: Array [1..20] of Integer;
 
 {==============================================================================\
 |                               Script Setup                                   |
@@ -134,8 +63,6 @@ var
 |    * Setup from here to line 264                                             |
  \_____________________________________________________________________________}
  
-
-const
   //for the different SMART settings
   SMART_WORLD          = 152;   //world to load
   SMART_MEMBERS_WORLD  = False; //True = Members world
@@ -235,322 +162,6 @@ begin
 //}
 end;
 
-{******************************************************************************}
-{ procedure Stats_CheckOutput(s: string);                                      }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-procedure Stats_CheckOutput(s: string);
-var
-  i: Integer;
-  sa: TStringArray;
-begin
-  sa := Explode(#10, s);
-  for i := 0 to High(sa) do
-    if (Trim(sa[i]) <> '') then
-      if StartsWith('ERROR(1)', sa[i]) then
-      begin
-        WriteLn('STATS: "' + sa[i] + '"');
-        Stats_UserID := '';
-        Stats_Password := '';
-      end
-      else if StartsWith('ERROR(2)', sa[i]) then
-      begin
-        WriteLn('STATS: "' + sa[i] + '"');
-        Stats_ScriptID := '';
-      end
-      else
-        WriteLn('STATS: "' + sa[i] + '"');
-end;
-
-{******************************************************************************}
-{ procedure Stats_GetScriptInfo( ... );                                        }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-function Stats_GetScriptInfo(out Version, News, Link: string;
-         out OutDated: Boolean; out LastUpdate_HoursAgo: Integer): Boolean;
-var
-  Client: Integer;
-  s: string;
-  sa: TStringArray;
-begin
-  Result := False;
-  if (Stats_ScriptID = '') then
-    Exit;
-
-  Client := InitializeHTTPClient(False, False);
-  ClearPostData(Client);
-  AddPostVariable(Client, 'do', 'getinfo');
-  AddPostVariable (Client, 'sID', Stats_ScriptID);
-
-  s := PostHTTPPageEx(Client, STATS_LINK);
-  sa := Explode(#10'GLUE'#10, s);
-  if (Length(sa) = 5) then
-  begin
-    Result := True;
-    Version := sa[0];
-    News := sa[1];
-    Link := sa[2];
-    OutDated := sa[3] = '1';
-    LastUpdate_HoursAgo := StrToIntDef(sa[4], -1);
-  end
-  else
-    Stats_CheckOutput(s);
-
-  FreeHTTPClient(Client );
-end;
-
-{******************************************************************************}
-{ procedure Stats_SendReport;                                                  }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-var
-  Stats_GlobalVars: array[1..24] of Integer;
-
-procedure Stats_SendReport;
-var
-  i, Client, Time: Integer;
-  s: string;
-begin
-  if (Stats_UserID = '') and (Stats_Password = '') and (Stats_ScriptID = '') then
-    Exit;
-
-  Client := InitializeHTTPClient(False, False);
-  ClearPostData(Client);
-  AddPostVariable(Client, 'do', 'submit');
-
-  Time := (GetTimeRunning - Stats_LastTime) div 1000 div 60;
-  if (Time < 5) then
-    Time := 0
-  else
-    Stats_LastTime := GetTimeRunning;
-  AddPostVariable(Client, 'sTime', IntToStr(Time));
-
-  if (Stats_UserID <> '') and (Stats_Password <> '') then
-  begin
-    AddPostVariable(Client, 'uID', Stats_UserID);
-    AddPostVariable(Client, 'uPass', Stats_Password);
-  end
-  else
-  begin
-    AddPostVariable(Client, 'uID', '-1');
-    AddPostVariable(Client, 'uPass', '');
-  end;
-
-  if (Stats_ScriptID <> '') then
-  begin
-    AddPostVariable (Client, 'sID', Stats_ScriptID);
-
-    for i := Low(Stats_CustomVars) to High(Stats_CustomVars) do
-    begin
-      AddPostVariable(Client, 'rndCustom' + IntToStr(i),
-                      IntToStr(Stats_CustomVars[i]));
-      Stats_CustomVars[i] := 0;
-    end;
-  end
-  else
-  begin
-    AddPostVariable (Client, 'sID', '-1');
-  end;
-
-  for i := Low(Stats_GlobalVars) to High(Stats_GlobalVars) do
-  begin
-    case i of
-      1: s := IntToStr(SRL_Logs - Stats_GlobalVars[i]);
-      2: s := IntToStr(Banks - Stats_GlobalVars[i]);
-      3: s := IntToStr(RandSolved[rand_Death] - Stats_GlobalVars[i]);
-      else if ((i - 3) < Length(RandSolved) - 1) then
-        s := IntToStr(RandSolved[i - 3] - Stats_GlobalVars[i]);
-    end;
-    AddPostVariable(Client, 'rndGlobal' + IntToStr(i), s);
-    Stats_GlobalVars[i] := Stats_GlobalVars[i] + StrToInt(s);
-  end;
-
-  s := PostHTTPPageEx(Client, STATS_LINK);
-  Stats_CheckOutput(s);
-  FreeHTTPClient(Client);
-
-  if (SRL_Procs[srl_OnSendStats] <> nil) then
-    SRL_Procs[srl_OnSendStats]();
-end;
-
-{******************************************************************************}
-{ procedure Stats_SendAccountInfo;                                             }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-procedure Stats_SendAccountInfo;
-var
-  i, Client: Integer;
-  Accounts: TStringArray;
-begin
-  if (Stats_UserID = '') and (Stats_Password = '') then
-    Exit;
-
-  Client := InitializeHTTPClient(False, False);
-  ClearPostData(Client);
-  AddPostVariable(Client, 'do', 'setaccounts');
-  AddPostVariable(Client, 'uID', Stats_UserID);
-  AddPostVariable(Client, 'uPass', Stats_Password);
-  if (Stats_ScriptID <> '') then
-    AddPostVariable (Client, 'sID', Stats_ScriptID)
-  else
-    AddPostVariable (Client, 'sID', '-1');
-
-  SetLength(Accounts, HowManyPlayers);
-  for i := 0 to HowManyPlayers - 1 do
-    Accounts[i] := Implode('.|€stat€|.', [Players[i].Name, Players[i].Loc,
-                   IntToStr(Integer(Players[i].Active))]);
-
-  AddPostVariable(Client, 'accInfo', Implode(#10'ACC'#10, Accounts));
-  Stats_CheckOutput(PostHTTPPageEx(Client, STATS_LINK));
-  FreeHTTPClient(Client);
-end;
-
-{******************************************************************************}
-{ procedure Stats_ManageAccounts;                                              }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-procedure Stats_ManageAccounts;
-var
-  i, ii, Client: Integer;
-  s: string;
-  Accounts, Stats: TStringArray;
-begin
-  if (Stats_UserID = '') and (Stats_Password = '') then
-    Exit;
-
-  Client := InitializeHTTPClient(False, False);
-  ClearPostData(Client);
-  AddPostVariable(Client, 'do', 'getaccounts');
-  AddPostVariable(Client, 'uPass', Stats_Password);
-  AddPostVariable(Client, 'uID', Stats_UserID);
-
-  s := PostHTTPPageEx(Client, STATS_LINK);
-  Accounts := Explode(#10'ACC'#10, s);
-  for i := 0 to High(Accounts) do
-  begin
-    Stats := Explode('.|€stat€|.', Accounts[i]);
-    if (Length(Stats) = 3) then
-    begin
-      for ii := 0 to HowManyPlayers - 1 do
-        if (LowerCase(Players[ii].Name) = LowerCase(Stats[0])) then
-        begin
-          Players[ii].Loc := Stats[1];
-          Players[ii].Active := Stats[2] = '1';
-          Break;
-        end;
-    end
-    else
-    begin
-      Stats_CheckOutput(s);
-      Break;
-    end;
-  end;
-
-  FreeHTTPClient(Client);
-  stats_SendAccountInfo;
-end;
-
-{******************************************************************************}
-{ function AC_CircleTPA(cX, cY, r: Integer): TPointArray;                      }
-{ By: Nava2                                                                    }
-{ Description: Creates a TPA of a circle with radius 'r' and center point      }
-{              cX, cY                                                          }
-{******************************************************************************}
-function AC_CircleTPA(cX, cY, r: Integer): TPointArray;
-var
-  i, j, l, tX, tY: Integer;
-begin
-  setLength(Result, 4 * r * r);
-  l := 2 * r - 1;
-  tX := cX - r;
-  tY := cY - r;
-  for i := 0 to l do
-    for j := 0 to l do
-      Result[j + l * i] := Point(tX + i, tY + j);
-
-  Result := RemoveDistTPointArray(cX, cY, r, Result, True);
-end;
-
-{******************************************************************************}
-{ function AC_ReturnMMTPA: TPointArray;                                        }
-{ By: Nava2                                                                    }
-{ Description: Performs AC_CircleTPA for the RS minimap                        }
-{******************************************************************************}
-function AC_ReturnMMTPA: TPointArray;
-begin
-  if High(srl_MMTPA) < 0 then
-  begin
-    Result := AC_CircleTPA(MMCX, MMCY, (MMX2 - MMX1) div 2);
-    srl_MMTPA := Result;
-  end else
-    Result := srl_MMTPA;
-end;
-
-procedure DCnB_Signature;
-begin
-  ClearDebug;
-  Writeln('                                            ___          ');
-  Wait(100);
-  Writeln('                       ____                /\__\         ');
-  Wait(100);
-  Writeln('                      /\___\     ____      \/ _/         ');
-  Wait(100);
-  Writeln('       _____          \/_  /    /\___\      \/ _____     ');
-  Wait(100);
-  Writeln('      /\____\  _______/ / /___ _\/___ \_____  /\____\    ');
-  Wait(100);;
-  Writeln('     / /  ___\/\______\/ /____\\____/ /_____\/ / ____\   ');
-  Wait(100);
-  Writeln('    / /  /__ / / ___  / ____  //___  / ____  \/ /___\    ');
-  Wait(100);
-  Writeln('   / /  /___\ / /__/ / / / / /____/ / /  / / /____  /    ');
-  Wait(100);
-  Writeln('   \/_______//______/_/ /_/_/______/_/__/_/_/____/ /     ');
-  Wait(100);
-  Writeln('                             \/___________________/      ');
-  Wait(100);
-  Writeln(PadR('               Draynor Chop N'' Bank ~ Revision ' + SCRIPT_VERSION + '!', 57));
-end;
-
-procedure DCnB_Debug(proc, msg: String; debug: Integer);
-begin
-  case debug of
-    DEBUG_ERROR:
-      Writeln('-> ERROR: ' + proc + ': ' + msg);
-      
-    DEBUG_SUCCESS:
-      Writeln('-> SUCCESS: ' + proc + ': ' + msg);
-      
-    DEBUG_DETAILS:
-      Writeln('-> DETAIL: ' + proc + ': ' + msg);
-      
-    DEBUG_PLAYER:
-      Writeln('-> PLAYER: ' + Capitalize(Players[CurrentPlayer].Name) + ': ' + proc + ': ' + msg);
-      
-    else
-      DCnB_Debug('DCnB_Debug', 'Invalid debug choice', DEBUG_ERROR);
-  end;
-end;
-
-procedure Load_Antiban;
-begin
-  case Random(100) of
-    10: BoredHuman;
-    20: HoverSkill('random', False);
-    30: HoverSkill('woodcutting', False);
-    40: PickUpMouse;
-    50: RandomRClick;
-    60: RandomMovement;
-    70: SleepAndMoveMouse(200 + Random(50));
-    90: ExamineInv;
-  end;
-end;
-
 function Load_MSObject(which: Integer): TMSObject;
 begin
   case which of
@@ -595,7 +206,7 @@ begin
           end;
 
         else
-          DCnB_Debug('Load_MSObject', 'Invalid tree type in DeclarePlayers', DEBUG_ERROR);
+          Debug('Load_MSObject', 'Invalid tree type in DeclarePlayers', DEBUG_ERROR);
       end;
       
     OBJ_BANK_BOOTH:
@@ -617,51 +228,7 @@ begin
       end;
       
     else
-      DCnB_Debug('Load_MSObject', 'Invalid object index', DEBUG_ERROR);
-  end;
-end;
-
-function Level_Gained: Boolean;
-var
-  i, t: Integer;
-  chatText: TStringArray;
-  p: TPoint;
-begin
-  if (not LoggedIn) then
-    Exit;
-  
-  chatText := ['ongrat', 'dvanced', 'ulatio', 'oodcuti'];
-  for i := 0 to High(chatText) do
-  begin
-    if (FindNPCChatText(chatText[i], Nothing)) then
-    begin
-      ClickContinue(True, True);
-      Result := True;
-      Break;
-    end;
-  end;
-            
-  if (Result) then
-  begin
-    Inc(Stats_CustomVars[STATS_LEVELS]);
-    Stats_SendReport;
-    Stats_ManageAccounts;
-    
-    DCnB_Debug('Level_Gained', 'Congratulations, you have gained a Woodcutting level!', DEBUG_PLAYER);
-    GameTab(tab_Stats);
-    p := SkillToCoords(skill_Woodcutting);
-    Mouse(p.x, p.y, 3, 0, True);
-    
-    t := GetSystemTime + 5000;
-    while (GetSystemTime < t) do
-      if (GetColor(449, 50) = 8042720) then //the skill info X
-      begin
-        Mouse(449, 50, 3, 3, True);
-        Break;
-      end;
-
-    Wait(RandomRange(250, 750));
-    GameTab(tab_Inv);
+      Debug('Load_MSObject', 'Invalid object index', DEBUG_ERROR);
   end;
 end;
 
@@ -672,20 +239,20 @@ begin
     
   if (not active) then
   begin
-    DCnB_Debug(proc, msg, DEBUG_PLAYER);
+    Debug(proc, msg, DEBUG_PLAYER);
     Players[CurrentPlayer].Loc := 'Lost';
-    DCnB_Debug('Next_Player', 'Location - ' + Players[CurrentPlayer].Loc, DEBUG_PLAYER);
+    Debug('Next_Player', 'Location - ' + Players[CurrentPlayer].Loc, DEBUG_PLAYER);
     falseReason[CurrentPlayer] := msg;
   end else
-    DCnB_Debug(proc, msg, DEBUG_DETAILS);
+    Debug(proc, msg + ', logging out...', DEBUG_DETAILS);
   
   Logout; //just an extra precaution
   NextPlayer(active);
-  breakAfterLoads := 0;
+  playerLoads := 0;
   
   if (AllPlayersInactive) then
   begin
-    DCnB_Debug('Next_Player', 'All players inactive', DEBUG_SUCCESS);
+    Debug('Next_Player', 'All players inactive, terminating...', DEBUG_SUCCESS);
     TerminateScript;
   end;
 end;
@@ -694,114 +261,71 @@ procedure Next_Break;
 begin
   if (not LoggedIn) then
     Exit;
+    
+  //adds to stats/players array
   Inc(Stats_CustomVars[STATS_BREAKS]);
-
-  with Players[CurrentPlayer] do
-    Integers[P_BREAKS] := Integers[P_BREAKS] + 1;
+  Inc(Players[CurrentPlayer].Integers[P_BREAKS]);
     
   if (HowManyPlayers > 1) then
     Next_Player(True, 'Next_Break', 'Switching players...')
   else
   begin
-    DCnB_Debug('Next_Break', 'Taking a short break...', DEBUG_DETAILS);
+    Debug('Next_Break', 'Taking a short break...', DEBUG_DETAILS);
     Logout;
     Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
     
-    DCnB_Debug('Next_Break', 'Break over, logging back in...', DEBUG_DETAILS);
+    Debug('Next_Break', 'Break over, logging back in...', DEBUG_DETAILS);
     LoginPlayer;
   end;
   
   Inc(Stats_CustomVars[STATS_LOGINS]);
-  Stats_SendReport;
-  Stats_ManageAccounts;
+  Stats_Send;
 end;
 
-procedure Find_Randoms(waitFrom, waitTo: Integer);
-begin
-  if (not LoggedIn) then
-    Exit;
-    
-  LampSkill := 'Woodcutting';
-  DCnB_Debug('Find_Randoms', 'Scanning for random events...', DEBUG_DETAILS);
-
-  if (Level_Gained) then
-    Inc(Players[CurrentPlayer].Integers[P_LEVELS]);
-    
-  if (FindNormalRandoms) then
-  begin
-    Inc(Stats_CustomVars[STATS_RANDOMS]);
-    Stats_SendReport;
-    Stats_ManageAccounts;
-    
-    if (playSnd) then
-      PlaySound(ScriptPath + 'RandomSound.wav');
-  end;
-
-  UseRewardBox;
-  Wait(RandomRange(waitFrom, waitTo));
-end;
-
-function Find_Object(var x, y: Integer; which: Integer): Boolean;
+function Find_HoverObj(var x, y: Integer; which: Integer): Boolean;
 var
-  notFindObj, notFindUptext, i: Integer;
+  i: Integer;
   obj: TMSObject;
   pts: TPointArray;
   boxes: T2DPointArray;
 begin
+  obj := Load_MSObject(which);
   if (not LoggedIn) then
     Exit;
-  obj := Load_MSObject(which);
-  notFindObj := 0;
-  notFindUptext := 0;
 
   ColorToleranceSpeed(2);
   SetColorSpeed2Modifiers(obj.hueMod, obj.satMod);
 
-  repeat
-    FindColorsSpiralTolerance(MSCX, MSCY, pts, obj.color, MSX1, MSY1, MSX2, MSY2, obj.tol);
-    boxes := TPAToATPAEx(pts, obj.width, obj.height);
-    //DebugATPA(boxesArr, '');
-    DCnB_Debug('Find_Object', obj.name + ' - boxes found: ' + IntToStr(Length(boxes)), DEBUG_DETAILS);
+  FindColorsSpiralTolerance(MSCX, MSCY, pts, obj.color, MSX1, MSY1, MSX2, MSY2, obj.tol);
+  boxes := TPAToATPAEx(pts, obj.width, obj.height);
+  DebugATPA(boxes, '');
 
-    if (Length(boxes) <= 0) then
+  if (Length(boxes) <= 0) then
+  begin
+    Debug('Find_HoverObj', 'Failed to find object: ' + obj.name, DEBUG_ERROR);
+    Randoms(2000, 4000);
+  end;
+
+  SortATPAFrom(boxes, Point(MSCX, MSCY));
+  for i := 0 to High(boxes) do
+  begin
+    if (Length(boxes[i]) < obj.minLen) then
     begin
-      DCnB_Debug('Find_Object', 'Failed to find object: ' + obj.name, DEBUG_ERROR);
-      Find_Randoms(2000, 4000);
-      Inc(notFindObj);
+      Randoms(50, 150);
+      Continue;
     end;
 
-    SortATPAFrom(boxes, Point(MSCX, MSCY));
-    for i := 0 to High(boxes) do
+    MiddleTPAEx(boxes[i], x, y);
+    MMouse(x, y, 4, 4);
+
+    if (WaitUptextMulti(obj.upText, 500)) then
     begin
-      if (Length(boxes[i]) < obj.minLen) then
-      begin
-        Find_Randoms(50, 150);
-        Continue;
-      end;
-
-      MiddleTPAEx(boxes[i], x, y);
-      MMouse(x, y, 4, 4);
-      notFindObj := 0;
-
-      Result := WaitUptextMulti(obj.upText, 500);
-      if (Result) then
-      begin
-        DCnB_Debug('Find_Object', 'Found object: ' + obj.name, DEBUG_SUCCESS);
-        notFindUptext := 0;
-        Break;
-      end else begin
-        DCnB_Debug('Find_Object', 'Failed to find uptext for object: ' + obj.name, DEBUG_ERROR);
-        Inc(notFindUptext);
-      end;
-
-    end;
-  until(Result or (not LoggedIn) or (notFindUptext >= 55) or (notFindObj >= 55));
-
-  if (notFindObj >= 55) then
-    Next_Player(False, 'Find_Object', 'Failed to find object: ' + obj.name + ' 55 times');
-
-  if (notFindUptext >= 55) then
-    Next_Player(False, 'Find_Object', 'Failed to find uptext: ' + obj.name + ' 55 times');
+      Debug('Find_HoverObj', 'Found object: ' + obj.name, DEBUG_SUCCESS);
+      Result := True;
+      Break;
+    end else
+      Debug('Find_HoverObj', 'Failed to find uptext for object: ' + obj.name, DEBUG_ERROR);
+  end;
 
   SetColorSpeed2Modifiers(0.2, 0.2);
   ColorToleranceSpeed(1);
@@ -880,11 +404,11 @@ begin
       end;
       
     else
-      DCnB_Debug('Find_MMColors', 'Invalid Color parameters', DEBUG_ERROR);
+      Debug('Find_MMColors', 'Invalid Color parameters', DEBUG_ERROR);
   end;
   
   //Get all the colours in the minimap
-  CycleCols := GetColors(AC_ReturnMMTPA);
+  CycleCols := GetColors(ReturnMMTPA);
   ClearSameIntegers(CycleCols);
 
   //Cycle through creating a new array based on the inputted RGB max/mins
@@ -923,75 +447,15 @@ begin
   if (Length(newCols) > 0) then
   begin
     Result := newCols[j];
-    DCnB_Debug('Find_MMColors', 'Found Color: ' + IntToStr(Result), DEBUG_SUCCESS);
+    Debug('Find_MMColors', 'Found Color: ' + IntToStr(Result), DEBUG_SUCCESS);
   end else
-    DCnB_Debug('Find_MMColors', 'Failed to find color: ' + IntToStr(Which), DEBUG_DETAILS);
-end;
-
-function Chop_IsTreeDown: Boolean;
-var
-  inBox: TPointArray;
-  tree: TMSObject;
-begin
-  if not LoggedIn or InvFull then Exit;
-  tree := Load_MSObject(OBJ_TREE);
-  
-  ColorToleranceSpeed(2);
-  SetColorSpeed2Modifiers(tree.hueMod, tree.satMod);
-  
-  FindColorsTolerance(inBox, tree.Color, tP.x - 15, tP.y - 15, tP.x + 15,
-                                         tP.y + 15, tree.tol);
-  Result := (Length(inBox) < 20);
-  DCnB_Debug('Chop_IsTreeDown', 'Length inside Box: ' + IntToStr(Length(inBox)), DEBUG_DETAILS);
-  
-  if (Result) then
-    DCnB_Debug('Chop_IsTreeDown', 'Tree has been cut down!', DEBUG_DETAILS);
-  
-  SetColorSpeed2Modifiers(0.2, 0.2);
-  ColorToleranceSpeed(1);
-  FreeDTM(tree.dtm);
-end;
-
-function Chop_Trees: Boolean;
-var
-  t, x, y: Integer;
-begin
-  if (not LoggedIn) then
-    Exit;
-
-  repeat
-    if (InvFull) then
-      Break;
-
-    if (Find_Object(x, y, OBJ_TREE)) then
-    begin
-      Mouse(x, y, 0, 0, True);
-      Wait(RandomRange(2000, 3000));
-
-      GetMousePos(x, y);
-      tP := IntToPoint(x, y);
-      DCnB_Debug('Chop_Trees', 'Track Point: (' + IntToStr(x) + ', ' + IntToStr(y) + ')', DEBUG_DETAILS);
-
-      t := GetSystemTime + RandomRange(15000, 20000);
-      repeat
-        if (Level_Gained) then
-          Inc(Players[CurrentPlayer].Integers[P_LEVELS]);
-
-        Result := Chop_IsTreeDown;
-        if (Result or (GetSystemTime > t)) then
-          Break;
-
-        Load_Antiban;
-        Find_Randoms(500, 1000);
-      until(InvFull or (not LoggedIn));
-    end;
-  until(InvFull or (not LoggedIn));
+    Debug('Find_MMColors', 'Failed to find color: ' + IntToStr(Which), DEBUG_DETAILS);
 end;
 
 function Walk_ConstToLoc(which: Integer): String;
 begin
   case which of
-    WALK_TREES_WILLOWS:
+    WALK_TREES_WILLOWS, WALK_WILLOWS_RELOCATE:
       Result := 'Willows';
 
     WALK_TREES_OAKS_1:
@@ -1007,7 +471,7 @@ begin
       Result := 'Bank[1]';
 
     else
-      DCnB_Debug('Walk_ConstToLoc', 'Invalid location', DEBUG_ERROR);
+      Debug('Walk_ConstToLoc', 'Invalid location', DEBUG_ERROR);
   end;
 end;
 
@@ -1015,15 +479,15 @@ function Walk_WaitWhile(where: Integer): Boolean;
 var
   t: Integer;
 begin
-  t := GetSystemTime + 10000;
+  t := GetSystemTime + 20000;
   while (GetSystemTime < t) do
   begin
-    Find_Randoms(1500, 3000);
+    Randoms(1500, 3000);
 
-    if (FFlag(5) or (not IsMoving)) then
+    if (FFlag(5) or (not IsMoving) or (not FlagPresent)) then
     begin
       Players[CurrentPlayer].Loc := Walk_ConstToLoc(where);
-      DCnB_Debug('Walk_WaitWhile', 'Location - ' + Players[CurrentPlayer].Loc, DEBUG_PLAYER);
+      Debug('Walk_WaitWhile', 'Location - ' + Players[CurrentPlayer].Loc, DEBUG_PLAYER);
       Wait(RandomRange(500, 1000));
       Result := True;
       Break;
@@ -1062,7 +526,11 @@ begin
       end;
 
     WALK_BANK_WILLOWS:
-      MouseBox(645, 44, 656, 53, CLICK_LEFT);
+      begin
+        bankColor := Find_MMColors(MM_BANK);
+        if (not RadialWalkTolerance(bankColor, 20, 50, 70, -5, 1, 10)) then
+          MouseBox(645, 44, 656, 53, CLICK_LEFT);
+      end;
 
     WALK_BANK_OAKS_1:
       begin
@@ -1084,14 +552,18 @@ begin
     WALK_BANK_RELOCATE:
       if (FindSymbolIn(x, y, 'bank', MMX1, MMY1, MMCX, MMY2)) then
         Mouse(x, y, 3, 3, True);
+        
+    WALK_WILLOWS_RELOCATE:
+      if (FindSymbolIn(x, y, 'fishing', MMX1, MMY1, MMCX, MMY2)) then
+        Mouse(x, y - 20, 3, 3, True);
 
     else
-      DCnB_Debug('Walk_PerformIndex', 'Invalid walk point', DEBUG_ERROR);
+      Debug('Walk_PerformIndex', 'Invalid walk point', DEBUG_ERROR);
   end;
 
   Result := Walk_WaitWhile(which);
   if (Result) then
-    DCnB_Debug('Walk_PerformIndex', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS)
+    Debug('Walk_PerformIndex', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS)
   else
     Next_Player(False, 'Walk_PerformIndex', 'Failed to walk to location: ' + Walk_ConstToLoc(which));
 end;
@@ -1124,7 +596,7 @@ begin
           Result := True;
           
         else
-          DCnB_Debug('Walk_ToLoc', 'Invalid location for PATH_BANK_TO_OAKS', DEBUG_ERROR);
+          Debug('Walk_ToLoc', 'Invalid location for PATH_BANK_TO_OAKS', DEBUG_ERROR);
       end;
 
     PATH_OAKS_TO_BANK:
@@ -1140,96 +612,152 @@ begin
           Result := True;
 
         else
-          DCnB_Debug('Walk_ToLoc', 'Invalid location for PATH_OAKS_TO_BANK', DEBUG_ERROR);
+          Debug('Walk_ToLoc', 'Invalid location for PATH_OAKS_TO_BANK', DEBUG_ERROR);
       end;
 
     else
-      DCnB_Debug('Walk_ToLoc', 'Invalid walk path', DEBUG_ERROR);
+      Debug('Walk_ToLoc', 'Invalid walk path', DEBUG_ERROR);
   end;
 
   if (Result) then
-    DCnB_Debug('Walk_ToLoc', 'Walked to ' + Walk_ConstToLoc(where), DEBUG_SUCCESS);
+    Debug('Walk_ToLoc', 'Walked to ' + Walk_ConstToLoc(where), DEBUG_SUCCESS);
 end;
 
-function Bank_Open: Boolean;
+function Chop_IsTreeDown: Boolean;
 var
-  t, x, y: Integer;
+  inBox: TPointArray;
+  tree: TMSObject;
+begin
+  if not LoggedIn or InvFull then Exit;
+  tree := Load_MSObject(OBJ_TREE);
+
+  ColorToleranceSpeed(2);
+  SetColorSpeed2Modifiers(tree.hueMod, tree.satMod);
+
+  FindColorsTolerance(inBox, tree.Color, tP.x - 15, tP.y - 15, tP.x + 15, tP.y + 15, tree.tol);
+  Result := (Length(inBox) < 20);
+  Debug('Chop_IsTreeDown', 'Length inside Box: ' + IntToStr(Length(inBox)), DEBUG_DETAILS);
+
+  if (Result) then
+    Debug('Chop_IsTreeDown', 'Tree has been cut down!', DEBUG_DETAILS);
+
+  SetColorSpeed2Modifiers(0.2, 0.2);
+  ColorToleranceSpeed(1);
+  FreeDTM(tree.dtm);
+end;
+
+function Chop_Trees: Boolean;
+var
+  tries, t, x, y: Integer;
 begin
   if (not LoggedIn) then
     Exit;
 
-  t := GetSystemTime + 10000;
+  Result := InvFull;
   repeat
-    if (Find_Object(x, y, OBJ_BANK_BOOTH)) then
+    if (Find_HoverObj(x, y, OBJ_TREE)) then
     begin
-      Mouse(x, y, 0, 0, False);
+      Mouse(x, y, 0, 0, True);
 
-      if (WaitOptionEx('uick', 'Action',  ClickLeft, 500)) then
+      tP := IntToPoint(x, y);
+      Debug('Chop_Trees', 'Track Point: (' + IntToStr(x) + ', ' + IntToStr(y) + ')', DEBUG_DETAILS);
+
+      t := GetSystemTime + RandomRange(15000, 20000);
+      while ((not Chop_IsTreeDown) and (GetSystemTime < t) and (not Result)) do
       begin
-        Result := WaitFunc(@BankScreen, 50,  3000);
-        if (not Result) then
-          Result := WaitFunc(@PinScreen, 50, 3000);
-      end else
-        DCnB_Debug('Bank_Open', 'Failed to choose option: Use-quickly', DEBUG_ERROR);
-    end else
-      Walk_PerformIndex(WALK_BANK_RELOCATE);
-  until(Result or (not LoggedIn) or (GetSystemTime > t));
-
-  if (Result) then
-    if (PinScreen) then
-    begin
-      InPin(Players[CurrentPlayer].Pin);
-      Result := WaitFunc(@BankScreen, 50, 3000);
+        Antiban;
+        Randoms(500, 1000);
+      end;
+    end else begin
+      Debug('Chop_Trees', 'Failed to find trees', DEBUG_ERROR);
+      Wait(RandomRange(500, 1000));
+      Inc(tries);
     end;
+
+    if (tries >= 15) then
+      Walk_PerformIndex(WALK_WILLOWS_RELOCATE);
+
+  until(Result or (not LoggedIn));
+end;
+
+function Bank_Open: Boolean;
+var
+  x, y: Integer;
+begin
+  if (not LoggedIn) then
+    Exit;
+
+  if (Find_HoverObj(x, y, OBJ_BANK_BOOTH)) then
+  begin
+    Mouse(x, y, 0, 0, False);
+    WaitOptionEx('uick', 'Action',  ClickLeft, 500);
+
+    if (PinScreen) then
+      InPin(Players[CurrentPlayer].Pin);
+
+    Result := WaitFunc(@BankScreen, 50, 3000);
+  end;
 end;
 
 function Bank_Logs: Boolean;
 var
-  logsInInv, t: Integer;
+  logsInInv, tries, t: Integer;
   tree: TMSObject;
 begin
   if (not LoggedIn) or (InvCount <= 1) then
     Exit;
   tree := Load_MSObject(OBJ_TREE);
 
-  if (Bank_Open) then
-  begin
-    DCnB_Debug('Bank_Logs', 'Successfully opened bank!', DEBUG_SUCCESS);
-    Wait(RandomRange(500, 1000));
-
-    //count the logs in inventory
-    logsInInv := CountItems('dtm', tree.dtm, []);
-    if (logsInInv > 0) then
-      DCnB_Debug('Bank_Logs', 'Found ' + IntToStr(logsInInv) + ' logs in inventory', DEBUG_DETAILS)
-    else
-      DCnB_Debug('Bank_Logs', 'Failed to find dtm: ' + tree.name, DEBUG_ERROR);
-
-    //deposit the logs
-    if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
-      MouseBox(386, 300, 409, 315, CLICK_LEFT)
-    else
-      Deposit(2, 28, True);
-
-    //waits for the logs to leave the inv (in case of lag)
-    t := GetSystemTime + 5000;
-    while (GetSystemTime < t) do
+  repeat
+    if (Bank_Open) then
     begin
-      Wait(RandomRange(200, 500));
-      if (InvCount <= 1) then
-      begin
-        Result := True;
-        Break;
-      end;
-    end;
+      Debug('Bank_Logs', 'Successfully opened bank!', DEBUG_SUCCESS);
+      Wait(RandomRange(500, 1000));
+      tries := 0;
 
-  end else
-    DCnB_Debug('Bank_Logs', 'Failed to open bank', DEBUG_ERROR);
+      //count the logs in inventory
+      logsInInv := CountItems('dtm', tree.dtm, []);
+      IncEx(totalLogs, logsInInv);
+      Disguise('Logs Chopped: ' + IntToStr(totalLogs));
+      
+      if (logsInInv > 0) then
+        Debug('Bank_Logs', 'Found ' + IntToStr(logsInInv) + ' logs in inventory', DEBUG_DETAILS)
+      else
+        Debug('Bank_Logs', 'Failed to find dtm: ' + tree.name, DEBUG_ERROR);
+
+      //deposit the logs
+      if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
+        MouseBox(386, 300, 409, 315, CLICK_LEFT)
+      else
+        Deposit(2, 28, True);
+
+      //waits for the logs to leave the inv (in case of lag)
+      t := GetSystemTime + 5000;
+      while (GetSystemTime < t) do
+      begin
+        Wait(RandomRange(200, 500));
+        if (InvCount <= 1) then
+        begin
+          Result := True;
+          Break;
+        end;
+      end;
+
+    end else begin
+      Debug('Bank_Logs', 'Failed to open bank', DEBUG_ERROR);
+      Inc(tries);
+    end;
+    
+    if (tries >= 15) then
+      Walk_PerformIndex(WALK_BANK_RELOCATE);
+      
+  until ((tries >= 20) or Result);
 
   if (Result) then
   begin
-    DCnB_Debug('Bank_Logs', 'Successfully banked logs!', DEBUG_SUCCESS);
+    Debug('Bank_Logs', 'Successfully banked logs!', DEBUG_SUCCESS);
     Wait(RandomRange(250, 750));
-    Inc(breakAfterLoads);
+    Inc(playerLoads);
 
     //randomly closes the bank, or just walks to the trees
     if (Random(10) > 4) then
@@ -1247,35 +775,15 @@ begin
       IncEx(Stats_CustomVars[STATS_OAKS], logsInInv);
     IncEx(Stats_CustomVars[STATS_EXP], Round(logsInInv * tree.exp));
     Inc(Stats_CustomVars[STATS_LOADS]);
-    Stats_SendReport;
-    Stats_ManageAccounts;
+    Stats_Send;
 
+    //checks to see if player has done specified number of logs
     with Players[CurrentPlayer] do
       if (Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) then
         Next_Player(False, 'Bank_Logs', 'Cut desired number of logs');
   end;
 
   FreeDTM(tree.dtm);
-end;
-
-{******************************************************************************}
-{ function Report_GroupDigits(n: integer; token: String): String;              }
-{ By: PriSoner and Nava2                                                       }
-{ Description: Formats an integer into groups of 3 seperated by `token' and    }
-{              returns a formatted string (i.e 1234567 would become 1,234,567) }
-{******************************************************************************}
-function Report_GroupDigits(n: integer; token: String): String;
-var
-  b: integer;
-begin
-  Result := IntToStr(n);
-  b := length(Result) + 1;
-  if b > 3 then
-  repeat
-    b := b - 3;
-    if b > 1 then
-      insert(token, Result, b);
-  until (b < 3);
 end;
 
 function Report_GetTotals: TStringArray;
@@ -1297,19 +805,10 @@ begin
     end;
     
   for i := 0 to High(temp) do
-    Result[i] := Report_GroupDigits(temp[i], ',');
+    Result[i] := GroupDigits(temp[i], ',');
 end;
 
-procedure Report_AddTo(s: String);
-begin
-  {$IFDEF SIMBA}
-    Writeln(s);
-  {$ELSE}
-    AddToReport(s);
-  {$ENDIF}
-end;
-
-procedure Report_WhichProgram(right: Integer);
+procedure Report_ProgramInfo(right: Integer);
 var
   theRunTime, theProgram, useSMART: String;
 begin
@@ -1329,13 +828,13 @@ begin
   
   if (HowManyPlayers = 1) then
   begin
-    Report_AddTo(PadR('|    Program: ' + theProgram, right) + '|');
-    Report_AddTo(PadR('|    SMART:   ' + useSMART, right) + '|');
-    Report_AddTo(PadR('|    ' + theRunTime, right) + '|');
+    AddToProggy(PadR('|    Program: ' + theProgram, right) + '|');
+    AddToProggy(PadR('|    SMART:   ' + useSMART, right) + '|');
+    AddToProggy(PadR('|    ' + theRunTime, right) + '|');
   end else
   begin
-    Report_AddTo(PadR('|                    ' + theRunTime, right) + '|');
-    Report_AddTo(PadR('|                             Program: ' + theProgram +
+    AddToProggy(PadR('|                    ' + theRunTime, right) + '|');
+    AddToProggy(PadR('|                             Program: ' + theProgram +
                       ' | SMART: ' + useSMART, right) + '|');
   end;
 end;
@@ -1346,69 +845,69 @@ var
   s: TStringArray;
 begin
   s := Report_GetTotals;
-  Report_AddTo('/=====================================================================================|'); //86
-  Report_AddTo(PadR('|                         Coh3n''s Draynor Chop N'' Bank!', 86) + '|');
-  Report_AddTo(PadR('|                                - Revision ' + SCRIPT_VERSION + ' -', 86) + '|');
-  Report_AddTo('|=====================================================================================|');
-  Report_AddTo('|                                                                                     |');
-  Report_WhichProgram(86);
-  Report_AddTo('|______ ________ __________ _______ ________ __________ ________ ____________ ________|');
-  Report_AddTo('| Nick | Active | Location | Loads |  Tree  | Logs Cut | Levels | Experience | Breaks |');
-  Report_AddTo('|¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯|');
+  AddToProggy('/=====================================================================================|'); //86
+  AddToProggy(PadR('|                         Coh3n''s Draynor Chop N'' Bank!', 86) + '|');
+  AddToProggy(PadR('|                                - Revision ' + SCRIPT_VERSION + ' -', 86) + '|');
+  AddToProggy('|=====================================================================================|');
+  AddToProggy('|                                                                                     |');
+  Report_ProgramInfo(86);
+  AddToProggy('|______ ________ __________ _______ ________ __________ ________ ____________ ________|');
+  AddToProggy('| Nick | Active | Location | Loads |  Tree  | Logs Cut | Levels | Experience | Breaks |');
+  AddToProggy('|¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯|');
 
   //adds all the player info to the report
   for i := 0 to High(Players) do
     with Players[i] do
-      Report_AddTo('| ' + PadR(Nick, 5) + '| ' + PadR(BoolToStr(Active), 7) + '| '
-                        + PadR(Loc, 9) + '|  ' + PadR(Report_GroupDigits(Integers[P_LOADS], ','), 5) + '| '
-                        + PadR(Capitalize(Strings[P_TREE]), 7) + '|  ' + PadR(Report_GroupDigits(Integers[P_LOGS], ','), 8) + '|   '
-                        + PadR(IntToStr(Integers[P_LEVELS]), 5) + '|  ' + PadR(Report_GroupDigits(Integers[P_EXP], ','), 10) + '|   '
+      AddToProggy('| ' + PadR(Nick, 5) + '| ' + PadR(BoolToStr(Active), 7) + '| '
+                        + PadR(Loc, 9) + '|  ' + PadR(GroupDigits(Integers[P_LOADS], ','), 5) + '| '
+                        + PadR(Capitalize(Strings[P_TREE]), 7) + '|  ' + PadR(GroupDigits(Integers[P_LOGS], ','), 8) + '|   '
+                        + PadR(IntToStr(Integers[P_LEVELS]), 5) + '|  ' + PadR(GroupDigits(Integers[P_EXP], ','), 10) + '|   '
                         + PadR(IntToStr(Integers[P_BREAKS]), 5) + '|');
 
-  Report_AddTo('|-------------------------------------------------------------------------------------|');
-  Report_AddTo(PadR('| Totals:', 27) + '|  ' + PadR(s[0], 5) + '|        |  ' + PadR(s[1], 8) + '|   '
+  AddToProggy('|-------------------------------------------------------------------------------------|');
+  AddToProggy(PadR('| Totals:', 27) + '|  ' + PadR(s[0], 5) + '|        |  ' + PadR(s[1], 8) + '|   '
                     + PadR(s[2], 5) + '|  ' + PadR(s[3], 10) + '|   ' + PadR(s[4], 5) + '|');
                     
-  Report_AddTo('|                                                                                     |');
-  Report_AddTo('| False Reasons:                                                                      |');
+  AddToProggy('|                                                                                     |');
+  AddToProggy('| False Reasons:                                                                      |');
   
   //adds the false reasons to the report
   for i := 0 to High(Players) do
     if (not Players[i].Active) then
-      Report_AddTo(PadR('|   ' + Players[i].Nick + ': ' + falseReason[i], 86) + '|');
+      AddToProggy(PadR('|   ' + Players[i].Nick + ': ' + falseReason[i], 86) + '|');
       
-  Report_AddTo('|_____________________________________________________________________________________|');
-  Report_AddTo('|_____________________________________________________________________________________/');
+  AddToProggy('|_____________________________________________________________________________________|');
+  AddToProggy('|_____________________________________________________________________________________/');
 end;
   
 procedure Report_SinglePlayer;
 begin
-  Report_AddTo('/====================================================|');
-  Report_AddTo(PadR('|           Coh3n''s Draynor Chop N'' Bank!', 53) + '|');
-  Report_AddTo('|                  - Revision ' + SCRIPT_VERSION + ' -                   |');
-  Report_AddTo('|====================================================|');
-  Report_AddTo('|                                                    |');
-  Report_WhichProgram(53);
-  Report_AddTo('|                                                    |');
+  AddToProggy('/====================================================|');
+  AddToProggy(PadR('|           Coh3n''s Draynor Chop N'' Bank!', 53) + '|');
+  AddToProggy('|                  - Revision ' + SCRIPT_VERSION + ' -                   |');
+  AddToProggy('|====================================================|');
+  AddToProggy('|                                                    |');
+  Report_ProgramInfo(53);
+  AddToProggy('|                                                    |');
   
   with Players[CurrentPlayer] do
   begin
-    Report_AddTo(PadR('|    Player:   ' + Capitalize(Name), 53) + '|');
-    Report_AddTo(PadR('|    Active:   ' + BoolToStr(Active), 53) + '|');
-    Report_AddTo(PadR('|    Location: ' + Capitalize(Loc), 53) + '|');
+    AddToProggy(PadR('|    Player:   ' + Capitalize(Name), 53) + '|');
+    AddToProggy(PadR('|    Active:   ' + BoolToStr(Active), 53) + '|');
+    AddToProggy(PadR('|    Location: ' + Capitalize(Loc), 53) + '|');
     if (not Active) then
-      Report_AddTo(PadR('|    Reason:   ' + falseReason[CurrentPlayer], 53) + '|');
+      AddToProggy(PadR('|    Reason:   ' + falseReason[CurrentPlayer], 53) + '|');
       
-    Report_AddTo(PadR('|      Tree Type:  ' + Capitalize(Strings[P_TREE]), 53) + '|');
-    Report_AddTo(PadR('|      Loads Done: ' + Report_GroupDigits(Integers[P_LOADS], ','), 53) + '|');
-    Report_AddTo(PadR('|      Logs Cut:   ' + Report_GroupDigits(Integers[P_LOGS], ','), 53) + '|');
-    Report_AddTo(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
-    Report_AddTo(PadR('|      Experience: ' + Report_GroupDigits(Integers[P_EXP], ','), 53) + '|');
-    Report_AddTo(PadR('|      Breaks:     ' + IntToStr(Integers[P_BREAKS]), 53) + '|');
+    AddToProggy(PadR('|      Tree Type:  ' + Capitalize(Strings[P_TREE]), 53) + '|');
+    AddToProggy(PadR('|      Loads Done: ' + GroupDigits(Integers[P_LOADS], ','), 53) + '|');
+    AddToProggy(PadR('|      Logs Cut:   ' + GroupDigits(Integers[P_LOGS], ','), 53) + '|');
+    AddToProggy(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
+    AddToProggy(PadR('|      Experience: ' + GroupDigits(Integers[P_EXP], ','), 53) + '|');
+    AddToProggy(PadR('|      Breaks:     ' + IntToStr(Integers[P_BREAKS]), 53) + '|');
   end;
 
-  Report_AddTo('|____________________________________________________|');
-  Report_AddTo('|____________________________________________________/');
+  AddToProggy('|____________________________________________________|');
+  AddToProggy('|____________________________________________________/');
 end;
 
 procedure Report_Print;
@@ -1431,15 +930,14 @@ procedure Setup_Player;
 begin
   LoginPlayer;
   Inc(Stats_CustomVars[STATS_LOGINS]);
-  Stats_SendReport;
-  Stats_ManageAccounts;
+  Stats_Send;
   
-  Players[CurrentPlayer].Loc := 'Bank';
+  hasLoggedIn[CurrentPlayer] := True;
   SetAngle(True);
-  Find_Randoms(250, 500);
+  Randoms(250, 500);
   
   if (Find_Hatchet) then
-    DCnB_Debug('Setup_Player', 'Found hatchet!', DEBUG_SUCCESS)
+    Debug('Setup_Player', 'Found hatchet!', DEBUG_SUCCESS)
   else
     Next_Player(False, 'Find_Hatchet', 'Failed to find hatchet');
 end;
@@ -1452,7 +950,7 @@ begin
     ClearDebug;
     Writeln('Thank you for using Draynor Chop N'' Bank - Simba version!');
   {$ELSE}
-    DCnB_Signature;
+    Signature;
   {$ENDIF}
   
   if (USE_FORM) then
@@ -1493,6 +991,8 @@ begin
   SymbolAccuracy := 0.5;
   
   SetLength(falseReason, HowManyPlayers);
+  SetLength(hasLoggedIn, HowManyPlayers);
+  
   for i := 0 to High(Players) do
   with Players[i] do
   begin
@@ -1503,57 +1003,49 @@ begin
 end;
 
 procedure Setup_MainLoop;
-var
-  totalLogs, i: Integer;
 begin
   Setup_Script;
   
-  repeat
-    with Players[CurrentPlayer] do
-      repeat
+  with Players[CurrentPlayer] do
+    repeat
+      if (not hasLoggedIn[CurrentPlayer]) then
         Setup_Player;
-      
-        if (Lowercase(Strings[P_TREE]) = 'willow') then
-          Walk_ToLoc(PATH_BANK_TO_WILLOWS)
-        else
-          Walk_ToLoc(PATH_BANK_TO_OAKS);
-
-        while (not InvFull) and (LoggedIn) do
-          Chop_Trees;
-
-        if (InvFull) then
-          if (Lowercase(Strings[P_TREE]) = 'willow') then
-            Walk_ToLoc(PATH_WILLOWS_TO_BANK)
-          else
-            Walk_ToLoc(PATH_OAKS_TO_BANK);
-
-        if (Bank_Logs) then
-        begin
-          {$IFDEF SIMBA}
-            DCnB_Debug('Setup_MainLoop', 'Sorry, no randoms report for Simba :(', DEBUG_DETAILS);
-          {$ELSE}
-            SRLRandomsReport;
-          {$ENDIF}
-          Report_Print;
-          
-          for i := 0 to High(Players) do
-            IncEx(totalLogs, Players[i].Integers[P_LOGS]);
-            
-          Disguise('Logs Chopped: ' + IntToStr(totalLogs));
-          totalLogs := 0;
-          
-          if (Booleans[P_TAKE_BREAKS]) then
-            if (breakAfterLoads >= (breakAfter + RandomRange(-2, 2))) then
-            begin
-              Next_Break;
-              breakAfterLoads := 0;
-            end;
-        end;
-      until((Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) or (not LoggedIn));
     
-    if (not LoggedIn) then
-      Next_Player(True, 'Setup_MainLoop', 'Switching players');
-  until(AllPlayersInactive);
+      if (Lowercase(Strings[P_TREE]) = 'willow') then
+        Walk_ToLoc(PATH_BANK_TO_WILLOWS)
+      else
+        Walk_ToLoc(PATH_BANK_TO_OAKS);
+        
+      if (Chop_Trees) then
+        if (Lowercase(Strings[P_TREE]) = 'willow') then
+          Walk_ToLoc(PATH_WILLOWS_TO_BANK)
+        else
+          Walk_ToLoc(PATH_OAKS_TO_BANK);
+
+      if (Bank_Logs) then
+      begin
+        {$IFDEF SIMBA}
+          Debug('Setup_MainLoop', 'Sorry, no randoms report for Simba :(', DEBUG_DETAILS);
+        {$ELSE}
+          SRLRandomsReport;
+        {$ENDIF}
+        Report_Print;
+        
+        if (Booleans[P_TAKE_BREAKS]) then
+          if (playerLoads >= (breakAfter + RandomRange(-2, 2))) then
+          begin
+            Next_Break;
+            playerLoads := 0;
+          end;
+      end;
+      
+      if (not LoggedIn) then
+      begin
+        Next_Player(True, 'Setup_MainLoop', 'Player is logged out, switching players...');
+        Debug('Setup_MainLoop', 'Waiting a few minutes in case of connection loss...', DEBUG_DETAILS);
+        Wait(RandomRange(3*60000, 5*60000));
+      end;
+    until(AllPlayersInactive);
 end;
 
 procedure ScriptTerminate;

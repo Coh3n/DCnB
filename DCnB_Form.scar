@@ -1,5 +1,5 @@
 {.include SRL/SRL.scar}
-{.Include srl\srl\Misc\Debug.scar}
+{.include SRL/SRL/misc/Debug.scar}
 
 { const Players.Integers Indexes;
   Description: Constants representing the DeclarePlayers integers. }

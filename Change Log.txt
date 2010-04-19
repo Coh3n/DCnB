@@ -185,4 +185,12 @@ Rev. 45:
   - Added a couple extra randoms checks       
 
 Rev. 46:
-  - Added a few things that may fix the can't find trees error                     
+  - Added a few things that may fix the can't find trees error
+
+Rev. 47:
+  - Tweaked a couple things
+
+Rev. 48:
+  - Did dones of organizing/maintenance
+  - Added an include file
+  - This is untested, so expect some quick updates                     
