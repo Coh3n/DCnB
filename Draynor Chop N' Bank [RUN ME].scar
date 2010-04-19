@@ -244,7 +244,7 @@ begin
     Debug('Next_Player', 'Location - ' + Players[CurrentPlayer].Loc, DEBUG_PLAYER);
     falseReason[CurrentPlayer] := msg;
   end else
-    Debug(proc, msg + ', logging out...', DEBUG_DETAILS);
+    Debug(proc, msg, DEBUG_DETAILS);
   
   Logout; //just an extra precaution
   NextPlayer(active);
@@ -298,7 +298,7 @@ begin
 
   FindColorsSpiralTolerance(MSCX, MSCY, pts, obj.color, MSX1, MSY1, MSX2, MSY2, obj.tol);
   boxes := TPAToATPAEx(pts, obj.width, obj.height);
-  DebugATPA(boxes, '');
+  //DebugATPA(boxes, '');
 
   if (Length(boxes) <= 0) then
   begin
@@ -655,9 +655,13 @@ begin
 
   Result := InvFull;
   repeat
+    if (Result) then
+      Exit;
+      
     if (Find_HoverObj(x, y, OBJ_TREE)) then
     begin
       Mouse(x, y, 0, 0, True);
+      Wait(RandomRange(1500, 3000));
 
       tP := IntToPoint(x, y);
       Debug('Chop_Trees', 'Track Point: (' + IntToStr(x) + ', ' + IntToStr(y) + ')', DEBUG_DETAILS);
