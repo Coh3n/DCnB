@@ -150,17 +150,18 @@ Rev. 37:
 Rev. 38: 
   - Redesigned the headers/progress reports
   - Made the progress reports more detailed
-  - The report now prints in the report box, so you can see at any time
-  - Added the SRL randoms progress report
-  - Did a lot of reorganizing
-  - Improved debugging A LOT
-  - Rewrote the entire Oak walking system
-  - Added to the antiban procedure   
+  
+  - The report now prints in the report box, so you can see at any time.
+  - Added the SRL randoms progress report.  
+  - Did a lot of reorganizing.  
+  - Improved debugging A LOT.
+  - Rewrote the entire Oak walking system.  
+  - Added to the antiban procedure.
 
-Rev. 39: 
+Rev. 39:
   - Adjusted Next_Player
 
-Rev. 40:
+Rev. 40:  
   - Fixed a bug on the proggy     
 
 Rev. 41:
@@ -169,16 +170,17 @@ Rev. 41:
 Rev. 42:
   - Made a small adjustment to bank finding 
 
-Rev. 43:
+Rev. 43:  
   - Fixed a compiling error      
 
 Rev. 44:
   - Rewrote all the object finding routines
   - Expanded on player locations so you can how start at the bank or trees
-  - Improved the leveling up detection system; it will now check if you've gained a level when it checks for randoms 
+  - Improved the leveling up detection system; it will now check if you've gained a level when it checks for randoms
   - Slightly modified walking, the player *shouldn't* get lost any more
+  
   - Expanded on debugging
-  - Script doesn't check for an initial woodcutting level any more
+  - Script doesn't check for an initial woodcutting level any more  
   - Fixed a bunch of memory leaks      
 
 Rev. 45:
@@ -192,8 +194,11 @@ Rev. 47:
 
 Rev. 48:
   - Did dones of organizing/maintenance
-  - Added an include file
-  - This is untested, so expect some quick updates     
+  - Added an include file  
+  - This is untested, so expect some quick updates                     
 
-Rev. 49:
-  - Couple small things                
+Rev. 49/50:
+  - Just a few small changes
+
+Rev. 51:
+  - I have temporarily reverted back to revision 40 as it seemed to be working much better then.
