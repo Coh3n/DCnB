@@ -10,7 +10,7 @@
 {.include DCnB_Form.scar}
 
 const
-  SCRIPT_VERSION = '48';
+  SCRIPT_VERSION = '50';
 
   //used for the temporary stats system
   STATS_LINK = 'http://scriptmanager.freehostia.com/submit.php'; //needed to record stats

@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 48 -                                |
+|                               - Revision 50 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -528,7 +528,7 @@ begin
     WALK_BANK_WILLOWS:
       begin
         bankColor := Find_MMColors(MM_BANK);
-        if (not RadialWalkTolerance(bankColor, 20, 50, 70, -5, 1, 10)) then
+        if (not RadialWalkTolerance(bankColor, 20, 50, 55, -5, 1, 10)) then
           MouseBox(645, 44, 656, 53, CLICK_LEFT);
       end;
 
@@ -653,9 +653,8 @@ begin
   if (not LoggedIn) then
     Exit;
 
-  Result := InvFull;
   repeat
-    if (Result) then
+    if (InvFull) then
       Exit;
       
     if (Find_HoverObj(x, y, OBJ_TREE)) then
@@ -671,6 +670,7 @@ begin
       begin
         Antiban;
         Randoms(500, 1000);
+        Result := InvFull;
       end;
     end else begin
       Debug('Chop_Trees', 'Failed to find trees', DEBUG_ERROR);
