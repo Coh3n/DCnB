@@ -202,3 +202,8 @@ Rev. 49/50:
 
 Rev. 51:
   - I have temporarily reverted back to revision 40 as it seemed to be working much better then.
+
+Rev. 52:
+  - Fixed memory leaks
+  - Took out the Level_Gained function; now uses SRL's antiban function
+  - Added to the multiplayer progress report

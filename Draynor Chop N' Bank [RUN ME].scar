@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 51 -                                |
+|                               - Revision 52 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '51';
+  SCRIPT_VERSION = '52';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -134,7 +134,7 @@ type
 var
   tP: TPoint;                           //used as the tree tracking point
   srl_MMTPA: TPointArray;               //used in autocoloring
-  startLevel, breakAfterLoads: Integer;
+  playerLoads: Integer;
   falseReason: Array of String;         //holds reasons why players turned false
 
 { var Stat variables;
@@ -476,6 +476,13 @@ begin
   stats_SendAccountInfo;
 end;
 
+procedure Stats_Send;
+begin
+  Writeln('-> DETAIL: Stats_Send: Sending stats to the server...');
+  Stats_SendReport;
+  Stats_ManageAccounts;
+end;
+
 {******************************************************************************}
 { function AC_CircleTPA(cX, cY, r: Integer): TPointArray;                      }
 { By: Nava2                                                                    }
@@ -609,44 +616,7 @@ begin
   end;
 end;
 
-function Level_Gained: Boolean;
-var
-  i, t: Integer;
-  chatText: TStringArray;
-begin
-  if (not LoggedIn) then
-    Exit;
-
-  chatText := ['ongrat', 'dvanced', 'ulatio', 'oodcuti'];
-  for i := 0 to High(chatText) do
-  begin
-    Result := (FindNPCChatText(chatText[i], Nothing));
-    if (Result) then
-      Break;
-  end;
-
-  if (Result) then
-  begin
-    Inc(Stats_CustomVars[STATS_LEVELS]);
-    Stats_SendReport;
-    Stats_ManageAccounts;
-
-    DCnB_Debug('Level_Gained', 'Congratulations, you have gained a Woodcutting level!', DEBUG_SUCCESS);
-    HoverSkill('woodcutting', True);
-
-    t := GetSystemTime + 10000;
-    while (GetSystemTime < t) do
-      if (GetColor(498, 22) = 8042720) then
-      begin
-        Mouse(498, 22, 5, 5, True);
-        Break;
-      end;
-  end;
-end;
-
 procedure Next_Player(active: Boolean; proc, msg: String);
-var
-  finalLevel: Integer;
 begin
   if (not active) then
   begin
@@ -655,18 +625,9 @@ begin
     falseReason[CurrentPlayer] := msg;
   end else
     DCnB_Debug(proc, msg, DEBUG_DETAILS);
-  {
-    Checks to see if the script recorded the correct amount of levels gained.
-    If not, the variable is reset to the correct value by subracting the start
-    level from the final level.
-  }
-  finalLevel := GetSkillLevel('woodcutting');
-  with Players[CurrentPlayer] do
-    if ((finalLevel - startLevel) > Integers[P_LEVELS]) then
-      Integers[P_LEVELS] := (finalLevel - startLevel);
 
   NextPlayer(active);
-  breakAfterLoads := 0;
+  playerLoads := 0;
 
   if (AllPlayersInactive) then
   begin
@@ -697,8 +658,7 @@ begin
   end;
 
   Inc(Stats_CustomVars[STATS_LOGINS]);
-  Stats_SendReport;
-  Stats_ManageAccounts;
+  Stats_Send
 end;
 
 procedure Find_Randoms(waitFrom, waitTo: Integer);
@@ -709,11 +669,17 @@ begin
   LampSkill := 'Woodcutting';
   DCnB_Debug('Find_Randoms', 'Scanning for random events...', DEBUG_DETAILS);
 
+  if (LevelUp) then
+  begin
+    Inc(Players[CurrentPlayer].Integers[P_LEVELS]);
+    Inc(Stats_CustomVars[STATS_LEVELS]);
+    Stats_Send
+  end;
+  
   if (FindNormalRandoms) then
   begin
     Inc(Stats_CustomVars[STATS_RANDOMS]);
-    Stats_SendReport;
-    Stats_ManageAccounts;
+    Stats_Send
 
     if (playSnd) then
       PlaySound(ScriptPath + 'RandomSound.wav');
@@ -750,15 +716,14 @@ begin
 
   h := High(dtm_Hatchet);
   for i := 0 to h do
-  begin
-    Result := FindDTM(dtm_Hatchet[i], x, y, MIX1, MIY1, MIX2, MIY2);
-
-    if Result then
+    if (FindDTM(dtm_Hatchet[i], x, y, MIX1, MIY1, MIX2, MIY2)) then
     begin
-      FreeDTM(dtm_Hatchet[i]);
-      Exit;
+      Result := True;
+      Break;
     end;
-  end;
+
+  FreeDTM(dtm_Hatchet[HATCHET_NORMAL]);
+  FreeDTM(dtm_Hatchet[HATCHET_DRAGON]);
 end;
 
 {******************************************************************************}
@@ -867,6 +832,7 @@ begin
 
   SetColorSpeed2Modifiers(0.2, 0.2);
   ColorToleranceSpeed(1);
+  FreeDTM(Tree.DTM);
 end;
 
 function Chop_Trees: Boolean;
@@ -931,10 +897,6 @@ begin
 
         t := GetSystemTime + RandomRange(15000, 20000);
         repeat
-          if (Level_Gained) then
-            with Players[CurrentPlayer] do
-              Integers[P_LEVELS] := Integers[P_LEVELS] + 1;
-
           Result := Chop_IsTreeDown;
           if (Result or (GetSystemTime > t)) then
             Break;
@@ -971,6 +933,7 @@ begin
 
   SetColorSpeed2Modifiers(0.2, 0.2);
   ColorToleranceSpeed(1);
+  FreeDTM(Tree.DTM);
 end;
 
 function Walk_ConstToLoc(which: Integer): String;
@@ -1233,7 +1196,7 @@ begin
   begin
     DCnB_Debug('Bank_Logs', 'Successfully banked logs!', DEBUG_SUCCESS);
     Wait(RandomRange(250, 750));
-    Inc(breakAfterLoads);
+    Inc(playerLoads);
 
     while ((not InvCount <= 1) and (GetSystemTime < t)) do
       Wait(RandomRange(200, 500));
@@ -1253,8 +1216,7 @@ begin
       IncEx(Stats_CustomVars[STATS_OAKS], logsInInv);
     IncEx(Stats_CustomVars[STATS_EXP], Round(logsInInv * Tree.Exp));
     Inc(Stats_CustomVars[STATS_LOADS]);
-    Stats_SendReport;
-    Stats_ManageAccounts;
+    Stats_Send
 
     with Players[CurrentPlayer] do
       if (Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) then
@@ -1350,6 +1312,7 @@ procedure Report_MultiPlayer;
 var
   i: Integer;
   s: TStringArray;
+  playerFalse: Boolean;
 begin
   s := Report_GetTotals;
   Report_AddTo('/=====================================================================================|'); //86
@@ -1374,6 +1337,26 @@ begin
   Report_AddTo(PadR('| Totals:', 27) + '|  ' + PadR(s[0], 5) + '|        |  ' + PadR(s[1], 8) + '|   '
                     + PadR(s[2], 5) + '|  ' + PadR(s[3], 10) + '|   ' + PadR(s[4], 5) + '|');
   Report_AddTo('|_____________________________________________________________________________________|');
+  
+  //checks to see if at least one player is false
+  for i := 0 to High(Players) do
+    if (not Players[i].Active) then
+    begin
+      playerFalse := True;
+      Break;
+    end;
+    
+  if (playerFalse) then
+  begin
+    Report_AddTo('|                                                                                     |');
+    Report_AddTo('| False Reasons:                                                                      |');
+    Report_AddTo('| ¯¯¯¯¯¯¯¯¯¯¯¯¯¯                                                                      |');
+    for i := 0 to High(Players) do
+      if (not Players[i].Active) then
+        with Players[i] do
+          Report_AddTo(PadR('|   ' + IntToStr(i) + ': ' + Nick + ' -> ' + falseReason[i], 86) + '|');
+  end;
+  
   Report_AddTo('|_____________________________________________________________________________________/');
 end;
 
@@ -1390,8 +1373,8 @@ begin
   with Players[CurrentPlayer] do
   begin
     Report_AddTo(PadR('|    Player:   ' + Capitalize(Name), 53) + '|');
-    Report_AddTo(PadR('|    Active:   ' + BoolToStr(Active), 53) + '|');
     Report_AddTo(PadR('|    Location: ' + Capitalize(Loc), 53) + '|');
+    Report_AddTo(PadR('|    Active:   ' + BoolToStr(Active), 53) + '|');
     if (not Active) then
       Report_AddTo(PadR('|    Reason:   ' + falseReason[CurrentPlayer], 53) + '|');
 
@@ -1427,15 +1410,13 @@ procedure Setup_Player;
 begin
   LoginPlayer;
   Inc(Stats_CustomVars[STATS_LOGINS]);
-  Stats_SendReport;
-  Stats_ManageAccounts;
+  Stats_Send;
 
   Players[CurrentPlayer].Loc := 'Bank';
   SetAngle(True);
 
-  startLevel := GetSkillLevel('woodcutting');
-  DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(startLevel), DEBUG_DETAILS);
-
+  DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(GetSkillLevel('woodcutting')), DEBUG_DETAILS);
+  
   if (Find_Hatchet) then
     DCnB_Debug('Setup_Player', 'Found hatchet!', DEBUG_SUCCESS)
   else
@@ -1540,10 +1521,10 @@ begin
           totalLogs := 0;
 
           if (Booleans[P_TAKE_BREAKS]) then
-            if (breakAfterLoads >= (breakAfter + RandomRange(-2, 2))) then
+            if (playerLoads >= (breakAfter + RandomRange(-2, 2))) then
             begin
               Next_Break;
-              breakAfterLoads := 0;
+              playerLoads := 0;
               Setup_Player;
             end;
         end;
