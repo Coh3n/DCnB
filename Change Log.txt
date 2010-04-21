@@ -207,3 +207,6 @@ Rev. 52:
   - Fixed memory leaks
   - Took out the Level_Gained function; now uses SRL's antiban function
   - Added to the multiplayer progress report
+
+Rev. 53:
+  - Fixed an out of range error that arrised when using the form

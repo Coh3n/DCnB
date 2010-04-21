@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 52 -                                |
+|                               - Revision 53 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '52';
+  SCRIPT_VERSION = '53';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -172,7 +172,6 @@ begin
   HowManyPlayers := 3;
   NumberOfPlayers(HowManyPlayers);
   CurrentPlayer := 0;
-  SetLength(falseReason, HowManyPlayers);
 
   with Players[0] do
   begin
@@ -658,7 +657,7 @@ begin
   end;
 
   Inc(Stats_CustomVars[STATS_LOGINS]);
-  Stats_Send
+  Stats_Send;
 end;
 
 procedure Find_Randoms(waitFrom, waitTo: Integer);
@@ -667,19 +666,19 @@ begin
     Exit;
 
   LampSkill := 'Woodcutting';
-  DCnB_Debug('Find_Randoms', 'Scanning for random events...', DEBUG_DETAILS);
+  //DCnB_Debug('Find_Randoms', 'Scanning for random events...', DEBUG_DETAILS);
 
   if (LevelUp) then
   begin
     Inc(Players[CurrentPlayer].Integers[P_LEVELS]);
     Inc(Stats_CustomVars[STATS_LEVELS]);
-    Stats_Send
+    Stats_Send;
   end;
   
   if (FindNormalRandoms) then
   begin
     Inc(Stats_CustomVars[STATS_RANDOMS]);
-    Stats_Send
+    Stats_Send;
 
     if (playSnd) then
       PlaySound(ScriptPath + 'RandomSound.wav');
@@ -1216,7 +1215,7 @@ begin
       IncEx(Stats_CustomVars[STATS_OAKS], logsInInv);
     IncEx(Stats_CustomVars[STATS_EXP], Round(logsInInv * Tree.Exp));
     Inc(Stats_CustomVars[STATS_LOADS]);
-    Stats_Send
+    Stats_Send;
 
     with Players[CurrentPlayer] do
       if (Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) then
@@ -1438,7 +1437,6 @@ begin
   begin
     tabCount := 1;
     SetLength(formPlayers, tabCount);
-    SetLength(falseReason, Length(formPlayers));
 
     frm_ShowPlayerForm;
     frm_KillForm;
@@ -1472,6 +1470,7 @@ begin
   Writeln('Loading, please wait...');
   SymbolAccuracy := 0.5;
 
+  SetLength(falseReason, HowManyPlayers);
   for i := 0 to High(Players) do
   with Players[i] do
   begin
