@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 54 -                                |
+|                               - Revision 55 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '54';
+  SCRIPT_VERSION = '55';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -1380,6 +1380,7 @@ begin
     Report_AddTo(PadR('|      Tree Type:  ' + Capitalize(Strings[P_TREE]), 53) + '|');
     Report_AddTo(PadR('|      Loads Done: ' + Report_GroupDigits(Integers[P_LOADS], ','), 53) + '|');
     Report_AddTo(PadR('|      Logs Cut:   ' + Report_GroupDigits(Integers[P_LOGS], ','), 53) + '|');
+    Report_AddTo(PadR('|      Logs P/H:   ' + Report_GroupDigits((Integers[P_LOGS] * 60 * 60) / (GetTimeRunning / 1000), ','), 53) + '|');
     Report_AddTo(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
     Report_AddTo(PadR('|      Experience: ' + Report_GroupDigits(Integers[P_EXP], ','), 53) + '|');
     Report_AddTo(PadR('|      Breaks:     ' + IntToStr(Integers[P_BREAKS]), 53) + '|');
