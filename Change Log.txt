@@ -210,3 +210,6 @@ Rev. 52:
 
 Rev. 53:
   - Fixed an out of range error that arrised when using the form
+
+Rev. 54:
+  - Added a (not FlagPresent) to the Walk_WaitWhile so maybe it won't return a false negative
