@@ -213,3 +213,9 @@ Rev. 53:
 
 Rev. 54:
   - Added a (not FlagPresent) to the Walk_WaitWhile so maybe it won't return a false negative
+
+Rev. 55:
+  - Fixed a small bug
+
+Rev. 56:
+  - Added player location detection - you can now start at the bank OR at the trees

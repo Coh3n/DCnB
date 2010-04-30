@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 55 -                                |
+|                               - Revision 56 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -17,7 +17,7 @@
 |       1. Determine whether or not you're using SMART (line 51)               |
 |       2. Determine whether or not you're using the PlayerForm (line 55)      |
 |       3. Have hatchet in FIRST inventory slot or equipped                    |
-|       4. Start in Draynor bank                                               |
+|       4. Start in Draynor bank OR at the trees                               |
 |       5. Setup player(s) via DeclarePlayers/PlayerForm                       |
 |       6. Hit run/start script                                                |
 |       7. Post any progress reports and/or bugs!                              |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION = '55';
+  SCRIPT_VERSION  = '56';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -114,6 +114,7 @@ const
   DEBUG_ERROR   = 0;
   DEBUG_SUCCESS = 1;
   DEBUG_DETAILS = 2;
+  DEBUG_PLAYER  = 3;
 
 { type TTree record;
   Description: A type used for loading different trees }
@@ -162,14 +163,14 @@ const
 { const Setup;
   Description: Constants used to setup the script }
 const
-  STATS_ID   = '';      // Your SRL Stats ID
-  STATS_PASS = '';      // Your SRL Stats Password
+  STATS_ID   = '24';      // Your SRL Stats ID
+  STATS_PASS = '304002';      // Your SRL Stats Password
   RANDOM_SOUND = False; // True = a sound plays when a random is found
   BREAK_AFTER  = 15;    // Loads until break/switch player
 
 procedure DeclarePlayers; // Where all your players are to be setup
 begin
-  HowManyPlayers := 3;
+  HowManyPlayers := 1;
   NumberOfPlayers(HowManyPlayers);
   CurrentPlayer := 0;
 
@@ -477,7 +478,6 @@ end;
 
 procedure Stats_Send;
 begin
-  Writeln('-> DETAIL: Stats_Send: Sending stats to the server...');
   Stats_SendReport;
   Stats_ManageAccounts;
 end;
@@ -545,16 +545,22 @@ begin
 end;
 
 procedure DCnB_Debug(proc, msg: String; debug: Integer);
+var
+  time: String;
 begin
+  time := '[' + TheTime + ']: ';
   case debug of
     DEBUG_ERROR:
-      Writeln('-> ERROR: ' + proc + ': ' + msg);
+      Writeln(time + 'ERROR: ' + proc + ': ' + msg);
 
     DEBUG_SUCCESS:
-      Writeln('-> SUCCESS: ' + proc + ': ' + msg);
+      Writeln(time + 'SUCCESS: ' + proc + ': ' + msg);
 
     DEBUG_DETAILS:
-      Writeln('-> DETAIL: ' + proc + ': ' + msg);
+      Writeln(time + 'DETAIL: ' + proc + ': ' + msg);
+
+    DEBUG_PLAYER:
+      Writeln(time + 'PLAYER: ' + proc + ': ' + Capitalize(Players[CurrentPlayer].Name) + ': ' + msg);
 
     else
       DCnB_Debug('DCnB_Debug', 'Invalid debug choice', DEBUG_ERROR);
@@ -688,6 +694,34 @@ begin
   FindLamp(LampSkill);
 
   Wait(RandomRange(waitFrom, waitTo));
+end;
+
+function Find_PlayerLocation: String;
+var
+  dist, x, y: Integer;
+begin
+  if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow') then
+  begin
+    if (FindSymbolIn(x, y, 'fish', MMX1, MMY1, MMX2, MMY2)) then
+    begin
+      dist := Distance(x, y, MMCX, MMCY);
+      DCnB_Debug('Find_PlayerLocation', 'Symbol Distance = ' + IntToStr(dist), DEBUG_DETAILS);
+
+      if (dist > 50) then
+        Result := 'Bank'
+      else
+        Result := 'Willows';
+
+    end else
+      Result := 'Bank';
+
+  end else
+    if (FindSymbolIn(x, y, 'dungeon', MMX1, MMY1, MMX2, MMY2)) then
+      Result := 'Oaks'
+    else
+      Result := 'Bank';
+
+  DCnB_Debug('Find_PlayerLocation', 'Location = ' + Result, DEBUG_PLAYER);
 end;
 
 function Find_Hatchet: Boolean;
@@ -989,29 +1023,59 @@ begin
 
   case which of
     WALK_TREES_WILLOWS:
-      MouseBox(595, 113, 613, 130, CLICK_LEFT);
+      if (Players[CurrentPlayer].Loc = 'Willows') then
+      begin
+        Result := True;
+        Exit;
+      end else
+        MouseBox(595, 113, 613, 130, CLICK_LEFT);
 
     WALK_TREES_OAKS_1:
       begin
+        if (Players[CurrentPlayer].Loc = 'Oaks') then
+        begin
+          Result := True;
+          Exit;
+        end;
+
         roadColor := Find_MMColors(MM_ROAD);
         if (not RadialWalkTolerance(roadColor, 85, 105, 60, 2, 1, 10)) then
           MouseBox(672, 85, 983, 97, CLICK_LEFT);
       end;
 
     WALK_TREES_OAKS_2:
-      if (FindSymbolIn(x, y, 'dungeon', MMCX, MMY1, MMX2, MMY2)) then
-        Mouse(x - Random(3), y - 15, 3, 3, True)
-      else begin
-        dungeonColor := Find_MMColors(MM_DUNGEON);
-        if (not RadialWalkTolerance(dungeonColor, 65, 95, 60, -2, 15, 10)) then
-          MouseBox(669, 55, 678, 63, CLICK_LEFT);
+      begin
+        if (Players[CurrentPlayer].Loc = 'Oaks') then
+        begin
+          Result := True;
+          Exit;
+        end;
+
+        if (FindSymbolIn(x, y, 'dungeon', MMCX, MMY1, MMX2, MMY2)) then
+          Mouse(x - Random(3), y - 15, 3, 3, True)
+        else begin
+          dungeonColor := Find_MMColors(MM_DUNGEON);
+          if (not RadialWalkTolerance(dungeonColor, 65, 95, 60, -2, 15, 10)) then
+            MouseBox(669, 55, 678, 63, CLICK_LEFT);
+        end;
       end;
 
     WALK_BANK_WILLOWS:
-      MouseBox(645, 44, 656, 53, CLICK_LEFT);
+      if (Players[CurrentPlayer].Loc = 'Bank') then
+      begin
+        Result := True;
+        Exit;
+      end else
+        MouseBox(645, 44, 656, 53, CLICK_LEFT);
 
     WALK_BANK_OAKS_1:
       begin
+        if (Players[CurrentPlayer].Loc = 'Bank') then
+        begin
+          Result := True;
+          Exit;
+        end;
+
         roadColor := Find_MMColors(MM_ROAD);
         if (not RadialWalkTolerance(roadColor, 275, 240, 70, 2, 1, 10)) then
           MouseBox(569, 87, 578, 96, CLICK_LEFT);
@@ -1019,6 +1083,12 @@ begin
 
     WALK_BANK_OAKS_2:
       begin
+        if (Players[CurrentPlayer].Loc = 'Bank') then
+        begin
+          Result := True;
+          Exit;
+        end;
+
         bankColor := Find_MMColors(MM_BANK);
         if (not RadialWalkTolerance(bankColor, 295, 240, 70, 2, 1, 10)) then
           if (FindSymbolIn(x, y, 'bank', MMX1, MMY1, MMCX, MMY2)) then
@@ -1412,10 +1482,10 @@ begin
   Inc(Stats_CustomVars[STATS_LOGINS]);
   Stats_Send;
 
-  Players[CurrentPlayer].Loc := 'Bank';
+  Players[CurrentPlayer].Loc := Find_PlayerLocation;
   SetAngle(True);
 
-  DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(GetSkillLevel('woodcutting')), DEBUG_DETAILS);
+  DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(GetSkillLevel('woodcutting')), DEBUG_PLAYER);
   
   if (Find_Hatchet) then
     DCnB_Debug('Setup_Player', 'Found hatchet!', DEBUG_SUCCESS)
@@ -1427,12 +1497,7 @@ procedure Setup_Script;
 var
   i: Integer;
 begin
-  {$IFDEF SIMBA}
-    ClearDebug;
-    Writeln('Thank you for using Draynor Chop N'' Bank - Simba version!');
-  {$ELSE}
-    DCnB_Signature;
-  {$ENDIF}
+  DCnB_Signature;
 
   if (USE_FORM) then
   begin
