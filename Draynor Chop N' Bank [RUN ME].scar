@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 56 -                                |
+|                               - Revision 58 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -53,8 +53,8 @@ program DraynorChopNBank;
   {.include DCnB_Form.scar}
 
 const
-  USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '56';
+  USE_FORM = False; // <-- VERY IMPORTANT! True = use PlayerForm
+  SCRIPT_VERSION  = '58';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -163,8 +163,8 @@ const
 { const Setup;
   Description: Constants used to setup the script }
 const
-  STATS_ID   = '24';      // Your SRL Stats ID
-  STATS_PASS = '304002';      // Your SRL Stats Password
+  STATS_ID   = '';      // Your SRL Stats ID
+  STATS_PASS = '';      // Your SRL Stats Password
   RANDOM_SOUND = False; // True = a sound plays when a random is found
   BREAK_AFTER  = 15;    // Loads until break/switch player
 
