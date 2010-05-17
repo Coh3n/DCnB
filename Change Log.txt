@@ -230,3 +230,6 @@ Rev. 59:
 
 Rev. 60:
   - Forgot a pretty important thing in the walking
+
+Rev. 61:
+  - Now the walking should actually be fixed :)

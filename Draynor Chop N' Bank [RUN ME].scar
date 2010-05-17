@@ -1039,10 +1039,15 @@ begin
     Find_Randoms(1500, 3000);
 
     if (Walk_FindFlag(x, y)) then
+      Result := (Distance(x, y, MSCX, MSCY) <= 5);
+
+    if (not Result) then
+      Result := (not IsMoving);
+
+    if (Result) then
     begin
       Players[CurrentPlayer].Loc := Walk_ConstToLoc(where);
       Wait(RandomRange(500, 1000));
-      Result := (Distance(x, y, MSCX, MSCY) <= 5) or (not IsMoving);
       Break;
     end;
   end;
