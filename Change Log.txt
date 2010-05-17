@@ -239,3 +239,6 @@ Rev. 62:
 
 Rev. 63:
   - Another small fix
+
+Rev. 64:
+  - Fixed an issue where it wouldn't set the player location properly if the previous player turned false because of a script error

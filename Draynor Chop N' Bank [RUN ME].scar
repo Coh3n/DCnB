@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 63 -                                |
+|                                  By: Coh3n                                   |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -49,12 +49,12 @@
  \_____________________________________________________________________________}
 
 program DraynorChopNBank;
-  {.include SRL\SRL\misc\Smart.scar} //Add '//' to the beginning of the line to disable SMART
-  {.include DCnB_Form.scar}
+{.include SRL\SRL\misc\Smart.scar} //Add '//' to the beginning of the line to disable SMART
+{.include DCnB_Form.scar}
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '63';
+  SCRIPT_VERSION  = '64';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -634,51 +634,6 @@ begin
   end;
 end;
 
-procedure Next_Player(active: Boolean; proc, msg: String);
-begin
-  if (not active) then
-  begin
-    DCnB_Debug(proc, msg, DEBUG_ERROR);
-    Players[CurrentPlayer].Loc := 'Lost';
-    falseReason[CurrentPlayer] := msg;
-  end else
-    DCnB_Debug(proc, msg, DEBUG_DETAILS);
-
-  NextPlayer(active);
-  playerLoads := 0;
-
-  if (AllPlayersInactive) then
-  begin
-    DCnB_Debug('Next_Player', 'All players inactive', DEBUG_SUCCESS);
-    TerminateScript;
-  end;
-end;
-
-procedure Next_Break;
-begin
-  if (not LoggedIn) then
-    Exit;
-  Inc(Stats_CustomVars[STATS_BREAKS]);
-
-  with Players[CurrentPlayer] do
-    Integers[P_BREAKS] := Integers[P_BREAKS] + 1;
-
-  if (HowManyPlayers > 1) then
-    Next_Player(True, 'Next_Break', 'Switching players...')
-  else
-  begin
-    DCnB_Debug('Next_Break', 'Taking a short break...', DEBUG_DETAILS);
-    Logout;
-    Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
-
-    DCnB_Debug('Next_Break', 'Break over, logging back in...', DEBUG_DETAILS);
-    LoginPlayer;
-  end;
-
-  Inc(Stats_CustomVars[STATS_LOGINS]);
-  Stats_Send;
-end;
-
 procedure Find_Randoms(waitFrom, waitTo: Integer);
 begin
   if (not LoggedIn) then
@@ -693,7 +648,7 @@ begin
     Inc(Stats_CustomVars[STATS_LEVELS]);
     Stats_Send;
   end;
-  
+
   if (FindNormalRandoms) then
   begin
     Inc(Stats_CustomVars[STATS_RANDOMS]);
@@ -855,6 +810,52 @@ begin
     DCnB_Debug('Find_MMColors', 'Found Color: ' + IntToStr(Result), DEBUG_SUCCESS);
   end else
     DCnB_Debug('Find_MMColors', 'Failed to find color: ' + IntToStr(Which), DEBUG_DETAILS);
+end;
+
+procedure Next_Player(active: Boolean; proc, msg: String);
+begin
+  if (not active) then
+  begin
+    DCnB_Debug(proc, msg, DEBUG_ERROR);
+    Players[CurrentPlayer].Loc := 'Lost';
+    falseReason[CurrentPlayer] := msg;
+  end else
+    DCnB_Debug(proc, msg, DEBUG_DETAILS);
+
+  NextPlayer(active);
+  Players[CurrentPlayer].Loc := Find_PlayerLocation;
+  playerLoads := 0;
+
+  if (AllPlayersInactive) then
+  begin
+    DCnB_Debug('Next_Player', 'All players inactive', DEBUG_SUCCESS);
+    TerminateScript;
+  end;
+end;
+
+procedure Next_Break;
+begin
+  if (not LoggedIn) then
+    Exit;
+  Inc(Stats_CustomVars[STATS_BREAKS]);
+
+  with Players[CurrentPlayer] do
+    Integers[P_BREAKS] := Integers[P_BREAKS] + 1;
+
+  if (HowManyPlayers > 1) then
+    Next_Player(True, 'Next_Break', 'Switching players...')
+  else
+  begin
+    DCnB_Debug('Next_Break', 'Taking a short break...', DEBUG_DETAILS);
+    Logout;
+    Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
+
+    DCnB_Debug('Next_Break', 'Break over, logging back in...', DEBUG_DETAILS);
+    LoginPlayer;
+  end;
+
+  Inc(Stats_CustomVars[STATS_LOGINS]);
+  Stats_Send;
 end;
 
 function Chop_IsTreeDown: Boolean;
