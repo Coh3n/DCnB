@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 58 -                                |
+|                               - Revision 59 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -53,8 +53,8 @@ program DraynorChopNBank;
   {.include DCnB_Form.scar}
 
 const
-  USE_FORM = False; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '58';
+  USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
+  SCRIPT_VERSION  = '59';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -115,6 +115,14 @@ const
   DEBUG_SUCCESS = 1;
   DEBUG_DETAILS = 2;
   DEBUG_PLAYER  = 3;
+
+{ const Flag Constants;
+  Description: Constants used in Walk_FindFlag }
+const
+  FLAG_COLOR  = 205052;
+  FLAG_LENGTH = 15;     //number of pixels with color FLAG_COLOR
+  FLAG_HEIGHT = 7;
+  FLAG_WIDTH  = 7;
 
 { type TTree record;
   Description: A type used for loading different trees }
@@ -548,7 +556,12 @@ procedure DCnB_Debug(proc, msg: String; debug: Integer);
 var
   time: String;
 begin
-  time := '[' + TheTime + ']: ';
+  {$IFNDEF SIMBA}
+    time := '[' + TheTime + ']: ';
+  {$ELSE}
+    time := '';
+  {$ENDIF}
+
   case debug of
     DEBUG_ERROR:
       Writeln(time + 'ERROR: ' + proc + ': ' + msg);
@@ -992,16 +1005,40 @@ begin
   end;
 end;
 
+function Walk_FindFlag(var x, y: Integer): Boolean;
+var
+  i: Integer;
+  flagPts: TPointArray;
+  flagBounds: T2DPointArray;
+begin
+  if (FindColors(flagPts, FLAG_COLOR, MMX1, MMY1, MMX2, MMY2)) then
+  begin
+    flagBounds := TPAToATPAEx(flagPts, FLAG_WIDTH, FLAG_HEIGHT);
+    for i := 0 to High(flagBounds) do
+      if (Length(flagBounds[i]) = FLAG_LENGTH) then
+      begin
+        MiddleTPAEx(flagBounds[i], x, y);
+
+        //set the coords to the bottom of the flag pole
+        IncEx(x, 4);
+        IncEx(y, 12);
+
+        Result := rs_OnMinimap(x, y);
+        Exit;
+      end;
+  end;
+end;
+
 function Walk_WaitWhile(where: Integer): Boolean;
 var
-  t: Integer;
+  t, x, y: Integer;
 begin
   t := GetSystemTime + 10000;
   while (GetSystemTime < t) do
   begin
     Find_Randoms(1500, 3000);
 
-    if (FFlag(5) or (not IsMoving) or (not FlagPresent)) then
+    if (not Walk_FindFlag(x, y)) then
     begin
       Players[CurrentPlayer].Loc := Walk_ConstToLoc(where);
       Wait(RandomRange(500, 1000));
@@ -1250,7 +1287,13 @@ begin
 
       begin
         Deposit(2, 28, True);
-        Result := (InvCount <= 1);
+        while (GetSystemTime < t) do
+        begin
+          Wait(RandomRange(200, 500));
+          Result := (InvCount <= 1);
+          if (Result) then
+            Break;
+        end;
       end;
 
     end else
@@ -1264,11 +1307,7 @@ begin
   if (Result) then
   begin
     DCnB_Debug('Bank_Logs', 'Successfully banked logs!', DEBUG_SUCCESS);
-    Wait(RandomRange(250, 750));
     Inc(playerLoads);
-
-    while ((not InvCount <= 1) and (GetSystemTime < t)) do
-      Wait(RandomRange(200, 500));
 
     CloseBank;
 
@@ -1392,7 +1431,7 @@ begin
   Report_WhichProgram(86);
   Report_AddTo('|______ ________ __________ _______ ________ __________ ________ ____________ ________|');
   Report_AddTo('| Nick | Active | Location | Loads |  Tree  | Logs Cut | Levels | Experience | Breaks |');
-  Report_AddTo('|¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯|');
+  Report_AddTo('|------ -------- ---------- ------- -------- ---------- -------- ------------ --------|');
 
   for i := 0 to High(Players) do
     with Players[i] do
@@ -1419,7 +1458,7 @@ begin
   begin
     Report_AddTo('|                                                                                     |');
     Report_AddTo('| False Reasons:                                                                      |');
-    Report_AddTo('| ¯¯¯¯¯¯¯¯¯¯¯¯¯¯                                                                      |');
+    Report_AddTo('| --------------                                                                      |');
     for i := 0 to High(Players) do
       if (not Players[i].Active) then
         with Players[i] do
@@ -1497,6 +1536,9 @@ procedure Setup_Script;
 var
   i: Integer;
 begin
+  {$IFDEF SIMBA}
+    SetScriptProp(SP_WriteTimeStamp, [True]);
+  {$ENDIF}
   DCnB_Signature;
 
   if (USE_FORM) then
@@ -1606,6 +1648,10 @@ begin
 end;
 
 begin
+  {$IFDEF SIMBA}
+    AddOnTerminate('ScriptTerminate');
+  {$ENDIF}
+
   Setup_MainLoop;
 end.
 
