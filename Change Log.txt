@@ -227,3 +227,6 @@ Rev. 59:
   - Adjusted banking a little; it shouldn't take as long to close the bank and start walking
   - The debug time stamps are now the script runtime (Simba only)
   - Added my own FindFlag function; the walking shouldn't return any false positives any longer
+
+Rev. 60:
+  - Forgot a pretty important thing in the walking

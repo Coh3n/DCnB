@@ -1,6 +1,6 @@
 {==============================================================================\
 |                             Draynor Chop N' Bank                             |
-|                               - Revision 59 -                                |
+|                               - Revision 60 -                                |
 |==============================================================================|
 |                                                                              |
 |      Written By: Coh3n                                                       |
@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '59';
+  SCRIPT_VERSION  = '60';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -1038,11 +1038,11 @@ begin
   begin
     Find_Randoms(1500, 3000);
 
-    if (not Walk_FindFlag(x, y)) then
+    if (Walk_FindFlag(x, y)) then
     begin
       Players[CurrentPlayer].Loc := Walk_ConstToLoc(where);
       Wait(RandomRange(500, 1000));
-      Result := True;
+      Result := (Distance(x, y, MSCX, MSCY) <= 5) or (not IsMoving);
       Break;
     end;
   end;
