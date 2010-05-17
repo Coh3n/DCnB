@@ -233,3 +233,6 @@ Rev. 60:
 
 Rev. 61:
   - Now the walking should actually be fixed :)
+
+Rev. 62:
+  - Small fix
