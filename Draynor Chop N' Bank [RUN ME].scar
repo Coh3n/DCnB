@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '65';
+  SCRIPT_VERSION  = '66';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -1248,25 +1248,26 @@ begin
 
   repeat
     if (not Bank_Open) then
-    begin
-      DCnB_Debug('Bank_Logs', 'Failed to open bank, retrying...', DEBUG_ERROR);
-      Inc(Tries);
-
-      if (Tries >= 20) then
+      if (not OpenBankFast('db')) then
       begin
-        SymbolAccuracy := 0.5;
+        DCnB_Debug('Bank_Logs', 'Failed to open bank, retrying...', DEBUG_ERROR);
+        Inc(Tries);
 
-        if FindSymbol(sX, sY, 'bank') then
+        if (Tries >= 20) then
         begin
-          DCnB_Debug('Bank_Logs', 'Found bank symbol! Relocating...', DEBUG_SUCCESS);
-          Mouse(sX, sY, 4, 4, True);
+          SymbolAccuracy := 0.5;
 
-          while (IsMoving and (GetSystemTime < t)) do
-            Wait(RandomRange(100, 300));
-        end else
-          DCnB_Debug('Bank_Logs', 'Failed to find bank symbol', DEBUG_ERROR);
+          if FindSymbol(sX, sY, 'bank') then
+          begin
+            DCnB_Debug('Bank_Logs', 'Found bank symbol! Relocating...', DEBUG_SUCCESS);
+            Mouse(sX, sY, 4, 4, True);
+
+            while (IsMoving and (GetSystemTime < t)) do
+              Wait(RandomRange(100, 300));
+          end else
+            DCnB_Debug('Bank_Logs', 'Failed to find bank symbol', DEBUG_ERROR);
+        end;
       end;
-    end;
 
     if (PinScreen) then
       InPin(Players[CurrentPlayer].Pin);

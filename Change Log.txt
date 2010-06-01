@@ -245,3 +245,6 @@ Rev. 64:
 
 Rev. 65:
   - Updated the logs DTMs
+
+Rev. 66:
+  - Added a quick failsafe for banking, thanks daazndagger! :)
