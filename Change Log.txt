@@ -248,3 +248,6 @@ Rev. 65:
 
 Rev. 66:
   - Added a quick failsafe for banking, thanks daazndagger! :)
+
+Rev. 67:
+  - Fixed a small bug in Next_Player, again thanks daazndagger. :)

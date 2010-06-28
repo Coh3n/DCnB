@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '66';
+  SCRIPT_VERSION  = '67';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -189,10 +189,10 @@ begin
     Nick   := '';   // 3-4 LOWERCASE letters from your username
     Active := True; // True = use this player
     Pin    := '';   // Leave blank if you don't have a bank pin
-    Integers[P_TOTAL_LOGS]  := 000;  // Total logs to cut
+    Integers[P_TOTAL_LOGS]  := 1000;  // Total logs to cut
     Booleans[P_TAKE_BREAKS] := True; // True = the player will take breaks
     Booleans[P_EQUIPPED]    := True; // True = your hatchet is equipped
-    Strings[P_TREE]         := '';   // Either 'willow' or 'oak'
+    Strings[P_TREE]         := 'willow';   // Either 'willow' or 'oak'
   end;
 
 {  // <-- Remove the curly brace to use multiple players!
@@ -820,15 +820,15 @@ begin
   end else
     DCnB_Debug(proc, msg, DEBUG_DETAILS);
 
-  NextPlayer(active);
-  Players[CurrentPlayer].Loc := Find_PlayerLocation;
-  playerLoads := 0;
-
   if (AllPlayersInactive) then
   begin
     DCnB_Debug('Next_Player', 'All players inactive', DEBUG_SUCCESS);
     TerminateScript;
   end;
+
+  NextPlayer(active);
+  Players[CurrentPlayer].Loc := Find_PlayerLocation;
+  playerLoads := 0;
 end;
 
 procedure Next_Break;
