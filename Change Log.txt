@@ -251,3 +251,6 @@ Rev. 66:
 
 Rev. 67:
   - Fixed a small bug in Next_Player, again thanks daazndagger. :)
+
+Rev. 68:
+  - Added a failsave in Bank_Logs to hopefully get rid of a bug where sometimes the script would continually look for logs even after they were banked.

@@ -54,7 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '67';
+  SCRIPT_VERSION  = '68';
 
 { const Stats Constansts;
   Description: Constants used for the stat's custom variables }
@@ -1281,8 +1281,10 @@ begin
       begin
         logsInInv := CountItems('dtm', Tree.DTM, [])
         DCnB_Debug('Bank_Logs', 'Found ' + IntToStr(logsInInv) + ' logs in inventory', DEBUG_DETAILS);
-      end else
+      end else begin
         DCnB_Debug('Bank_Logs', 'Failed to find DTM: ' + Tree.Name, DEBUG_ERROR);
+        Result := (InvCount <= 3);
+      end;
 
       if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
       begin
@@ -1291,13 +1293,17 @@ begin
       end else
 
       begin
-        Deposit(2, 28, True);
-        while (GetSystemTime < t) do
+        MMouse(dX, dY, 3, 3);
+        if (WaitUpText('ogs', 500)) then
         begin
-          Wait(RandomRange(200, 500));
-          Result := (InvCount <= 1);
-          if (Result) then
-            Break;
+          GetMousePos(dX, dY);
+          Mouse(dX, dY, 0, 0, False);
+          if (WaitOption('-All', 500)) then
+            while (GetSystemTime < t) do
+            begin
+              Wait(RandomRange(200, 500));
+              Result := (InvCount <= 3);
+            end;
         end;
       end;
 
