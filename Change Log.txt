@@ -254,3 +254,6 @@ Rev. 67:
 
 Rev. 68:
   - Added a failsave in Bank_Logs to hopefully get rid of a bug where sometimes the script would continually look for logs even after they were banked.
+
+Rev. 69:
+  - Updated the DTMs and added new SRL stats.

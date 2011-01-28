@@ -1,5 +1,6 @@
 {.include SRL/SRL.scar}
 {.include SRL/SRL/misc/Debug.scar}
+{.include SRL/SRL/misc/Stats.simba}
 
 { const Players.Integers Indexes;
   Description: Constants representing the DeclarePlayers integers. }
@@ -810,6 +811,7 @@ begin
     playSnd := frm_BoolToBool(tCombos[BOX_SND].Text);
     breakAfter := StrToInt(tEdits[EDIT_BRK_AFTER].Text);
   end;
+
   frmMain.ModalResult := mrOk;
 end;
 

@@ -50,25 +50,11 @@
 
 program DraynorChopNBank;
 {.include SRL\SRL\misc\Smart.scar} //Add '//' to the beginning of the line to disable SMART
-{.include DCnB_Form.scar}
+{.include DCnB_Form.simba}
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '68';
-
-{ const Stats Constansts;
-  Description: Constants used for the stat's custom variables }
-const
-  STATS_LINK = 'http://scriptmanager.freehostia.com/submit.php';
-
-  STATS_LOGINS  = 1;
-  STATS_WILLOWS = 2;
-  STATS_OAKS    = 3;
-  STATS_LOADS   = 4;
-  STATS_BREAKS  = 5;
-  STATS_EXP     = 6;
-  STATS_LEVELS  = 7;
-  STATS_RANDOMS = 8;
+  SCRIPT_VERSION  = '69';
 
 { const DTM Constants;
   Description: Constants representing DTMs used throughout the script }
@@ -146,13 +132,6 @@ var
   playerLoads: Integer;
   falseReason: Array of String;         //holds reasons why players turned false
 
-{ var Stat variables;
-  Description: Variables used for SRL Stats }
-var
-  Stats_UserID, Stats_Password, Stats_ScriptID: String;
-  Stats_LastTime: Integer;
-  Stats_CustomVars: Array [1..20] of Integer;
-
 {==============================================================================\
 |                               Script Setup                                   |
 |==============================================================================|
@@ -161,17 +140,10 @@ var
 |    * Setup from here to line 264                                             |
  \_____________________________________________________________________________}
 
-{ const SMART Constants;
-  Description: Constants representing SMART settings. Ignore if you're not
-               using SMART }
-const
-  SMART_WORLD          = 152;   // World to load
-  SMART_MEMBERS_WORLD  = False; // True = Members world
-
 { const Setup;
   Description: Constants used to setup the script }
 const
-  STATS_ID   = '';      // Your SRL Stats ID
+  STATS_ID   = '';      // Your SRL Stats Username
   STATS_PASS = '';      // Your SRL Stats Password
   RANDOM_SOUND = False; // True = a sound plays when a random is found
   BREAK_AFTER  = 15;    // Loads until break/switch player
@@ -262,232 +234,6 @@ begin
     Strings[P_TREE]         := '';
   end;
 //}
-end;
-
-{******************************************************************************}
-{ procedure Stats_CheckOutput(s: string);                                      }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-procedure Stats_CheckOutput(s: string);
-var
-  i: Integer;
-  sa: TStringArray;
-begin
-  sa := Explode(#10, s);
-  for i := 0 to High(sa) do
-    if (Trim(sa[i]) <> '') then
-      if StartsWith('ERROR(1)', sa[i]) then
-      begin
-        WriteLn('STATS: "' + sa[i] + '"');
-        Stats_UserID := '';
-        Stats_Password := '';
-      end
-      else if StartsWith('ERROR(2)', sa[i]) then
-      begin
-        WriteLn('STATS: "' + sa[i] + '"');
-        Stats_ScriptID := '';
-      end
-      else
-        WriteLn('STATS: "' + sa[i] + '"');
-end;
-
-{******************************************************************************}
-{ procedure Stats_GetScriptInfo( ... );                                        }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-function Stats_GetScriptInfo(out Version, News, Link: string;
-         out OutDated: Boolean; out LastUpdate_HoursAgo: Integer): Boolean;
-var
-  Client: Integer;
-  s: string;
-  sa: TStringArray;
-begin
-  Result := False;
-  if (Stats_ScriptID = '') then
-    Exit;
-
-  Client := InitializeHTTPClient(False, False);
-  ClearPostData(Client);
-  AddPostVariable(Client, 'do', 'getinfo');
-  AddPostVariable (Client, 'sID', Stats_ScriptID);
-
-  s := PostHTTPPageEx(Client, STATS_LINK);
-  sa := Explode(#10'GLUE'#10, s);
-  if (Length(sa) = 5) then
-  begin
-    Result := True;
-    Version := sa[0];
-    News := sa[1];
-    Link := sa[2];
-    OutDated := sa[3] = '1';
-    LastUpdate_HoursAgo := StrToIntDef(sa[4], -1);
-  end
-  else
-    Stats_CheckOutput(s);
-
-  FreeHTTPClient(Client );
-end;
-
-{******************************************************************************}
-{ procedure Stats_SendReport;                                                  }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-var
-  Stats_GlobalVars: array[1..24] of Integer;
-
-procedure Stats_SendReport;
-var
-  i, Client, Time: Integer;
-  s: string;
-begin
-  if (Stats_UserID = '') and (Stats_Password = '') and (Stats_ScriptID = '') then
-    Exit;
-
-  Client := InitializeHTTPClient(False, False);
-  ClearPostData(Client);
-  AddPostVariable(Client, 'do', 'submit');
-
-  Time := (GetTimeRunning - Stats_LastTime) div 1000 div 60;
-  if (Time < 5) then
-    Time := 0
-  else
-    Stats_LastTime := GetTimeRunning;
-  AddPostVariable(Client, 'sTime', IntToStr(Time));
-
-  if (Stats_UserID <> '') and (Stats_Password <> '') then
-  begin
-    AddPostVariable(Client, 'uID', Stats_UserID);
-    AddPostVariable(Client, 'uPass', Stats_Password);
-  end
-  else
-  begin
-    AddPostVariable(Client, 'uID', '-1');
-    AddPostVariable(Client, 'uPass', '');
-  end;
-
-  if (Stats_ScriptID <> '') then
-  begin
-    AddPostVariable (Client, 'sID', Stats_ScriptID);
-
-    for i := Low(Stats_CustomVars) to High(Stats_CustomVars) do
-    begin
-      AddPostVariable(Client, 'rndCustom' + IntToStr(i),
-                      IntToStr(Stats_CustomVars[i]));
-      Stats_CustomVars[i] := 0;
-    end;
-  end
-  else
-  begin
-    AddPostVariable (Client, 'sID', '-1');
-  end;
-
-  for i := Low(Stats_GlobalVars) to High(Stats_GlobalVars) do
-  begin
-    case i of
-      1: s := IntToStr(SRL_Logs - Stats_GlobalVars[i]);
-      2: s := IntToStr(Banks - Stats_GlobalVars[i]);
-      3: s := IntToStr(RandSolved[rand_Death] - Stats_GlobalVars[i]);
-      else if ((i - 3) < Length(RandSolved) - 1 {for Death}) then
-        s := IntToStr(RandSolved[i - 3] - Stats_GlobalVars[i]);
-    end;
-    AddPostVariable(Client, 'rndGlobal' + IntToStr(i), s);
-    Stats_GlobalVars[i] := Stats_GlobalVars[i] + StrToInt(s);
-  end;
-
-  s := PostHTTPPageEx(Client, STATS_LINK);
-  Stats_CheckOutput(s);
-  FreeHTTPClient(Client);
-
-  if (SRL_Procs[srl_OnSendStats] <> nil) then
-    SRL_Procs[srl_OnSendStats]();
-end;
-
-{******************************************************************************}
-{ procedure Stats_SendAccountInfo;                                             }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-procedure Stats_SendAccountInfo;
-var
-  i, Client: Integer;
-  Accounts: TStringArray;
-begin
-  if (Stats_UserID = '') and (Stats_Password = '') then
-    Exit;
-
-  Client := InitializeHTTPClient(False, False);
-  ClearPostData(Client);
-  AddPostVariable(Client, 'do', 'setaccounts');
-  AddPostVariable(Client, 'uID', Stats_UserID);
-  AddPostVariable(Client, 'uPass', Stats_Password);
-  if (Stats_ScriptID <> '') then
-    AddPostVariable (Client, 'sID', Stats_ScriptID)
-  else
-    AddPostVariable (Client, 'sID', '-1');
-
-  SetLength(Accounts, HowManyPlayers);
-  for i := 0 to HowManyPlayers - 1 do
-    Accounts[i] := Implode('.|€stat€|.', [Players[i].Name, Players[i].Loc,
-                   IntToStr(Integer(Players[i].Active))]);
-
-  AddPostVariable(Client, 'accInfo', Implode(#10'ACC'#10, Accounts));
-  Stats_CheckOutput(PostHTTPPageEx(Client, STATS_LINK));
-  FreeHTTPClient(Client);
-end;
-
-{******************************************************************************}
-{ procedure Stats_ManageAccounts;                                              }
-{ By: nielsie95                                                                }
-{ Description:                                                                 }
-{******************************************************************************}
-procedure Stats_ManageAccounts;
-var
-  i, ii, Client: Integer;
-  s: string;
-  Accounts, Stats: TStringArray;
-begin
-  if (Stats_UserID = '') and (Stats_Password = '') then
-    Exit;
-
-  Client := InitializeHTTPClient(False, False);
-  ClearPostData(Client);
-  AddPostVariable(Client, 'do', 'getaccounts');
-  AddPostVariable(Client, 'uPass', Stats_Password);
-  AddPostVariable(Client, 'uID', Stats_UserID);
-
-  s := PostHTTPPageEx(Client, STATS_LINK);
-  Accounts := Explode(#10'ACC'#10, s);
-  for i := 0 to High(Accounts) do
-  begin
-    Stats := Explode('.|€stat€|.', Accounts[i]);
-    if (Length(Stats) = 3) then
-    begin
-      for ii := 0 to HowManyPlayers - 1 do
-        if (LowerCase(Players[ii].Name) = LowerCase(Stats[0])) then
-        begin
-          Players[ii].Loc := Stats[1];
-          Players[ii].Active := Stats[2] = '1';
-          Break;
-        end;
-    end
-    else
-    begin
-      Stats_CheckOutput(s);
-      Break;
-    end;
-  end;
-
-  FreeHTTPClient(Client);
-  stats_SendAccountInfo;
-end;
-
-procedure Stats_Send;
-begin
-  Stats_SendReport;
-  Stats_ManageAccounts;
 end;
 
 {******************************************************************************}
@@ -607,9 +353,8 @@ begin
         Sat    := 0.77;
         Exp    := 37.5;
         Tol    := 9;
-        DTM    := DTMFromString('78DA633CCFCCC0B090910119247BEB30F0036' +
-                    '990E87F20603C02543307550D030313988489325E04AA994E40CD' +
-                    '4DA09A7904D45C05AA594940CD71A09AD5F8D50000BC850DB3');
+        DTM    := DTMFromString('mggAAAHicY2NgYPjMwsDwEYj/AvEvIH4NxE+BeA8j' +
+                      'A8NmIN4GxIeB+AQQ7wbidF9doC4mLBgT8AMxIw4MAQCBqQs7');
       end;
 
     'willow':
@@ -622,9 +367,8 @@ begin
         Sat    := 0.28;
         Exp    := 67.5;
         Tol    := 14;
-        DTM    := DTMFromString('78DA635CCACCC0B08891011998190832F0036' +
-                   '99828E32CA09A05A86A181898207230354B806A661050B301A866' +
-                   '16116A561050330FA8660D7E35002149085E');
+        DTM    := DTMFromString('mggAAAHicY2NgYDjBwsBwCIgvQfFhIN4JxPsYGRi2A' +
+                      'PF2ID4MxCegtKWRIFAXExaMCfiBmBEHhgAA8qkJ4Q==');
       end;
 
     else
@@ -643,18 +387,12 @@ begin
   if (LevelUp) then
   begin
     Inc(Players[CurrentPlayer].Integers[P_LEVELS]);
-    Inc(Stats_CustomVars[STATS_LEVELS]);
-    Stats_Send;
+    stats_IncVariable('Total Levels Gained', 1);
   end;
 
   if (FindNormalRandoms) then
-  begin
-    Inc(Stats_CustomVars[STATS_RANDOMS]);
-    Stats_Send;
-
     if (playSnd) then
       PlaySound(ScriptPath + 'RandomSound.wav');
-  end;
 
   UseRewardBox;
   FindLamp(LampSkill);
@@ -698,10 +436,14 @@ begin
   if (not LoggedIn) then
     Exit;
 
-  dtm_Hatchet[HATCHET_NORMAL] :=
-    DTMFromString('78DA639CC0C2C0709D910119E4050830F0036' +
-       '990E87F2060EC07AAB98FAA868181094CC244197B816AEE105003' +
-       'B2EB22013553806A2EE3570300C2B90C0B');
+  if (not Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
+    dtm_Hatchet[HATCHET_NORMAL] :=
+      DTMFromString('mbQAAAHicY2VgYJBgZWAQgWJJIJYF4l2MDAwngHg/EG8E4nVAXBoi' +
+         'AFTNhIZRAT8QM2LBYAAAjCQFLw==')
+  else
+    dtm_Hatchet[HATCHET_NORMAL] :=
+      DTMFromString('mbQAAAHicY2VgYHBhYmBwA2JvKO0ExMaMDAwaQKwMxAZAbAvERcH8' +
+         'QNVMaBgVgFQwYsFgAAALeANN');
 
   dtm_Hatchet[HATCHET_DRAGON] :=
     DTMFromString('78DA63CC66666058C7C8800CFC05B819A6016' +
@@ -835,7 +577,6 @@ procedure Next_Break;
 begin
   if (not LoggedIn) then
     Exit;
-  Inc(Stats_CustomVars[STATS_BREAKS]);
 
   with Players[CurrentPlayer] do
     Integers[P_BREAKS] := Integers[P_BREAKS] + 1;
@@ -851,9 +592,6 @@ begin
     DCnB_Debug('Next_Break', 'Break over, logging back in...', DEBUG_DETAILS);
     LoginPlayer;
   end;
-
-  Inc(Stats_CustomVars[STATS_LOGINS]);
-  Stats_Send;
 end;
 
 function Chop_IsTreeDown: Boolean;
@@ -973,7 +711,7 @@ begin
   if (notFindTrees >= 60) then
     Next_Player(False, 'Chop_Trees', 'Failed to find trees 60 times');
 
-  if (notFindUptext >= 60) then
+  if (notFindUptext >= 120) then
     Next_Player(False, 'Chop_Trees', 'Failed to find uptext 60 times');
 
   SetColorSpeed2Modifiers(0.2, 0.2);
@@ -1330,12 +1068,10 @@ begin
     end;
 
     if (Tree.Name = 'Willow') then
-      IncEx(Stats_CustomVars[STATS_WILLOWS], logsInInv)
+      stats_IncVariable('Willow Logs Chopped', logsInInv)
     else
-      IncEx(Stats_CustomVars[STATS_OAKS], logsInInv);
-    IncEx(Stats_CustomVars[STATS_EXP], Round(logsInInv * Tree.Exp));
-    Inc(Stats_CustomVars[STATS_LOADS]);
-    Stats_Send;
+      stats_IncVariable('Oak Logs Chopped', logsInInv);
+    stats_IncVariable('Total EXP Gained', Round(logsInInv * Tree.Exp));
 
     with Players[CurrentPlayer] do
       if (Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) then
@@ -1529,8 +1265,6 @@ end;
 procedure Setup_Player;
 begin
   LoginPlayer;
-  Inc(Stats_CustomVars[STATS_LOGINS]);
-  Stats_Send;
 
   Players[CurrentPlayer].Loc := Find_PlayerLocation;
   SetAngle(True);
@@ -1546,6 +1280,7 @@ end;
 procedure Setup_Script;
 var
   i: Integer;
+  sName, sPass: string;
 begin
   {$IFDEF SIMBA}
     SetScriptProp(SP_WriteTimeStamp, [True]);
@@ -1560,31 +1295,32 @@ begin
     frm_ShowPlayerForm;
     frm_KillForm;
 
-    Stats_UserID := statsID;
-    Stats_Password := statsPass;
+    sName := statsID;
+    sPass := statsPass;
 
     if (not startReady) then
       TerminateScript;
   end else
 
   begin
-    Smart_Server := SMART_WORLD;
-    Smart_Members := SMART_MEMBERS_WORLD;
+    Smart_Server := 152;
+    Smart_Members := False;
     Smart_Signed := True;
     Smart_SuperDetail := False;
 
-    Stats_UserID := STATS_ID;
-    Stats_Password := STATS_PASS;
+    sName := STATS_ID;
+    sPass := STATS_PASS;
     playSnd := RANDOM_SOUND;
     breakAfter := BREAK_AFTER;
   end;
 
-  Stats_ScriptID := '24';
   SetupSRL;
   ActivateClient;
+  SetupSRLStats(34, sName, sPass);
 
   if (not USE_FORM) then
     DeclarePlayers;
+
   Disguise('Logs Chopped: 0');
   Writeln('Loading, please wait...');
   SymbolAccuracy := 0.5;
@@ -1646,6 +1382,8 @@ begin
               Setup_Player;
             end;
         end;
+
+        stats_Commit;
       until((Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) or (not LoggedIn));
 
     if (not LoggedIn) then
@@ -1656,6 +1394,7 @@ end;
 procedure ScriptTerminate;
 begin
   Report_Print;
+  stats_Commit;
 end;
 
 begin
@@ -1667,5 +1406,5 @@ begin
 end.
 
 {==============================================================================\
-|                    Copyright ©09-10 Coh3n @ SRL-Forums                       |
+|                    Copyright 09-11 Coh3n @ SRL-Forums                        |
 |==============================================================================}
