@@ -54,13 +54,7 @@ program DraynorChopNBank;
 
 const
   USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '69';
-
-{ const DTM Constants;
-  Description: Constants representing DTMs used throughout the script }
-const
-  HATCHET_NORMAL = 0;
-  HATCHET_DRAGON = 1;
+  SCRIPT_VERSION  = '70';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
@@ -431,40 +425,18 @@ end;
 function Find_Hatchet: Boolean;
 var
   x, y, h, i: Integer;
-  dtm_Hatchet: Array[0..1] of Integer;
 begin
   if (not LoggedIn) then
     Exit;
 
-  if (not Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
-    dtm_Hatchet[HATCHET_NORMAL] :=
-      DTMFromString('mbQAAAHicY2VgYJBgZWAQgWJJIJYF4l2MDAwngHg/EG8E4nVAXBoi' +
-         'AFTNhIZRAT8QM2LBYAAAjCQFLw==')
-  else
-    dtm_Hatchet[HATCHET_NORMAL] :=
-      DTMFromString('mbQAAAHicY2VgYHBhYmBwA2JvKO0ExMaMDAwaQKwMxAZAbAvERcH8' +
-         'QNVMaBgVgFQwYsFgAAALeANN');
-
-  dtm_Hatchet[HATCHET_DRAGON] :=
-    DTMFromString('78DA63CC66666058C7C8800CFC05B819A6016' +
-       '99828630A50CD6A54350C0C4C1039989A02A09A5504D41401D5AC' +
-       '21A0260DA8661301352540355BF0AB0100FB0307CF');
-
   if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
-    GameTab(tab_Equip)
-  else
+  begin
+    GameTab(tab_Equip);
+    Result := (CountColor(SRL_OUTLINE_BLACK, 570, 289, 603, 320) > 0);
+  end else begin
     GameTab(tab_Inv);
-
-  h := High(dtm_Hatchet);
-  for i := 0 to h do
-    if (FindDTM(dtm_Hatchet[i], x, y, MIX1, MIY1, MIX2, MIY2)) then
-    begin
-      Result := True;
-      Break;
-    end;
-
-  FreeDTM(dtm_Hatchet[HATCHET_NORMAL]);
-  FreeDTM(dtm_Hatchet[HATCHET_DRAGON]);
+    Result := ExistsItem(1);
+  end;
 end;
 
 {******************************************************************************}

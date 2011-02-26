@@ -257,3 +257,6 @@ Rev. 68:
 
 Rev. 69:
   - Updated the DTMs and added new SRL stats.
+
+Rev. 70:
+  - Doesn't use DTMs anymore, just checks to see if an item exists in the equipment slot/first inventory slot.
