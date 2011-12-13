@@ -7,5 +7,12 @@ pertaining to this script can be found here:
 
 http://villavu.com/forum/showthread.php?t=47111
 
+
+And the git repository (including change logs) can be found here:
+
+https://github.com/Coh3n/DCnB
+
+
+
 Thanks,
 Coh3n
