@@ -248,11 +248,7 @@ begin
           bmp := frmBitmaps[TAB_ACTIVE];
           GetBitmapSize(bmp, w, h);
           SetBounds({L} 50 + (i * 74), {T} 161, {W} w, {H} h);
-          {$ifdef Simba}
           DrawBitmap(Bmp,canvas,0,0);
-          {$else}
-          SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
-          {$endif}
           isActiveTab[i] := True;
 
           if (isActiveImage[IMG_TAB_SCPT_NORM]) then
@@ -326,12 +322,7 @@ begin
       if (not isActiveImage[intArr[0]]) then
         Exit;
       GetBitmapSize(intArr[1], w, h);
-      {$ifdef Simba}
       DrawBitmap(intarr[1],tImages[intArr[0]].Canvas,0,0);
-      {$else}
-      SafeCopyCanvas(GetBitmapCanvas(intArr[1]), tImages[intArr[0]].Canvas,
-                     0, 0, w, h, 0, 0, w, h);
-      {$endif}
       isActiveImage[intArr[0]] := False;
     end;
   end;
@@ -373,12 +364,7 @@ begin
   begin
     bmp := intArr[INACTIVE];
     GetBitmapSize(bmp, w, h);
-    {$ifdef Simba}
     DrawBitmap(bmp,tTabs[currTab].Canvas,0,0);
-    {$else}
-    SafeCopyCanvas(GetBitmapCanvas(bmp), tTabs[currTab].Canvas,
-                   0, 0, w, h, 0, 0, w, h);
-    {$endif}
     tTabLabels[currTab].Font.Color := 1068418;
     isActiveTab[currTab] := False;
     frm_PlayerInfo(currTab, True);
@@ -391,11 +377,7 @@ begin
   }
   bmp := intArr[ACTIVE];
   GetBitmapSize(bmp, w, h);
-  {$ifdef Simba}
   DrawBitmap(bmp,tTabs[theSender].Canvas,0,0);
-  {$else}
-  SafeCopyCanvas(GetBitmapCanvas(bmp), tTabs[theSender].Canvas, 0, 0, w, h, 0, 0, w, h);
-  {$endif}
   tTabLabels[theSender].Font.Color := 2070783;
   isActiveTab[theSender] := True;
   frm_PlayerInfo(theSender, True);
@@ -489,12 +471,7 @@ begin
 
         bmp := frmBitmaps[TAB_INACTIVE];
         GetBitmapSize(bmp, w, h);
-        {$ifdef Simba}
         DrawBitmap(bmp,canvas,0,0);
-        {$else}
-        SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas,
-                       0, 0, w, h, 0, 0, w, h);
-        {$endif}
         isActiveTab[i] := False;
         //frm_Debug('tab_Add', 'Tab ' + IntToStr(i + 1) + ' is now inactive.');
       end;
@@ -537,11 +514,7 @@ begin
         frm_PlayerInfo(hi - 1, False);
         bmp := frmBitmaps[TAB_ACTIVE];
         GetBitmapSize(bmp, w, h);
-        {$ifdef Simba}
         DrawBitmap(bmp,canvas,0,0);
-        {$else}
-        SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
-        {$endif}
         tTabLabels[hi - 1].Font.Color := 2070783;
         isActiveTab[hi - 1] := True;
         //frm_Debug('tab_Delete', 'Tab ' + IntToStr(hi - 1) + ' is now active.');
@@ -898,12 +871,7 @@ begin
         for i := 0 to hi do
         begin
           GetBitmapSize(bmpArr[i], w, h);
-          {$ifdef Simba}
           DrawBitmap(bmpArr[i],tImages[imgArr[i]].Canvas,0,0);
-          {$else}
-          SafeCopyCanvas(GetBitmapCanvas(bmpArr[i]), tImages[imgArr[i]].Canvas,
-                     0, 0, w, h, 0, 0, w, h);
-          {$endif}
         end;
 
         hi := High(tTabs);
@@ -1035,12 +1003,7 @@ begin
 
           bmp := frmBitmaps[bmpArr[i]];
           GetBitmapSize(bmp, w, h);
-          {$ifdef Simba}
           DrawBitmap(bmp,tImages[imgArr[i]].Canvas,0,0);
-          {$else}
-          SafeCopyCanvas(GetBitmapCanvas(bmp), tImages[imgArr[i]].Canvas,
-                         0, 0, w, h, 0, 0, w, h);
-          {$endif}
           isActiveImage[imgArr[i]] := False;
         end;
 
@@ -1082,12 +1045,7 @@ begin
         if (not isActiveImage[intArr[0]]) then
           Exit;
         GetBitmapSize(intArr[1], w, h);
-        {$ifdef Simba}
         DrawBitmap(intArr[1],tImages[intArr[0]].Canvas,0,0);
-        {$else}
-        SafeCopyCanvas(GetBitmapCanvas(intArr[1]), tImages[intArr[0]].Canvas,
-                       0, 0, w, h, 0, 0, w, h);
-        {$endif}
         isActiveImage[intArr[0]] := False;
       end;
 
@@ -1134,12 +1092,7 @@ begin
         if (isActiveImage[intArr[0]]) then
           Exit;
         GetBitmapSize(intArr[1], w, h);
-        {$ifdef Simba}
         DrawBitmap(intArr[1],tImages[intArr[0]].Canvas,0,0);
-        {$else}
-        SafeCopyCanvas(GetBitmapCanvas(intArr[1]), tImages[intArr[0]].Canvas,
-                       0, 0, w, h, 0, 0, w, h);
-        {$endif}
         isActiveImage[intArr[0]] := True;
       end;
 
@@ -1172,12 +1125,7 @@ begin
 
           bmp := frmBitmaps[bmpArr[i]];
           GetBitmapSize(bmp, w, h);
-          {$ifdef Simba}
           DrawBitmap(bmp,tImages[imgArr[i]].Canvas,0,0);
-          {$else}
-          SafeCopyCanvas(GetBitmapCanvas(bmp), tImages[imgArr[i]].Canvas,
-                         0, 0, w, h, 0, 0, w, h);
-          {$endif}
           if (Sender = tImages[IMG_TAB_LABELS]) then
           begin
             isActiveImage[imgArr[i]] := False;
@@ -1442,11 +1390,7 @@ begin
       end;
 
       GetBitmapSize(bmp, w, h);
-      {$ifdef Simba}
       DrawBitmap(bmp,Canvas,0,0);
-      {$else}
-      SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
-      {$endif}
     end;
   end;
 
@@ -1465,7 +1409,7 @@ begin
       case mainCombo of
         BOX_SND:
           begin
-            SetBounds({L} 382, {T} 285, {W} 100, {H} 20);
+            SetBounds({L} 382, {T} 285, {W} 100, {H} 15);
             MaxLength := 3;
             comboItems := ['Yes', 'No'];
 
@@ -1475,7 +1419,7 @@ begin
 
         BOX_SMRT_MEM..BOX_SMRT_CLNT:
           begin
-            SetBounds({L} 175, {T} 221 + (mainCombo * 32), {W} 100, {H} 20);
+            SetBounds({L} 175, {T} 221 + (mainCombo * 32), {W} 100, {H} 15);
 
             case mainCombo of
               BOX_SMRT_MEM:
@@ -1518,18 +1462,19 @@ begin
       Color  := 5334130;
       Font.Color := clWhite;
       Font.Name  := 'Courier New';
+      ShowHint := True;
 
       case mainEdit of
         EDIT_SMRT_WLD:
           begin
-            SetBounds({L} 175, {T} 189, {W} 100, {H} 20);
-            Text := '152';
+            SetBounds({L} 175, {T} 189, {W} 100, {H} 15);
+            Text := '10';
             MaxLength := 3;
           end;
 
         EDIT_STAT_ID, EDIT_STAT_PASS:
           begin
-            SetBounds({L} 382, {T} 157 + (mainEdit * 32), {W} 100, {H} 20);
+            SetBounds({L} 382, {T} 157 + (mainEdit * 32), {W} 100, {H} 15);
 
             if (mainEdit = EDIT_STAT_PASS) then
             begin
@@ -1539,11 +1484,14 @@ begin
             end else
               if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
                 Text := ReadINI('Setup Info', 'Stats ID', ScriptPath + 'DCnB_PlayerList');
+
+            Hint := 'Your stats username/password';
           end;
 
         EDIT_BRK_AFTER:
           begin
-            SetBounds({L} 382, {T} 317, {W} 100, {H} 20);
+            SetBounds({L} 382, {T} 317, {W} 100, {H} 15);
+            Hint := 'How many loads to break or switch players after';
             if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
               Text := ReadINI('Setup Info', 'Break After', ScriptPath + 'DCnB_PlayerList');
           end;
@@ -1599,11 +1547,7 @@ begin
       isActiveImage[helpImage] := False;
       OnMouseMove := @frm_OnMouseMove;
       GetBitmapSize(bmp, w, h);
-      {$ifdef Simba}
       DrawBitmap(bmp,Canvas,0,0);
-      {$else}
-      SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
-      {$endif}
     end;
   end;
   {
@@ -1651,11 +1595,7 @@ begin
       isActiveImage[introImage] := False;
       OnMouseMove := @frm_OnMouseMove;
       GetBitmapSize(bmp, w, h);
-      {$ifdef Simba}
       DrawBitmap(bmp,Canvas,0,0);
-      {$else}
-      SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
-      {$endif}
     end;
   end;
 
@@ -1677,11 +1617,7 @@ begin
     isActiveImage[IMG_FRM_CREDITS] := False;
     OnMouseMove := @frm_OnMouseMove;
     GetBitmapSize(bmp, w, h);
-    {$ifdef Simba}
     DrawBitmap(bmp,Canvas,0,0);
-    {$else}
-    SafeCopyCanvas(GetBitmapCanvas(bmp), Canvas, 0, 0, w, h, 0, 0, w, h);
-    {$endif}
   end;
   {
     Everything to do with the intro form (frmIntro) ends here, and everything
@@ -1701,6 +1637,7 @@ begin
       Font.Color := clWhite;
       Font.Name  := 'Courier New';
       OnKeyPress := @frm_OnKeyPress;
+      ShowHint := True;
 
       if (isActiveImage[IMG_TAB_SCPT_NORM]) then
         Visible := False
@@ -1710,25 +1647,25 @@ begin
       case tabCombo of
         BOX_ACTIVE:
           begin
-            SetBounds({L} 152, {T} 319, {W} 100, {H} 20);
+            SetBounds({L} 152, {T} 319, {W} 100, {H} 15);
             comboItems := ['Yes', 'No'];
           end;
 
         BOX_TREE:
           begin
-            SetBounds({L} 395, {T} 195, {W} 100, {H} 20);
+            SetBounds({L} 395, {T} 195, {W} 100, {H} 15);
             comboItems := ['Willow', 'Oak'];
           end;
 
         BOX_HATCHET:
           begin
-            SetBounds({L} 395, {T} 257, {W} 100, {H} 20);
+            SetBounds({L} 395, {T} 257, {W} 100, {H} 15);
             comboItems := ['Equipped', 'Inventory'];
           end;
 
         BOX_BREAKS:
           begin
-            SetBounds({L} 395, {T} 288, {W} 100, {H} 20);
+            SetBounds({L} 395, {T} 288, {W} 100, {H} 15);
             comboItems := ['Yes', 'No'];
           end;
 
@@ -1753,6 +1690,7 @@ begin
       Color  := 5334130;
       Font.Color := clWhite;
       Font.Name  := 'Courier New';
+      ShowHint := True;
 
       if (isActiveImage[IMG_TAB_SCPT_NORM]) then
         Visible := False
@@ -1762,17 +1700,20 @@ begin
       case tabEdit of
         EDIT_NAME, EDIT_PASS, EDIT_NICK, EDIT_PIN:
           begin
+            if (tabEdit = EDIT_NICK) then
+              Hint := 'A 3-4 letter abbreviation of your username';
+
             if (tabEdit = EDIT_PASS) or (tabEdit = EDIT_PIN) then
               tTabEdits[tabEdit].PasswordChar := '*';
 
             if (tabEdit = EDIT_PIN) or (tabEdit = EDIT_NICK) then
               MaxLength := 4;
 
-            SetBounds({L} 152, {T} 195 + (tabEdit * 31), {W} 100, {H} 20);
+            SetBounds({L} 152, {T} 195 + (tabEdit * 31), {W} 100, {H} 15);
           end;
 
         EDIT_LOGS:
-          SetBounds({L} 395, {T} 226, {W} 100, {H} 20);
+          SetBounds({L} 395, {T} 226, {W} 100, {H} 15);
 
         else begin
           frm_Debug('frm_InitForm', 'Invalid tabEditBox!');

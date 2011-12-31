@@ -48,11 +48,11 @@
  \_____________________________________________________________________________}
 
 program DraynorChopNBank;
-//{$DEFINE SMART} //Add '//' to the beginning of the line to disable SMART
+{$DEFINE SMART} //Add '//' to the beginning of the line to disable SMART
 {$i DCnB_Form.simba}
 
 const
-  USE_FORM = False; // <-- VERY IMPORTANT! True = use PlayerForm
+  USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
   SCRIPT_VERSION  = '70';
 
 { const Walk Constants;
@@ -119,10 +119,9 @@ type
 { var Global;
   Description: Global variables used throughout the script }
 var
-  tP: TPoint;                           //used as the tree tracking point
-  srl_MMTPA: TPointArray;               //used in autocoloring
+  srl_MMTPA: TPointArray;               // used in autocoloring
   playerLoads: Integer;
-  falseReason: Array of String;         //holds reasons why players turned false
+  falseReason: Array of String;         // holds reasons why players turned false
 
 {==============================================================================\
 |                               Script Setup                                   |
@@ -155,7 +154,7 @@ begin
     Pin    := '';   // Leave blank if you don't have a bank pin
     Integers[P_TOTAL_LOGS]  := 1000;  // Total logs to cut
     Booleans[P_TAKE_BREAKS] := True; // True = the player will take breaks
-    Booleans[P_EQUIPPED]    := False; // True = your hatchet is equipped
+    Booleans[P_EQUIPPED]    := True; // True = your hatchet is equipped
     Strings[P_TREE]         := 'willow';   // Either 'willow' or 'oak'
   end;
 
@@ -417,8 +416,6 @@ begin
 end;
 
 function Find_Hatchet: Boolean;
-var
-  x, y, h, i: Integer;
 begin
   if (not LoggedIn) then
     Exit;
@@ -643,7 +640,6 @@ begin
         Wait(RandomRange(2000, 3000));
 
         GetMousePos(x, y);
-        tP := IntToPoint(x, y);
         DCnB_Debug('Chop_Trees', 'Track Point: (' + IntToStr(x) + ', ' + IntToStr(y) + ')', DEBUG_DETAILS);
 
         t := GetSystemTime + RandomRange(15000, 20000);
@@ -861,7 +857,7 @@ end;
 
 function Bank_Logs: Boolean;
 var
-  logsInInv, Tries, dX, dY, sX, sY, t: Integer;
+  logsInInv, Tries, sX, sY, t: Integer;
   Tree: TTree;
 begin
   if (not LoggedIn) or (InvCount <= 1) then
