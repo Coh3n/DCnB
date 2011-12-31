@@ -567,18 +567,17 @@ begin
     with formPlayers[i] do
     begin
       if (i = High(formPlayers)) then
-        if (Name = '') then
-          begin
-            Name := tTabEdits[EDIT_NAME].Text;
-            Pass := tTabEdits[EDIT_PASS].Text;
-            Nick := tTabEdits[EDIT_NICK].Text;
-            Pin  := tTabEdits[EDIT_PIN].Text;
-            Active := tTabCombos[BOX_ACTIVE].Text;
-            Tree := tTabCombos[BOX_TREE].Text;
-            Logs := tTabEdits[EDIT_LOGS].Text;
-            Hatchet := tTabCombos[BOX_HATCHET].Text;
-            Breaks := tTabCombos[BOX_BREAKS].Text;
-          end;
+      begin
+        Name := tTabEdits[EDIT_NAME].Text;
+        Pass := tTabEdits[EDIT_PASS].Text;
+        Nick := tTabEdits[EDIT_NICK].Text;
+        Pin  := tTabEdits[EDIT_PIN].Text;
+        Active := tTabCombos[BOX_ACTIVE].Text;
+        Tree := tTabCombos[BOX_TREE].Text;
+        Logs := tTabEdits[EDIT_LOGS].Text;
+        Hatchet := tTabCombos[BOX_HATCHET].Text;
+        Breaks := tTabCombos[BOX_BREAKS].Text;
+      end;
 
       WriteINI('Player List', 'Name' + IntToStr(i), ' ' + Name, ScriptPath + 'DCnB_PlayerList');
       WriteINI('Player List', 'Pass' + IntToStr(i), ' ' + Pass, ScriptPath + 'DCnB_PlayerList');
@@ -735,6 +734,8 @@ begin
       Players[i].Pass := formPlayers[i].Pass;
       Players[i].Nick := formPlayers[i].Nick;
       Players[i].Pin := formPlayers[i].Pin;
+      Players[i].Member := frm_BoolToBool(tCombos[BOX_SMRT_MEM].Text);
+      Players[i].WorldInfo := [Players[i].Member, StrToInt(tEdits[EDIT_SMRT_WLD].Text), False];
       Players[i].Strings[P_TREE] := formPlayers[i].Tree;
       Players[i].Booleans[P_TAKE_BREAKS] := frm_BoolToBool(formPlayers[i].Breaks);
 
@@ -759,7 +760,7 @@ begin
 
       Players[i].Booleans[P_EQUIPPED] := frm_BoolToBool(formPlayers[i].Hatchet);
       if (not Players[i].Booleans[P_EQUIPPED]) then
-        if (Lowercase(formPlayers[i].Hatchet) <> 'inventory') then
+        if (Lowercase(formPlayers[i].Hatchet) <> '1st inventory slot') then
         begin
           frmHelp.Visible := True;
           frm_ShowMessage('Invalid hatchet status for ' + #10 +
@@ -1403,8 +1404,10 @@ begin
       Parent := frmMain;
       Color  := 5334130;
       Font.Color := clWhite;
-      Font.Name  := 'Courier New';
+      Font.Name  := 'Arial';
+      Font.Size  := 10;
       OnKeyPress := @frm_OnKeyPress;
+      ShowHint := True;
 
       case mainCombo of
         BOX_SND:
@@ -1412,6 +1415,7 @@ begin
             SetBounds({L} 382, {T} 285, {W} 100, {H} 15);
             MaxLength := 3;
             comboItems := ['Yes', 'No'];
+            Hint := 'Do you want to play a sound when a random event is found?';
 
             if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
               Text := ReadINI('Setup Info', 'Play Sound', ScriptPath + 'DCnB_PlayerList');
@@ -1426,18 +1430,21 @@ begin
                 begin
                   comboItems := ['Free', 'Members'];
                   Text := 'Free';
+                  Hint := 'Are you players members or free-to-play?';
                 end;
 
               BOX_SMRT_DTL:
                 begin
                   comboItems := ['Low', 'High'];
                   Text := 'Low';
+                  Hint := 'Low detail recommended';
                 end;
 
               BOX_SMRT_CLNT:
                 begin
                   comboItems := ['Signed', 'Unsigned'];
                   Text := 'Signed';
+                  Hint := 'Signed recommended.  Unsigned loads much slower, but may be safer.';
                 end;
             end;
           end;
@@ -1461,7 +1468,8 @@ begin
       Parent := frmMain;
       Color  := 5334130;
       Font.Color := clWhite;
-      Font.Name  := 'Courier New';
+      Font.Name  := 'Arial';
+      Font.Size  := 10;
       ShowHint := True;
 
       case mainEdit of
@@ -1470,6 +1478,7 @@ begin
             SetBounds({L} 175, {T} 189, {W} 100, {H} 15);
             Text := '10';
             MaxLength := 3;
+            Hint := 'Which world to log your players in to';
           end;
 
         EDIT_STAT_ID, EDIT_STAT_PASS:
@@ -1485,13 +1494,13 @@ begin
               if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
                 Text := ReadINI('Setup Info', 'Stats ID', ScriptPath + 'DCnB_PlayerList');
 
-            Hint := 'Your stats username/password';
+            Hint := 'Your stats username (ID) & password';
           end;
 
         EDIT_BRK_AFTER:
           begin
             SetBounds({L} 382, {T} 317, {W} 100, {H} 15);
-            Hint := 'How many loads to break or switch players after';
+            Hint := 'How many loads to do before breaking or switching players';
             if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
               Text := ReadINI('Setup Info', 'Break After', ScriptPath + 'DCnB_PlayerList');
           end;
@@ -1635,7 +1644,8 @@ begin
       Parent := frmMain;
       Color  := 5334130;
       Font.Color := clWhite;
-      Font.Name  := 'Courier New';
+      Font.Name  := 'Arial';
+      Font.Size  := 10;
       OnKeyPress := @frm_OnKeyPress;
       ShowHint := True;
 
@@ -1649,24 +1659,28 @@ begin
           begin
             SetBounds({L} 152, {T} 319, {W} 100, {H} 15);
             comboItems := ['Yes', 'No'];
+            Hint := 'Do you want to use this player?';
           end;
 
         BOX_TREE:
           begin
             SetBounds({L} 395, {T} 195, {W} 100, {H} 15);
             comboItems := ['Willow', 'Oak'];
+            Hint := 'Which tree do you want this player to cut?';
           end;
 
         BOX_HATCHET:
           begin
             SetBounds({L} 395, {T} 257, {W} 100, {H} 15);
-            comboItems := ['Equipped', 'Inventory'];
+            comboItems := ['Equipped', '1st Inventory Slot'];
+            Hint := 'Is your hatchet equipped or in the 1st inventory slot?';
           end;
 
         BOX_BREAKS:
           begin
             SetBounds({L} 395, {T} 288, {W} 100, {H} 15);
             comboItems := ['Yes', 'No'];
+            Hint := 'Do you want this player to take breaks?';
           end;
 
         else begin
@@ -1689,7 +1703,8 @@ begin
       Parent := frmMain;
       Color  := 5334130;
       Font.Color := clWhite;
-      Font.Name  := 'Courier New';
+      Font.Name  := 'Arial';
+      Font.Size  := 10;
       ShowHint := True;
 
       if (isActiveImage[IMG_TAB_SCPT_NORM]) then
