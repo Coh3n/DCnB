@@ -59,11 +59,9 @@ const
   Description: Constants representing different types of walks }
 const
   WALK_TREES_WILLOWS = 0;
-  WALK_TREES_OAKS_1  = 1;
-  WALK_TREES_OAKS_2  = 2;
+  WALK_TREES_OAKS    = 1;
   WALK_BANK_WILLOWS  = 3;
-  WALK_BANK_OAKS_1   = 4;
-  WALK_BANK_OAKS_2   = 5;
+  WALK_BANK_OAKS     = 4;
 
 { const Path Constants;
   Description: Constants representing different walking paths }
@@ -302,11 +300,11 @@ begin
       begin
         Name   := 'Oak';
         UpText := ['Oak'];
-        Color  := 1516577;
-        Hue    := 0.74;
-        Sat    := 0.92;
+        Color  := 1583399;
+        Hue    := 0.50;
+        Sat    := 0.69;
         Exp    := 37.5;
-        Tol    := 10;
+        Tol    := 5;
       end;
 
     'willow':
@@ -570,17 +568,11 @@ begin
     WALK_TREES_WILLOWS:
       Result := 'Willows';
 
-    WALK_TREES_OAKS_1:
-      Result := 'Oaks[1]';
-
-    WALK_TREES_OAKS_2:
+    WALK_TREES_OAKS:
       Result := 'Oaks';
 
-    WALK_BANK_WILLOWS, WALK_BANK_OAKS_2:
+    WALK_BANK_WILLOWS, WALK_BANK_OAKS:
       Result := 'Bank';
-
-    WALK_BANK_OAKS_1:
-      Result := 'Bank[1]';
 
     else
       DCnB_Debug('Walk_ConstToLoc', 'Invalid location', DEBUG_ERROR);
@@ -594,6 +586,12 @@ begin
   t := GetSystemTime + 10000;
   while (GetSystemTime < t) do
   begin
+    if (where = WALK_TREES_OAKS) then
+      SetAngle(SRL_ANGLE_LOW);
+
+    if (where = WALK_BANK_OAKS) then
+      SetAngle(SRL_ANGLE_HIGH);
+
     Find_Randoms(1500, 3000);
 
     if (FindFlag(x, y)) then
@@ -609,8 +607,6 @@ begin
       Break;
     end;
   end;
-
-  writeln(toStr(result));
 end;
 
 function Walk_PerformIndex(which: Integer): Boolean;
@@ -632,32 +628,13 @@ begin
       end else
         MouseBox(595, 113, 613, 130, CLICK_LEFT);
 
-    WALK_TREES_OAKS_1:
+    WALK_TREES_OAKS:
+      if (Players[CurrentPlayer].Loc = 'Oaks') then
       begin
-        if (Players[CurrentPlayer].Loc = 'Oaks') then
-        begin
-          Result := True;
-          Exit;
-        end;
-
-        if (not RadialWalkTolerance(MM_ROAD, 85, 105, 60, 2, 1, 10)) then
-          MouseBox(672, 85, 983, 97, CLICK_LEFT);
-      end;
-
-    WALK_TREES_OAKS_2:
-      begin
-        if (Players[CurrentPlayer].Loc = 'Oaks') then
-        begin
-          Result := True;
-          Exit;
-        end;
-
-        if (FindSymbolIn(x, y, 'dungeon', MMCX, MMY1, MMX2, MMY2)) then
-          Mouse(x - Random(3), y - 15, 3, 3, True)
-        else
-          if (not RadialWalkTolerance(MM_DUNGEON, 65, 95, 60, -2, 15, 10)) then
-            MouseBox(669, 55, 678, 63, CLICK_LEFT);
-      end;
+        Result := True;
+        Exit;
+      end else
+        MouseBox(656, 82, 665, 100, CLICK_LEFT);
 
     WALK_BANK_WILLOWS:
       if (Players[CurrentPlayer].Loc = 'Bank') then
@@ -667,32 +644,13 @@ begin
       end else
         MouseBox(645, 44, 656, 53, CLICK_LEFT);
 
-    WALK_BANK_OAKS_1:
+    WALK_BANK_OAKS:
+      if (Players[CurrentPlayer].Loc = 'Bank') then
       begin
-        if (Players[CurrentPlayer].Loc = 'Bank') then
-        begin
-          Result := True;
-          Exit;
-        end;
-
-        if (not RadialWalkTolerance(MM_ROAD, 275, 240, 70, 2, 1, 10)) then
-          MouseBox(569, 87, 578, 96, CLICK_LEFT);
-      end;
-
-    WALK_BANK_OAKS_2:
-      begin
-        if (Players[CurrentPlayer].Loc = 'Bank') then
-        begin
-          Result := True;
-          Exit;
-        end;
-
-        if (not RadialWalkTolerance(MM_BANK, 295, 240, 70, 2, 1, 10)) then
-          if (FindSymbolIn(x, y, 'bank', MMX1, MMY1, MMCX, MMY2)) then
-            Mouse(x, y, 3, 3, True)
-          else
-            MouseBox(566, 101, 582, 112, CLICK_LEFT);
-      end;
+        Result := True;
+        Exit;
+      end else
+        MouseBox(583, 71, 607, 85, CLICK_LEFT);
 
     else
       DCnB_Debug('Walk_PerformIndex', 'Invalid walk point', DEBUG_ERROR);
@@ -715,12 +673,10 @@ begin
       Result := Walk_PerformIndex(WALK_BANK_WILLOWS);
 
     PATH_BANK_TO_OAKS:
-      if (Walk_PerformIndex(WALK_TREES_OAKS_1)) then
-        Result := Walk_PerformIndex(WALK_TREES_OAKS_2);
+      Result := Walk_PerformIndex(WALK_TREES_OAKS);
 
     PATH_OAKS_TO_BANK:
-      if (Walk_PerformIndex(WALK_BANK_OAKS_1)) then
-        Result := Walk_PerformIndex(WALK_BANK_OAKS_2);
+      Result := Walk_PerformIndex(WALK_BANK_OAKS);
 
     else
       DCnB_Debug('Walk_ToLoc', 'Invalid walk path', DEBUG_ERROR);
@@ -851,7 +807,6 @@ begin
   Writeln(PadR('|                         Coh3n''s Draynor Chop N'' Bank!', 86) + '|');
   Writeln(PadR('|                                - Revision ' + SCRIPT_VERSION + ' -', 86) + '|');
   Writeln('|=====================================================================================|');
-  Writeln('|                                                                                     |');
   Writeln('|______ ________ __________ _______ ________ __________ ________ ____________ ________|');
   Writeln('| Nick | Active | Location | Loads |  Tree  | Logs Cut | Levels | Experience | Breaks |');
   Writeln('|------ -------- ---------- ------- -------- ---------- -------- ------------ --------|');
@@ -897,7 +852,6 @@ begin
   Writeln(PadR('|           Coh3n''s Draynor Chop N'' Bank!', 53) + '|');
   Writeln('|                  - Revision ' + SCRIPT_VERSION + ' -                   |');
   Writeln('|====================================================|');
-  Writeln('|                                                    |');
   Writeln('|                                                    |');
 
   with Players[CurrentPlayer] do
@@ -957,9 +911,7 @@ var
   i: Integer;
   sName, sPass: string;
 begin
-  {$IFDEF SIMBA}
-    SetScriptProp(SP_WriteTimeStamp, [True]);
-  {$ENDIF}
+  SetScriptProp(SP_WriteTimeStamp, [True]);
   DCnB_Signature;
 
   if (USE_FORM) then
