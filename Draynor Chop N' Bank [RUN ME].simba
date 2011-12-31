@@ -15,7 +15,7 @@
 |==============================================================================]
 |                                                                              |
 |       1. Determine whether or not you're using SMART (line 51)               |
-|       2. Determine whether or not you're using the PlayerForm (line 55)      |
+|       2. Determine whether or not you're using the PlayerForm (line 56)      |
 |       3. Have hatchet in FIRST inventory slot or equipped                    |
 |       4. Start in Draynor bank OR at the trees                               |
 |       5. Setup player(s) via DeclarePlayers/PlayerForm                       |
@@ -28,7 +28,7 @@
 |==============================================================================|
 |                                                                              |
 |     * Custom PlayerForm             * AntiRandoms/Antiban                    |
-|     * Custom signature              * Supports hatchets up to Dragon         |
+|     * Custom signature              * Supports ANY hatchet                   |
 |     * Detailed progress report      * Efficient tree finding/banking         |
 |     * Breaking/player switching     * Detects and records levels gained      |
 |     * Supports Oaks/Willows         * Plus many more!                        |
@@ -50,10 +50,13 @@
 program DraynorChopNBank;
 {$DEFINE SMART} //Add '//' to the beginning of the line to disable SMART
 {$i DCnB_Form.simba}
+{$i SRL/SRL/Misc/SmartColors.simba}
+{$i SRL/SRL/Misc/PaintSmart.simba}
 
 const
-  USE_FORM = True; // <-- VERY IMPORTANT! True = use PlayerForm
-  SCRIPT_VERSION  = '70';
+  USE_FORM    = True; // <-- VERY IMPORTANT! True = use PlayerForm
+  DEBUG_SMART = True; // Draw TPA debugging on SMART
+  SCRIPT_VERSION  = '71';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
@@ -63,28 +66,6 @@ const
   WALK_BANK_WILLOWS  = 3;
   WALK_BANK_OAKS     = 4;
 
-{ const Path Constants;
-  Description: Constants representing different walking paths }
-const
-  PATH_BANK_TO_WILLOWS = 0;
-  PATH_BANK_TO_OAKS    = 1;
-  PATH_OAKS_TO_BANK    = 2;
-  PATH_WILLOWS_TO_BANK = 3;
-
-{ const Mouse Constants;
-  Description: Constants representing different types mouse clicks }
-const
-  CLICK_LEFT  = 1;
-  CLICK_RIGHT = 2;
-  HOVER       = 3;
-
-{ const Autocolor Constants;
-  Description: Constants representing which autocolor to find on the minimap }
-const
-  MM_ROAD    = 4217183;
-  MM_BANK    = 9697013;
-  MM_DUNGEON = 2763504;
-
 { const Debug Constants;
   Description: Constants representing the different forms of debugging }
 const
@@ -92,14 +73,6 @@ const
   DEBUG_SUCCESS = 1;
   DEBUG_DETAILS = 2;
   DEBUG_PLAYER  = 3;
-
-{ const Flag Constants;
-  Description: Constants used in Walk_FindFlag }
-const
-  FLAG_COLOR  = 205052;
-  FLAG_LENGTH = 15;     //number of pixels with color FLAG_COLOR
-  FLAG_HEIGHT = 7;
-  FLAG_WIDTH  = 7;
 
 { type TTree record;
   Description: A type used for loading different trees }
@@ -118,14 +91,14 @@ type
   Description: Global variables used throughout the script }
 var
   playerLoads: Integer;
-  falseReason: Array of String;         // holds reasons why players turned false
+  falseReason: Array of String; // holds reasons why players turned false
 
 {==============================================================================\
 |                               Script Setup                                   |
 |==============================================================================|
 |                                                                              |
 |    * To setup the script if you decided NOT to use the player form           |
-|    * Setup from here to line 264                                             |
+|    * Setup from here to line 196                                             |
  \_____________________________________________________________________________}
 
 { const Setup;
@@ -148,6 +121,7 @@ begin
     Pass   := '';
     Nick   := '';   // 3-4 LOWERCASE letters from your username
     Active := True; // True = use this player
+    Member := False;
     Pin    := '';   // Leave blank if you don't have a bank pin
     Integers[P_TOTAL_LOGS]  := 1000;  // Total logs to cut
     Booleans[P_TAKE_BREAKS] := True; // True = the player will take breaks
@@ -155,7 +129,7 @@ begin
     Strings[P_TREE]         := 'willow';   // Either 'willow' or 'oak'
   end;
 
-{  // <-- Remove the curly brace to use multiple players!
+{ // <-- Remove the curly brace to use multiple players!
 
   with Players[1] do
   begin
@@ -163,6 +137,7 @@ begin
     Pass   := '';
     Nick   := '';
     Active := True;
+    Member := False;
     Pin    := '';
     Integers[P_TOTAL_LOGS]  := 000;
     Booleans[P_TAKE_BREAKS] := True;
@@ -176,6 +151,7 @@ begin
     Pass   := '';
     Nick   := '';
     Active := True;
+    Member := False;
     Pin    := '';
     Integers[P_TOTAL_LOGS]  := 000;
     Booleans[P_TAKE_BREAKS] := True;
@@ -189,6 +165,7 @@ begin
     Pass   := '';
     Nick   := '';
     Active := True;
+    Member := False;
     Pin    := '';
     Integers[P_TOTAL_LOGS]  := 000;
     Booleans[P_TAKE_BREAKS] := True;
@@ -202,6 +179,7 @@ begin
     Pass   := '';
     Nick   := '';
     Active := True;
+    Member := False;
     Pin    := '';
     Integers[P_TOTAL_LOGS]  := 000;
     Booleans[P_TAKE_BREAKS] := True;
@@ -215,6 +193,7 @@ begin
     Pass   := '';
     Nick   := '';
     Active := True;
+    Member := False;
     Pin    := '';
     Integers[P_TOTAL_LOGS]  := 000;
     Booleans[P_TAKE_BREAKS] := True;
@@ -304,7 +283,7 @@ begin
         Hue    := 0.50;
         Sat    := 0.69;
         Exp    := 37.5;
-        Tol    := 5;
+        Tol    := 10;
       end;
 
     'willow':
@@ -316,7 +295,7 @@ begin
         Hue    := 0.74;
         Sat    := 0.92;
         Exp    := 67.5;
-        Tol    := 10;
+        Tol    := 5;
       end;
 
     else
@@ -458,9 +437,10 @@ end;
 
 function Chop_Trees: Boolean;
 var
-  notFindTrees, notFindUptext, i, h, t, x, y: Integer;
+  notFindTrees, notFindUptext, i, h, t, x, y, c: Integer;
   colorsArr: TPointArray;
-  boxesArr: T2DPointArray;
+  cP: TPoint;
+  boxesArr, tmpATPA: T2DPointArray;
   Tree: TTree;
   doneChopping: Boolean;
 begin
@@ -476,10 +456,10 @@ begin
       Break;
 
     FindColorsSpiralTolerance(MSCX, MSCY, colorsArr, Tree.Color, MSX1, MSY1, MSX2, MSY2, Tree.Tol);
-    boxesArr := TPAToATPAEx(colorsArr, 60, 60);
+    tmpATPA := TPAToATPAEx(colorsArr, 60, 60);
     DCnB_Debug('Chop_Trees', 'Boxes Found: ' + IntToStr(Length(boxesArr)), DEBUG_DETAILS);
 
-    if (Length(boxesArr) = 0) then
+    if (Length(tmpATPA) = 0) then
     begin
       DCnB_Debug('Chop_Trees', 'Failed to find tree', DEBUG_ERROR);
       Find_Randoms(2000, 4000);
@@ -489,19 +469,39 @@ begin
         Find_Randoms(0, 0);
     end;
 
-    SortATPAFrom(boxesArr, Point(MSCX, MSCY));
-    h := High(boxesArr);
+    SortATPAFrom(tmpATPA, Point(MSCX, MSCY));
+    SetLength(boxesArr, Length(tmpATPA));
+    h := High(tmpATPA);
+    c := 0;
+
     for i := 0 to h do
     begin
-      DCnB_Debug('Chop_Trees', 'Length boxesArr[' + IntToStr(i) + ']: ' + IntToStr(Length(boxesArr[i])), DEBUG_DETAILS);
-      if (Length(boxesArr[i]) < 100) then
+      DCnB_Debug('Chop_Trees', 'Length tmpATPA[' + IntToStr(i) + ']: ' + IntToStr(Length(tmpATPA[i])), DEBUG_DETAILS);
+
+      if (Length(tmpATPA[i]) < 50) then
       begin
         Find_Randoms(100, 300);
         Continue;
       end;
 
-      MiddleTPAEx(boxesArr[i], x, y);
-      MMouse(x, y, 4, 4);
+      boxesArr[c] := tmpATPA[i];
+      Inc(c);
+    end;
+
+    SetLength(boxesArr, c);
+    SortATPAFrom(boxesArr, point(MSCX, MSCY));
+    h := high(boxesArr);
+
+    // draw points on SMART if setting enabled
+    {$IFDEF SMART}
+    if (DEBUG_SMART) then
+      drawDotsMulti(true, boxesArr);
+    {$ENDIF}
+
+    for i := 0 to h do
+    begin
+      cP := MiddleTPA(boxesArr[i]);
+      MMouse(cP.x, cP.y, 4, 4);
       notFindTrees := 0;
 
       if (WaitUpTextMulti(Tree.UpText, 200)) then
@@ -509,14 +509,12 @@ begin
         DCnB_Debug('Chop_Trees', 'Uptext found!', DEBUG_DETAILS);
         notFindUptext := 0;
 
+        GetMousePos(x, y);
         Mouse(x, y, 0, 0, True);
         if (not DidRedClick()) then
           Continue;
 
         Wait(RandomRange(2000, 3000));
-
-        GetMousePos(x, y);
-        DCnB_Debug('Chop_Trees', 'Track Point: (' + IntToStr(x) + ', ' + IntToStr(y) + ')', DEBUG_DETAILS);
 
         t := GetSystemTime + RandomRange(15000, 20000);
         doneChopping := false;
@@ -526,7 +524,7 @@ begin
             Break;
 
           Load_Antiban;
-          Find_Randoms(500, 1000);
+          Find_Randoms(250, 500);
         until(InvFull or (not LoggedIn));
 
         if (InvFull or doneChopping) then
@@ -538,13 +536,13 @@ begin
         Find_Randoms(500, 1000);
         Inc(notFindUptext);
       end;
-    end; //of boxesArr loop.
+    end; // end of TPA loop.
 
     Result := InvFull();
 
     if (not Result) then
       if (notFindTrees >= 40) then
-        if (FindSymbol(x, y, 'fish')) or (FindSymbol(x, y, 'dungeon')) then
+        if (FindSymbol(x, y, 'fish')) then
         begin
           Mouse(x, y, 4, 4, True);
           FFlag(5);
@@ -556,7 +554,7 @@ begin
     Next_Player(False, 'Chop_Trees', 'Failed to find trees 60 times');
 
   if (notFindUptext >= 120) then
-    Next_Player(False, 'Chop_Trees', 'Failed to find uptext 60 times');
+    Next_Player(False, 'Chop_Trees', 'Failed to find uptext 120 times');
 
   SetColorSpeed2Modifiers(0.2, 0.2);
   ColorToleranceSpeed(1);
@@ -592,10 +590,10 @@ begin
     if (where = WALK_BANK_OAKS) then
       SetAngle(SRL_ANGLE_HIGH);
 
-    Find_Randoms(1500, 3000);
+    Find_Randoms(500, 1000);
 
     if (FindFlag(x, y)) then
-      Result := (Distance(x, y, MSCX, MSCY) <= 5);
+      Result := (Distance(x, y, MSCX, MSCY) <= 10);
 
     if (not Result) then
       Result := (not IsMoving);
@@ -603,87 +601,50 @@ begin
     if (Result) then
     begin
       Players[CurrentPlayer].Loc := Walk_ConstToLoc(where);
-      Wait(RandomRange(500, 1000));
       Break;
     end;
   end;
 end;
 
-function Walk_PerformIndex(which: Integer): Boolean;
+function Walk_ToLoc(which: Integer): Boolean;
 var
   x, y: Integer;
 begin
   if (not LoggedIn) then
     Exit;
 
-  MakeCompass('n');
   RunEnergy(20);
+  if (InRange(Round(rs_GetCompassAngleDegrees), 10, 350)) then
+    ClickNorth(SRL_ANGLE_HIGH);
 
-  case which of
-    WALK_TREES_WILLOWS:
-      if (Players[CurrentPlayer].Loc = 'Willows') then
-      begin
-        Result := True;
-        Exit;
-      end else
-        MouseBox(595, 113, 613, 130, CLICK_LEFT);
+  if (Players[CurrentPlayer].Loc = Walk_ConstToLoc(which)) then
+  begin
+    Result := True;
+    Exit;
+  end else
+    case which of
+      WALK_TREES_WILLOWS:
+        MouseBox(590, 120, 610, 135, MOUSE_LEFT);
 
-    WALK_TREES_OAKS:
-      if (Players[CurrentPlayer].Loc = 'Oaks') then
-      begin
-        Result := True;
-        Exit;
-      end else
-        MouseBox(656, 82, 665, 100, CLICK_LEFT);
+      WALK_TREES_OAKS:
+        MouseBox(656, 90, 665, 105, MOUSE_LEFT);
 
-    WALK_BANK_WILLOWS:
-      if (Players[CurrentPlayer].Loc = 'Bank') then
-      begin
-        Result := True;
-        Exit;
-      end else
-        MouseBox(645, 44, 656, 53, CLICK_LEFT);
+      WALK_BANK_WILLOWS:
+        MouseBox(645, 44, 656, 53, MOUSE_LEFT);
 
-    WALK_BANK_OAKS:
-      if (Players[CurrentPlayer].Loc = 'Bank') then
-      begin
-        Result := True;
-        Exit;
-      end else
-        MouseBox(583, 71, 607, 85, CLICK_LEFT);
+      WALK_BANK_OAKS:
+        MouseBox(583, 71, 607, 85, MOUSE_LEFT);
 
-    else
-      DCnB_Debug('Walk_PerformIndex', 'Invalid walk point', DEBUG_ERROR);
-  end;
+      else
+        DCnB_Debug('Walk_ToLoc', 'Invalid walk point', DEBUG_ERROR);
+    end;
 
-  Result := Walk_WaitWhile(which);
-  if (Result) then
-    DCnB_Debug('Walk_PerformIndex', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS)
-  else
-    Next_Player(False, 'Walk_PerformIndex', 'Failed to walk to location: ' + Walk_ConstToLoc(which));
-end;
-
-function Walk_ToLoc(where: Integer): Boolean;
-begin
-  case where of
-    PATH_BANK_TO_WILLOWS:
-      Result := Walk_PerformIndex(WALK_TREES_WILLOWS);
-
-    PATH_WILLOWS_TO_BANK:
-      Result := Walk_PerformIndex(WALK_BANK_WILLOWS);
-
-    PATH_BANK_TO_OAKS:
-      Result := Walk_PerformIndex(WALK_TREES_OAKS);
-
-    PATH_OAKS_TO_BANK:
-      Result := Walk_PerformIndex(WALK_BANK_OAKS);
-
-    else
-      DCnB_Debug('Walk_ToLoc', 'Invalid walk path', DEBUG_ERROR);
-  end;
-
-  if (Result) then
-    DCnB_Debug('Walk_ToLoc', 'Walked to ' + Walk_ConstToLoc(where), DEBUG_SUCCESS);
+  if (Walk_WaitWhile(which)) then
+  begin
+    Result := True;
+    DCnB_Debug('Walk_ToLoc', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS)
+  end else
+    Next_Player(False, 'Walk_ToLoc', 'Failed to walk to location: ' + Walk_ConstToLoc(which));
 end;
 
 function Bank_Logs: Boolean;
@@ -733,7 +694,7 @@ begin
 
       if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
       begin
-        MouseBox(386, 300, 409, 315, CLICK_LEFT);
+        MouseBox(386, 300, 409, 315, MOUSE_LEFT);
         Result := True;
       end else begin
         Deposit(2, 28, True);
@@ -824,7 +785,7 @@ begin
                     + PadR(s[2], 5) + '|  ' + PadR(s[3], 10) + '|   ' + PadR(s[4], 5) + '|');
   Writeln('|_____________________________________________________________________________________|');
   
-  //checks to see if at least one player is false
+  // checks to see if at least one player is false
   for i := 0 to High(Players) do
     if (not Players[i].Active) then
     begin
@@ -879,6 +840,11 @@ procedure Report_Print;
 var
   i: Integer;
 begin
+  SetScriptProp(SP_WriteTimeStamp, [False]);
+  ClearDebug();
+
+  SRLRandomsReport();
+
   if (HowManyPlayers = 1) then
     Report_SinglePlayer
   else
@@ -889,6 +855,8 @@ begin
       Players[CurrentPlayer].Integers[i] := Players[CurrentPlayer].Integers[i]
     else
       Players[CurrentPlayer].Integers[i] := 0;
+
+  SetScriptProp(SP_WriteTimeStamp, [True]);
 end;
 
 procedure Setup_Player;
@@ -927,9 +895,7 @@ begin
 
     if (not startReady) then
       TerminateScript;
-  end else
-
-  begin
+  end else begin
     Smart_Server := 152;
     Smart_Members := False;
     Smart_Signed := True;
@@ -970,44 +936,42 @@ begin
   repeat
     Setup_Player;
 
-    with Players[CurrentPlayer] do
-      repeat
-        if (Lowercase(Strings[P_TREE]) = 'willow') then
-          Walk_ToLoc(PATH_BANK_TO_WILLOWS)
+    repeat
+      if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow') then
+        Walk_ToLoc(WALK_TREES_WILLOWS)
+      else
+        Walk_ToLoc(WALK_TREES_OAKS);
+
+      while (not InvFull) and (LoggedIn) do
+        Chop_Trees;
+
+      if (InvFull) then
+        if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow') then
+          Walk_ToLoc(WALK_BANK_WILLOWS)
         else
-          Walk_ToLoc(PATH_BANK_TO_OAKS);
+          Walk_ToLoc(WALK_BANK_OAKS);
 
-        while (not InvFull) and (LoggedIn) do
-          Chop_Trees;
+      if (Bank_Logs) then
+      begin
+        Report_Print;
 
-        if (InvFull) then
-          if (Lowercase(Strings[P_TREE]) = 'willow') then
-            Walk_ToLoc(PATH_WILLOWS_TO_BANK)
-          else
-            Walk_ToLoc(PATH_OAKS_TO_BANK);
+        for i := 0 to High(Players) do
+          totalLogs := totalLogs + Players[i].Integers[P_LOGS];
 
-        if (Bank_Logs) then
-        begin
-          DCnB_Debug('Setup_MainLoop', 'Sorry, no randoms report for Simba :(', DEBUG_DETAILS);
-          Report_Print;
+        Disguise('Logs Chopped: ' + IntToStr(totalLogs));
+        totalLogs := 0;
 
-          for i := 0 to High(Players) do
-            totalLogs := totalLogs + Players[i].Integers[P_LOGS];
+        if (Players[CurrentPlayer].Booleans[P_TAKE_BREAKS]) then
+          if (playerLoads >= (breakAfter + RandomRange(-2, 2))) then
+          begin
+            Next_Break;
+            playerLoads := 0;
+            Setup_Player;
+          end;
+      end;
 
-          Disguise('Logs Chopped: ' + IntToStr(totalLogs));
-          totalLogs := 0;
-
-          if (Booleans[P_TAKE_BREAKS]) then
-            if (playerLoads >= (breakAfter + RandomRange(-2, 2))) then
-            begin
-              Next_Break;
-              playerLoads := 0;
-              Setup_Player;
-            end;
-        end;
-
-        stats_Commit;
-      until((Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) or (not LoggedIn));
+      stats_Commit;
+    until((Players[CurrentPlayer].Integers[P_LOGS] >= Players[CurrentPlayer].Integers[P_TOTAL_LOGS]) or (not LoggedIn));
 
     if (not LoggedIn) then
       Next_Player(True, 'Setup_MainLoop', 'Switching players');
