@@ -566,18 +566,19 @@ begin
   for i := 0 to High(formPlayers) do
     with formPlayers[i] do
     begin
-      if (i = High(formPlayers)) then
-      begin
-        Name := tTabEdits[EDIT_NAME].Text;
-        Pass := tTabEdits[EDIT_PASS].Text;
-        Nick := tTabEdits[EDIT_NICK].Text;
-        Pin  := tTabEdits[EDIT_PIN].Text;
-        Active := tTabCombos[BOX_ACTIVE].Text;
-        Tree := tTabCombos[BOX_TREE].Text;
-        Logs := tTabEdits[EDIT_LOGS].Text;
-        Hatchet := tTabCombos[BOX_HATCHET].Text;
-        Breaks := tTabCombos[BOX_BREAKS].Text;
-      end;
+      if (isActiveTab[i]) then
+        if (i = High(formPlayers)) then
+        begin
+          Name := tTabEdits[EDIT_NAME].Text;
+          Pass := tTabEdits[EDIT_PASS].Text;
+          Nick := tTabEdits[EDIT_NICK].Text;
+          Pin  := tTabEdits[EDIT_PIN].Text;
+          Active := tTabCombos[BOX_ACTIVE].Text;
+          Tree := tTabCombos[BOX_TREE].Text;
+          Logs := tTabEdits[EDIT_LOGS].Text;
+          Hatchet := tTabCombos[BOX_HATCHET].Text;
+          Breaks := tTabCombos[BOX_BREAKS].Text;
+        end;
 
       WriteINI('Player List', 'Name' + IntToStr(i), ' ' + Name, ScriptPath + 'DCnB_PlayerList');
       WriteINI('Player List', 'Pass' + IntToStr(i), ' ' + Pass, ScriptPath + 'DCnB_PlayerList');

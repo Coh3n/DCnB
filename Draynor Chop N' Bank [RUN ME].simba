@@ -50,7 +50,6 @@
 program DraynorChopNBank;
 {$DEFINE SMART} //Add '//' to the beginning of the line to disable SMART
 {$i DCnB_Form.simba}
-{$i SRL/SRL/Misc/SmartColors.simba}
 {$i SRL/SRL/Misc/PaintSmart.simba}
 
 const
@@ -279,11 +278,11 @@ begin
       begin
         Name   := 'Oak';
         UpText := ['Oak'];
-        Color  := 1583399;
-        Hue    := 0.50;
-        Sat    := 0.69;
+        Color  := 1516577;
+        Hue    := 0.74;
+        Sat    := 0.92;
         Exp    := 37.5;
-        Tol    := 10;
+        Tol    := 5;
       end;
 
     'willow':
@@ -577,35 +576,6 @@ begin
   end;
 end;
 
-function Walk_WaitWhile(where: Integer): Boolean;
-var
-  t, x, y: Integer;
-begin
-  t := GetSystemTime + 10000;
-  while (GetSystemTime < t) do
-  begin
-    if (where = WALK_TREES_OAKS) then
-      SetAngle(SRL_ANGLE_LOW);
-
-    if (where = WALK_BANK_OAKS) then
-      SetAngle(SRL_ANGLE_HIGH);
-
-    Find_Randoms(500, 1000);
-
-    if (FindFlag(x, y)) then
-      Result := (Distance(x, y, MSCX, MSCY) <= 10);
-
-    if (not Result) then
-      Result := (not IsMoving);
-
-    if (Result) then
-    begin
-      Players[CurrentPlayer].Loc := Walk_ConstToLoc(where);
-      Break;
-    end;
-  end;
-end;
-
 function Walk_ToLoc(which: Integer): Boolean;
 var
   x, y: Integer;
@@ -619,6 +589,7 @@ begin
 
   if (Players[CurrentPlayer].Loc = Walk_ConstToLoc(which)) then
   begin
+    Writeln('Yep');
     Result := True;
     Exit;
   end else
@@ -627,24 +598,29 @@ begin
         MouseBox(590, 120, 610, 135, MOUSE_LEFT);
 
       WALK_TREES_OAKS:
-        MouseBox(656, 90, 665, 105, MOUSE_LEFT);
+        begin
+          MouseBox(656, 90, 665, 105, MOUSE_LEFT);
+          SetAngle(SRL_ANGLE_LOW);
+        end;
 
       WALK_BANK_WILLOWS:
         MouseBox(645, 44, 656, 53, MOUSE_LEFT);
 
       WALK_BANK_OAKS:
-        MouseBox(583, 71, 607, 85, MOUSE_LEFT);
+        begin
+          MouseBox(583, 78, 607, 87, MOUSE_LEFT);
+          SetAngle(SRL_ANGLE_HIGH);
+        end;
 
       else
         DCnB_Debug('Walk_ToLoc', 'Invalid walk point', DEBUG_ERROR);
     end;
 
-  if (Walk_WaitWhile(which)) then
-  begin
-    Result := True;
-    DCnB_Debug('Walk_ToLoc', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS)
-  end else
-    Next_Player(False, 'Walk_ToLoc', 'Failed to walk to location: ' + Walk_ConstToLoc(which));
+  Wait(RandomRange(2000, 3000));
+  Flag();
+  Result := True;
+  Players[CurrentPlayer].Loc := Walk_ConstToLoc(which);
+  DCnB_Debug('Walk_ToLoc', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS);
 end;
 
 function Bank_Logs: Boolean;
@@ -946,31 +922,33 @@ begin
         Chop_Trees;
 
       if (InvFull) then
+      begin
         if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow') then
           Walk_ToLoc(WALK_BANK_WILLOWS)
         else
           Walk_ToLoc(WALK_BANK_OAKS);
 
-      if (Bank_Logs) then
-      begin
-        Report_Print;
+        if (Bank_Logs) then
+        begin
+          Report_Print;
 
-        for i := 0 to High(Players) do
-          totalLogs := totalLogs + Players[i].Integers[P_LOGS];
+          for i := 0 to High(Players) do
+            totalLogs := totalLogs + Players[i].Integers[P_LOGS];
 
-        Disguise('Logs Chopped: ' + IntToStr(totalLogs));
-        totalLogs := 0;
+          Disguise('Logs Chopped: ' + IntToStr(totalLogs));
+          totalLogs := 0;
 
-        if (Players[CurrentPlayer].Booleans[P_TAKE_BREAKS]) then
-          if (playerLoads >= (breakAfter + RandomRange(-2, 2))) then
-          begin
-            Next_Break;
-            playerLoads := 0;
-            Setup_Player;
-          end;
+          if (Players[CurrentPlayer].Booleans[P_TAKE_BREAKS]) then
+            if (playerLoads >= (breakAfter + RandomRange(-2, 2))) then
+            begin
+              Next_Break;
+              playerLoads := 0;
+              Setup_Player;
+            end;
+        end;
+
+        stats_Commit;
       end;
-
-      stats_Commit;
     until((Players[CurrentPlayer].Integers[P_LOGS] >= Players[CurrentPlayer].Integers[P_TOTAL_LOGS]) or (not LoggedIn));
 
     if (not LoggedIn) then
