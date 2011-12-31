@@ -1,6 +1,4 @@
-{.include SRL/SRL.scar}
-{.include SRL/SRL/misc/Debug.scar}
-{.include SRL/SRL/misc/Stats.simba}
+{$i SRL/SRL.simba}
 
 { const Players.Integers Indexes;
   Description: Constants representing the DeclarePlayers integers. }
