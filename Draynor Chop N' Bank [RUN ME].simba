@@ -355,7 +355,7 @@ begin
         Hue    := 0.74;
         Sat    := 02.92;
         Exp    := 67.5;
-        Tol    := 3;
+        Tol    := 10;
       end;
 
     else
