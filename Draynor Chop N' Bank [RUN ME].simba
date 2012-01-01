@@ -638,6 +638,7 @@ begin
   repeat
     if (not OpenBankFast('db')) then
     begin
+      Find_Randoms(250, 500);
       DCnB_Debug('Bank_Logs', 'Failed to open bank, retrying...', DEBUG_ERROR);
       Inc(Tries);
 
@@ -684,7 +685,7 @@ begin
   until(Result or (not LoggedIn) or (Tries >= 40));
 
   if (Tries >= 40) then
-    Next_Player(False, 'Bank_Logs', 'Failed to open bank after 40 tries');
+    Next_Player(True, 'Bank_Logs', 'Failed to open bank after 40 tries');
 
   if (Result) then
   begin
