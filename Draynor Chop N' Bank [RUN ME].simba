@@ -580,8 +580,6 @@ begin
 end;
 
 function Walk_ToLoc(which: Integer): Boolean;
-var
-  x, y: Integer;
 begin
   if (not LoggedIn) then
     Exit;
