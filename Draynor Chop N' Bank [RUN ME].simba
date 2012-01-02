@@ -58,7 +58,7 @@ program DraynorChopNBank;
 const
   USE_FORM    = True; // <-- VERY IMPORTANT! True = use PlayerForm
   DEBUG_SMART = True; // Draw TPA debugging on SMART
-  SCRIPT_VERSION  = '71';
+  SCRIPT_VERSION  = '72';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
