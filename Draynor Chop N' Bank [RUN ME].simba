@@ -15,7 +15,7 @@
 |==============================================================================]
 |                                                                              |
 |       1. Determine whether or not you're using SMART (line 51)               |
-|       2. Determine whether or not you're using the PlayerForm (line 56)      |
+|       2. Determine whether or not you're using the PlayerForm (line 59)      |
 |       3. Have hatchet in FIRST inventory slot or equipped                    |
 |       4. Start in Draynor bank OR at the trees                               |
 |       5. Setup player(s) via DeclarePlayers/PlayerForm                       |
@@ -50,7 +50,10 @@
 program DraynorChopNBank;
 {$DEFINE SMART} //Add '//' to the beginning of the line to disable SMART
 {$i DCnB_Form.simba}
-{$i SRL/SRL/Misc/PaintSmart.simba}
+
+{$IFDEF SMART}
+  {$i SRL/SRL/Misc/PaintSmart.simba}
+{$ENDIF}
 
 const
   USE_FORM    = True; // <-- VERY IMPORTANT! True = use PlayerForm
