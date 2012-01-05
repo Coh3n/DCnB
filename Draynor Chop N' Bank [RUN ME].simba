@@ -323,9 +323,6 @@ begin
     if (playSnd) then
       PlaySound(ScriptPath + 'RandomSound.wav');
 
-  UseRewardBox;
-  FindLamp(LampSkill);
-
   Wait(RandomRange(waitFrom, waitTo));
 end;
 
@@ -532,8 +529,7 @@ begin
         if (InvFull or doneChopping) then
           Break;
 
-      end else
-      begin
+      end else begin
         DCnB_Debug('Chop_Tree', 'Failed to find uptext', DEBUG_ERROR);
         Find_Randoms(500, 1000);
         Inc(notFindUptext);
@@ -542,13 +538,18 @@ begin
 
     Result := InvFull();
 
-    if (not Result) then
-      if (notFindTrees >= 40) then
+    if (not Result) and (Tree.Name <> 'Oak') then
+      if (notFindTrees >= 20) or (notFindUptext > 5) then
         if (FindSymbol(x, y, 'fish')) then
         begin
-          Mouse(x, y, 4, 4, True);
+          notFindTrees := 0;
+          notFindUptext := 0;
+
+          Mouse(x + 5, y - 8, 4, 4, True);
           FFlag(5);
         end;
+
+    Find_Randoms(100, 300);
 
   until(Result or (not LoggedIn) or (notFindTrees >= 60) or (notFindUptext >= 60));
 
@@ -956,7 +957,10 @@ begin
     until((Players[CurrentPlayer].Integers[P_LOGS] >= Players[CurrentPlayer].Integers[P_TOTAL_LOGS]) or (not LoggedIn));
 
     if (not LoggedIn) then
-      Next_Player(True, 'Setup_MainLoop', 'Switching players');
+    begin
+      LoginPlayer();
+      Continue;
+    end;
   until(AllPlayersInactive);
 end;
 
