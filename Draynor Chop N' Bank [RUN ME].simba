@@ -58,7 +58,7 @@ program DraynorChopNBank;
 const
   USE_FORM    = True; // <-- VERY IMPORTANT! True = use PlayerForm
   DEBUG_SMART = True; // Draw TPA debugging on SMART
-  SCRIPT_VERSION  = '72';
+  SCRIPT_VERSION  = '73';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
@@ -742,23 +742,24 @@ var
   playerFalse: Boolean;
 begin
   s := Report_GetTotals;
-  Writeln('/=====================================================================================|'); //86
-  Writeln(PadR('|                         Coh3n''s Draynor Chop N'' Bank!', 86) + '|');
-  Writeln(PadR('|                                - Revision ' + SCRIPT_VERSION + ' -', 86) + '|');
-  Writeln('|=====================================================================================|');
-  Writeln('|______ ________ __________ _______ ________ __________ ________ ____________ ________|');
-  Writeln('| Nick | Active | Location | Loads |  Tree  | Logs Cut | Levels | Experience | Breaks |');
-  Writeln('|------ -------- ---------- ------- -------- ---------- -------- ------------ --------|');
+  Writeln('/=======================================================================================|'); //88
+  Writeln(PadR('|                          Coh3n''s Draynor Chop N'' Bank!', 88) + '|');
+  Writeln(PadR('|                                 - Revision ' + SCRIPT_VERSION + ' -', 88) + '|');
+  Writeln('|=======================================================================================|');
+  Writeln(PadR('|                    Ran for: ' + TimeRunning, 88) + '|');
+  Writeln('|────── ──────── ──────────── ─────── ──────── ────────── ──────── ──────────── ────────|');
+  Writeln('| Nick | Active | Location   | Loads |  Tree  | Logs Cut | Levels | Experience | Breaks |');
+  Writeln('|────── ──────── ──────────── ─────── ──────── ────────── ──────── ──────────── ────────|');
 
   for i := 0 to High(Players) do
     with Players[i] do
       Writeln('| ' + PadR(Nick, 5) + '| ' + PadR(BoolToStr(Active), 7) + '| '
-                        + PadR(Loc, 9) + '|  ' + PadR(GroupDigits(Integers[P_LOADS], ','), 5) + '| '
+                        + PadR(Loc, 11) + '|  ' + PadR(GroupDigits(Integers[P_LOADS], ','), 5) + '| '
                         + PadR(Capitalize(Strings[P_TREE]), 7) + '|  ' + PadR(GroupDigits(Integers[P_LOGS], ','), 8) + '|   '
                         + PadR(IntToStr(Integers[P_LEVELS]), 5) + '|  ' + PadR(GroupDigits(Integers[P_EXP], ','), 10) + '|   '
                         + PadR(IntToStr(Integers[P_BREAKS]), 5) + '|');
 
-  Writeln('|-------------------------------------------------------------------------------------|');
+  Writeln('|─────────────────────────────────────────────────────────────────────────────────────|');
   Writeln(PadR('| Totals:', 27) + '|  ' + PadR(s[0], 5) + '|        |  ' + PadR(s[1], 8) + '|   '
                     + PadR(s[2], 5) + '|  ' + PadR(s[3], 10) + '|   ' + PadR(s[4], 5) + '|');
   Writeln('|_____________________________________________________________________________________|');
@@ -773,16 +774,16 @@ begin
     
   if (playerFalse) then
   begin
-    Writeln('|                                                                                     |');
-    Writeln('| False Reasons:                                                                      |');
-    Writeln('| --------------                                                                      |');
+    Writeln('|                                                                                       |');
+    Writeln('| False Reasons:                                                                        |');
+    Writeln('| ──────────────                                                                        |');
     for i := 0 to High(Players) do
       if (not Players[i].Active) then
         with Players[i] do
-          Writeln(PadR('|   ' + IntToStr(i) + ': ' + Nick + ' -> ' + falseReason[i], 86) + '|');
+          Writeln(PadR('|   ' + IntToStr(i) + ': ' + Nick + ' -> ' + falseReason[i], 88) + '|');
   end;
   
-  Writeln('|_____________________________________________________________________________________/');
+  Writeln('|_______________________________________________________________________________________/');
 end;
 
 procedure Report_SinglePlayer;
@@ -791,7 +792,8 @@ begin
   Writeln(PadR('|           Coh3n''s Draynor Chop N'' Bank!', 53) + '|');
   Writeln('|                  - Revision ' + SCRIPT_VERSION + ' -                   |');
   Writeln('|====================================================|');
-  Writeln('|                                                    |');
+  Writeln(PadR('|        ' + TimeRunning, 53) + '|');
+  Writeln('|────────────────────────────────────────────────────|');
 
   with Players[CurrentPlayer] do
   begin
