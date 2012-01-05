@@ -760,10 +760,10 @@ begin
                         + PadR(IntToStr(Integers[P_LEVELS]), 5) + '|  ' + PadR(GroupDigits(Integers[P_EXP], ','), 10) + '|   '
                         + PadR(IntToStr(Integers[P_BREAKS]), 5) + '|');
 
-  Writeln('|─────────────────────────────────────────────────────────────────────────────────────|');
-  Writeln(PadR('| Totals:', 27) + '|  ' + PadR(s[0], 5) + '|        |  ' + PadR(s[1], 8) + '|   '
+  Writeln('|───────────────────────────────────────────────────────────────────────────────────────|');
+  Writeln(PadR('| Totals:', 29) + '|  ' + PadR(s[0], 5) + '|        |  ' + PadR(s[1], 8) + '|   '
                     + PadR(s[2], 5) + '|  ' + PadR(s[3], 10) + '|   ' + PadR(s[4], 5) + '|');
-  Writeln('|_____________________________________________________________________________________|');
+  Writeln('|_______________________________________________________________________________________|');
   
   // checks to see if at least one player is false
   for i := 0 to High(Players) do
@@ -796,22 +796,23 @@ begin
   Writeln(PadR('|        ' + TimeRunning, 53) + '|');
   Writeln('|────────────────────────────────────────────────────|');
 
-  with Players[CurrentPlayer] do
-  begin
-    Writeln(PadR('|    Player:   ' + Capitalize(Name), 53) + '|');
-    Writeln(PadR('|    Location: ' + Capitalize(Loc), 53) + '|');
-    Writeln(PadR('|    Active:   ' + BoolToStr(Active), 53) + '|');
-    if (not Active) then
-      Writeln(PadR('|    Reason:   ' + falseReason[CurrentPlayer], 53) + '|');
+  if (Length(Players) > 0) then
+    with Players[CurrentPlayer] do
+    begin
+      Writeln(PadR('|    Player:   ' + Capitalize(Name), 53) + '|');
+      Writeln(PadR('|    Location: ' + Capitalize(Loc), 53) + '|');
+      Writeln(PadR('|    Active:   ' + BoolToStr(Active), 53) + '|');
+      if (not Active) then
+        Writeln(PadR('|    Reason:   ' + falseReason[CurrentPlayer], 53) + '|');
 
-    Writeln(PadR('|      Tree Type:  ' + Capitalize(Strings[P_TREE]), 53) + '|');
-    Writeln(PadR('|      Loads Done: ' + GroupDigits(Integers[P_LOADS], ','), 53) + '|');
-    Writeln(PadR('|      Logs Cut:   ' + GroupDigits(Integers[P_LOGS], ','), 53) + '|');
-    Writeln(PadR('|      Logs P/H:   ' + GroupDigits((Integers[P_LOGS] * 60 * 60) / (GetTimeRunning / 1000), ','), 53) + '|');
-    Writeln(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
-    Writeln(PadR('|      Experience: ' + GroupDigits(Integers[P_EXP], ','), 53) + '|');
-    Writeln(PadR('|      Breaks:     ' + IntToStr(Integers[P_BREAKS]), 53) + '|');
-  end;
+      Writeln(PadR('|      Tree Type:  ' + Capitalize(Strings[P_TREE]), 53) + '|');
+      Writeln(PadR('|      Loads Done: ' + GroupDigits(Integers[P_LOADS], ','), 53) + '|');
+      Writeln(PadR('|      Logs Cut:   ' + GroupDigits(Integers[P_LOGS], ','), 53) + '|');
+      Writeln(PadR('|      Logs P/H:   ' + GroupDigits((Integers[P_LOGS] * 60 * 60) / (GetTimeRunning / 1000), ','), 53) + '|');
+      Writeln(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
+      Writeln(PadR('|      Experience: ' + GroupDigits(Integers[P_EXP], ','), 53) + '|');
+      Writeln(PadR('|      Breaks:     ' + IntToStr(Integers[P_BREAKS]), 53) + '|');
+    end;
 
   Writeln('|____________________________________________________|');
   Writeln('|____________________________________________________/');
@@ -829,13 +830,21 @@ begin
   if (HowManyPlayers = 1) then
     Report_SinglePlayer
   else
-    Report_MultiPlayer;
-
-  for i := P_LOADS to P_BREAKS do
-    if (Players[CurrentPlayer].Integers[i] > 0) then
-      Players[CurrentPlayer].Integers[i] := Players[CurrentPlayer].Integers[i]
+    if (HowManyPlayers > 1) then
+      Report_MultiPlayer
     else
-      Players[CurrentPlayer].Integers[i] := 0;
+      if (HowManyPlayers < 1) then
+      begin
+        Report_SinglePlayer;
+        Report_MultiPlayer;
+      end;
+
+  if (Length(Players) > 0) then
+    for i := P_LOADS to P_BREAKS do
+      if (Players[CurrentPlayer].Integers[i] > 0) then
+        Players[CurrentPlayer].Integers[i] := Players[CurrentPlayer].Integers[i]
+      else
+        Players[CurrentPlayer].Integers[i] := 0;
 
   SetScriptProp(SP_WriteTimeStamp, [True]);
 end;
@@ -967,7 +976,8 @@ end;
 procedure ScriptTerminate;
 begin
   Report_Print;
-  stats_Commit;
+  if (Length(Players) > 0) then
+    stats_Commit;
 end;
 
 begin
