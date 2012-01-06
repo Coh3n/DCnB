@@ -58,7 +58,10 @@ program DraynorChopNBank;
 const
   USE_FORM    = True; // <-- VERY IMPORTANT! True = use PlayerForm
   DEBUG_SMART = True; // Draw TPA debugging on SMART
+
+const
   SCRIPT_VERSION  = '73';
+  PATH_PLAYER = ScriptPath + 'DCnB_PlayerList.txt';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
@@ -768,9 +771,9 @@ procedure Form_SavePlayers(Sender: TObject);
 var
   i: Integer;
 begin
-  DeleteINI('Player List', '', ScriptPath + 'DCnB_PlayerList');
+  DeleteINI('Player List', '', PATH_PLAYER);
   WriteINI('Player List', 'NumberOfPlayers',
-           ' ' + IntToStr(Length(formPlayers)), ScriptPath + 'DCnB_PlayerList');
+           ' ' + IntToStr(Length(formPlayers)), PATH_PLAYER);
 
   for i := 0 to High(formPlayers) do
     with formPlayers[i] do
@@ -789,21 +792,21 @@ begin
           Breaks := tTabCombos[BOX_BREAKS].Text;
         end;
 
-      WriteINI('Player List', 'Name' + IntToStr(i), ' ' + Name, ScriptPath + 'DCnB_PlayerList');
-      WriteINI('Player List', 'Pass' + IntToStr(i), ' ' + Pass, ScriptPath + 'DCnB_PlayerList');
-      WriteINI('Player List', 'Nick' + IntToStr(i), ' ' + Nick, ScriptPath + 'DCnB_PlayerList');
-      WriteINI('Player List', 'Pin' + IntToStr(i), ' ' + Pin, ScriptPath + 'DCnB_PlayerList');
-      WriteINI('Player List', 'Active' + IntToStr(i), ' ' + Active, ScriptPath + 'DCnB_PlayerList');
-      WriteINI('Player List', 'Tree' + IntToStr(i), ' ' + Tree, ScriptPath + 'DCnB_PlayerList');
-      WriteINI('Player List', 'Logs' + IntToStr(i), ' ' + Logs, ScriptPath + 'DCnB_PlayerList');
-      WriteINI('Player List', 'Hatchet' + IntToStr(i), ' ' + Hatchet, ScriptPath + 'DCnB_PlayerList');
-      WriteINI('Player List', 'Breaks' + IntToStr(i), ' ' + Breaks, ScriptPath + 'DCnB_PlayerList');
+      WriteINI('Player List', 'Name' + IntToStr(i), ' ' + Name, PATH_PLAYER);
+      WriteINI('Player List', 'Pass' + IntToStr(i), ' ' + Pass, PATH_PLAYER);
+      WriteINI('Player List', 'Nick' + IntToStr(i), ' ' + Nick, PATH_PLAYER);
+      WriteINI('Player List', 'Pin' + IntToStr(i), ' ' + Pin, PATH_PLAYER);
+      WriteINI('Player List', 'Active' + IntToStr(i), ' ' + Active, PATH_PLAYER);
+      WriteINI('Player List', 'Tree' + IntToStr(i), ' ' + Tree, PATH_PLAYER);
+      WriteINI('Player List', 'Logs' + IntToStr(i), ' ' + Logs, PATH_PLAYER);
+      WriteINI('Player List', 'Hatchet' + IntToStr(i), ' ' + Hatchet, PATH_PLAYER);
+      WriteINI('Player List', 'Breaks' + IntToStr(i), ' ' + Breaks, PATH_PLAYER);
     end;
 
-  WriteINI('Setup Info', 'Play Sound', tCombos[BOX_SND].Text, ScriptPath + 'DCnB_PlayerList');
-  WriteINI('Setup Info', 'Break After', tEdits[EDIT_BRK_AFTER].Text, ScriptPath + 'DCnB_PlayerList');
-  WriteINI('Setup Info', 'Stats ID', tEdits[EDIT_STAT_ID].Text, ScriptPath + 'DCnB_PlayerList');
-  WriteINI('Setup Info', 'Stats PAss', tEdits[EDIT_STAT_PASS].Text, ScriptPath + 'DCnB_PlayerList');
+  WriteINI('Setup Info', 'Play Sound', tCombos[BOX_SND].Text, PATH_PLAYER);
+  WriteINI('Setup Info', 'Break After', tEdits[EDIT_BRK_AFTER].Text, PATH_PLAYER);
+  WriteINI('Setup Info', 'Stats ID', tEdits[EDIT_STAT_ID].Text, PATH_PLAYER);
+  WriteINI('Setup Info', 'Stats PAss', tEdits[EDIT_STAT_PASS].Text, PATH_PLAYER);
 
   Form_ShowMessage('Successfully saved players! The ' + #10 +
                   'file can be found in your DCnB ' + #10 + 'folder.', 20, 35, 100, 20);
@@ -815,7 +818,7 @@ var
   i: Integer;
   s: String;
 begin
-  if (not FileExists(ScriptPath + 'DCnB_PlayerList')) then
+  if (not FileExists(PATH_PLAYER)) then
     Exit;
 
   if (didLoad) then
@@ -825,7 +828,7 @@ begin
   end;
 
   didLoad := True;
-  s := ReadINI('Player List', 'NumberOfPlayers', ScriptPath + 'DCnB_PlayerList');
+  s := ReadINI('Player List', 'NumberOfPlayers', PATH_PLAYER);
   SetLength(formPlayers, StrToInt(s));
 
   SetLength(records, Length(formPlayers));
@@ -833,15 +836,15 @@ begin
   begin
     SetLength(records[i], RECORD_COUNT);
 
-    records[i][REC_NAME] := ReadINI('Player List', 'Name' + IntToStr(i), ScriptPath + 'DCnB_PlayerList');
-    records[i][REC_PASS] := ReadINI('Player List', 'Pass' + IntToStr(i), ScriptPath + 'DCnB_PlayerList');
-    records[i][REC_NICK] := ReadINI('Player List', 'Nick' + IntToStr(i), ScriptPath + 'DCnB_PlayerList');
-    records[i][REC_PIN] := ReadINI('Player List', 'Pin' + IntToStr(i), ScriptPath + 'DCnB_PlayerList');
-    records[i][REC_ACTIVE] := ReadINI('Player List', 'Active' + IntToStr(i), ScriptPath + 'DCnB_PlayerList');
-    records[i][REC_TREE] := ReadINI('Player List', 'Tree' + IntToStr(i), ScriptPath + 'DCnB_PlayerList');
-    records[i][REC_LOGS] := ReadINI('Player List', 'Logs' + IntToStr(i), ScriptPath + 'DCnB_PlayerList');
-    records[i][REC_HATCHET] := ReadINI('Player List', 'Hatchet' + IntToStr(i), ScriptPath + 'DCnB_PlayerList');
-    records[i][REC_BREAKS] := ReadINI('Player List', 'Breaks' + IntToStr(i), ScriptPath + 'DCnB_PlayerList');
+    records[i][REC_NAME] := ReadINI('Player List', 'Name' + IntToStr(i), PATH_PLAYER);
+    records[i][REC_PASS] := ReadINI('Player List', 'Pass' + IntToStr(i), PATH_PLAYER);
+    records[i][REC_NICK] := ReadINI('Player List', 'Nick' + IntToStr(i), PATH_PLAYER);
+    records[i][REC_PIN] := ReadINI('Player List', 'Pin' + IntToStr(i), PATH_PLAYER);
+    records[i][REC_ACTIVE] := ReadINI('Player List', 'Active' + IntToStr(i), PATH_PLAYER);
+    records[i][REC_TREE] := ReadINI('Player List', 'Tree' + IntToStr(i), PATH_PLAYER);
+    records[i][REC_LOGS] := ReadINI('Player List', 'Logs' + IntToStr(i), PATH_PLAYER);
+    records[i][REC_HATCHET] := ReadINI('Player List', 'Hatchet' + IntToStr(i), PATH_PLAYER);
+    records[i][REC_BREAKS] := ReadINI('Player List', 'Breaks' + IntToStr(i), PATH_PLAYER);
   end;
 
   for i := 0 to High(formPlayers) do
@@ -1628,8 +1631,8 @@ begin
             comboItems := ['Yes', 'No'];
             Hint := 'Do you want to play a sound when a random event is found?';
 
-            if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
-              Text := ReadINI('Setup Info', 'Play Sound', ScriptPath + 'DCnB_PlayerList');
+            if (FileExists(PATH_PLAYER)) then
+              Text := ReadINI('Setup Info', 'Play Sound', PATH_PLAYER);
           end;
 
         BOX_SMRT_MEM..BOX_SMRT_CLNT:
@@ -1699,11 +1702,11 @@ begin
             if (mainEdit = EDIT_STAT_PASS) then
             begin
               PasswordChar := '*';
-              if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
-                Text := ReadINI('Setup Info', 'Stats Pass', ScriptPath + 'DCnB_PlayerList');
+              if (FileExists(PATH_PLAYER)) then
+                Text := ReadINI('Setup Info', 'Stats Pass', PATH_PLAYER);
             end else
-              if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
-                Text := ReadINI('Setup Info', 'Stats ID', ScriptPath + 'DCnB_PlayerList');
+              if (FileExists(PATH_PLAYER)) then
+                Text := ReadINI('Setup Info', 'Stats ID', PATH_PLAYER);
 
             Hint := 'Your stats username (ID) & password';
           end;
@@ -1712,8 +1715,8 @@ begin
           begin
             SetBounds({L} 382, {T} 317, {W} 100, {H} 15);
             Hint := 'How many loads to do before breaking or switching players';
-            if (FileExists(ScriptPath + 'DCnB_PlayerList')) then
-              Text := ReadINI('Setup Info', 'Break After', ScriptPath + 'DCnB_PlayerList');
+            if (FileExists(PATH_PLAYER)) then
+              Text := ReadINI('Setup Info', 'Break After', PATH_PLAYER);
           end;
 
         else begin
