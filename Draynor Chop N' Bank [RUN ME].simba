@@ -620,6 +620,7 @@ begin
 
   Wait(RandomRange(2000, 3000));
   Flag();
+  Wait(500 + Random(500));
   Result := True;
   Players[CurrentPlayer].Loc := Walk_ConstToLoc(which);
   DCnB_Debug('Walk_ToLoc', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS);
@@ -799,7 +800,7 @@ begin
   if (Length(Players) > 0) then
     with Players[CurrentPlayer] do
     begin
-      Writeln(PadR('|    Player:   ' + Capitalize(Name), 53) + '|');
+      Writeln(PadR('|    Player:   ' + ToStr(CurrentPlayer), 53) + '|');
       Writeln(PadR('|    Location: ' + Capitalize(Loc), 53) + '|');
       Writeln(PadR('|    Active:   ' + BoolToStr(Active), 53) + '|');
       if (not Active) then
