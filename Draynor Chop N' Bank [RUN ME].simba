@@ -815,6 +815,9 @@ var
   i: Integer;
   s: String;
 begin
+  if (not FileExists(ScriptPath + 'DCnB_PlayerList')) then
+    Exit;
+
   if (didLoad) then
   begin
     Form_ShowMessage('You''ve already loaded a player ' + #10 + 'list!', 22, 43, 100, 20);
@@ -1043,6 +1046,8 @@ begin
 
           if (not didLoad) then
             Form_LoadPlayers(Sender);
+
+          tImages[IMG_TAB_LOAD_NORM].Visible := False;
         end else
 
         begin
