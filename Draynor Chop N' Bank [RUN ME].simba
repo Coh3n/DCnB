@@ -821,13 +821,6 @@ begin
     Exit;
   end;
 
-  if (not FileExists(ScriptPath + 'DCnB_PlayerList')) then
-  begin
-    Form_ShowMessage('You need to save a player list ' + #10 + 'before you can load one!',
-                    26, 43, 100, 20);
-    Exit;
-  end;
-
   didLoad := True;
   s := ReadINI('Player List', 'NumberOfPlayers', ScriptPath + 'DCnB_PlayerList');
   SetLength(formPlayers, StrToInt(s));
@@ -1047,6 +1040,9 @@ begin
             tImages[IMG_TAB_DLT_NORM].Visible := True
           else
             tImages[IMG_TAB_DLT_NORM].Visible := False;
+
+          if (not didLoad) then
+            Form_LoadPlayers(Sender);
         end else
 
         begin
