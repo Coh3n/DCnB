@@ -1962,17 +1962,17 @@ begin
   ThreadSafeCall('Form_InitForm', varArr);
 end;
 
-procedure Form_ShowFormModal;
+procedure Form_ShowModal;
 begin
   frmMain.ShowModal;
 end;
 
-procedure Form_SafeShowFormModal;
+procedure Form_SafeShowModal;
 var
   varArr: TVariantArray;
 begin
   SetArrayLength(varArr, 0);
-  ThreadSafeCall('Form_ShowFormModal', varArr);
+  ThreadSafeCall('Form_ShowModal', varArr);
 end;
 
 procedure Form_KillForm;
@@ -1994,10 +1994,10 @@ begin
   FreeForm(frmIntro);
 end;
 
-procedure Form_ShowPlayerForm;
+procedure Form_Show;
 begin
   Form_SafeInitForm;
-  Form_SafeShowFormModal;
+  Form_SafeShowModal;
 end;
 
 {==============================================================================\
@@ -2669,7 +2669,7 @@ begin
     tabCount := 1;
     SetLength(formPlayers, tabCount);
 
-    Form_ShowPlayerForm;
+    Form_Show;
     Form_KillForm;
 
     sName := statsID;
