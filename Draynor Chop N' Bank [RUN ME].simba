@@ -14,13 +14,12 @@
 |                              Setup Instructions                              |
 |==============================================================================]
 |                                                                              |
-|       1. Determine whether or not you're using SMART (line 51)               |
-|       2. Determine whether or not you're using the PlayerForm (line 59)      |
-|       3. Have hatchet in FIRST inventory slot or equipped                    |
-|       4. Start in Draynor bank OR at the trees                               |
-|       5. Setup player(s) via DeclarePlayers/PlayerForm                       |
-|       6. Hit run/start script                                                |
-|       7. Post any progress reports and/or bugs!                              |
+|       1. Have hatchet in FIRST inventory slot or equipped                    |
+|       2. Start in Draynor bank OR at the trees                               |
+|       3. Hit run in Simba                                                    |
+|       4. Fill out the player form (hover boxes for hints)                    |
+|       5. Hit the "Start Script" button on the player setup tab               |
+|       6. Post any progress reports and/or bugs!                              |
  \_____________________________________________________________________________}
 
 {==============================================================================\
@@ -111,6 +110,9 @@ type
     Sat    : Extended;
     Exp    : Extended;
     Tol    : Integer;
+    Symbol : String;
+    OffsetX: Integer;
+    OffsetY: Integer;
   end;
 
 { var Global;
@@ -1942,7 +1944,10 @@ begin
           end;
 
         EDIT_LOGS:
-          SetBounds({L} 395, {T} 226, {W} 100, {H} 15);
+          begin
+            SetBounds({L} 395, {T} 226, {W} 100, {H} 15);
+            Hint := 'How many logs do you want this player to cut?';
+          end;
 
         else begin
           Form_Debug('Form_InitForm', 'Invalid tabEditBox!');
@@ -2076,11 +2081,14 @@ begin
       begin
         Name   := 'Oak';
         UpText := ['Oak'];
-        Color  := 1516577;
-        Hue    := 0.74;
-        Sat    := 0.92;
+        Color  := 1450785;
+        Hue    := 1.29;
+        Sat    := 2.43;
         Exp    := 37.5;
-        Tol    := 5;
+        Tol    := 2;
+        Symbol := 'bank';
+        OffsetX := 30;
+        OffsetY := 0;
       end;
 
     'willow':
@@ -2093,6 +2101,9 @@ begin
         Sat    := 0.92;
         Exp    := 67.5;
         Tol    := 5;
+        Symbol := 'fish';
+        OffsetX := 5;
+        OffsetY := -10;
       end;
 
     else
@@ -2106,7 +2117,7 @@ begin
     Exit;
 
   LampSkill := 'Woodcutting';
-  //DCnB_Debug('Find_Randoms', 'Scanning for random events...', DEBUG_DETAILS);
+  DCnB_Debug('Find_Randoms', 'Scanning for random events...', DEBUG_DETAILS);
 
   if (LevelUp) then
   begin
@@ -2177,6 +2188,9 @@ begin
   end else
     DCnB_Debug(proc, msg, DEBUG_DETAILS);
 
+  if (Players[CurrentPlayer].Rand <> '') then
+    falseReason[CurrentPlayer] := Players[CurrentPlayer].Rand;
+
   if (AllPlayersInactive) then
   begin
     DCnB_Debug('Next_Player', 'All players inactive', DEBUG_SUCCESS);
@@ -2199,7 +2213,7 @@ begin
   with Players[CurrentPlayer] do
     Integers[P_BREAKS] := Integers[P_BREAKS] + 1;
 
-  if (HowManyPlayers > 1) then
+  if (HowManyPlayers > 1) and (PlayersActive > 1) then
     Next_Player(True, 'Next_Break', 'Switching players...')
   else
   begin
@@ -2209,6 +2223,17 @@ begin
 
     DCnB_Debug('Next_Break', 'Break over, logging back in...', DEBUG_DETAILS);
     LoginPlayer;
+  end;
+end;
+
+function Chop_Relocate(tree: TTree): boolean;
+var
+  x, y: integer;
+begin
+  if (FindSymbol(x, y, tree.symbol)) then
+  begin
+    Mouse(x + tree.offsetX, y + tree.offsetY, 4, 4, True);
+    Result := FFlag(5);
   end;
 end;
 
@@ -2240,6 +2265,7 @@ var
 begin
   if (not LoggedIn) then
     Exit;
+
   Tree := Load_TreeRecords;
 
   ColorToleranceSpeed(2);
@@ -2333,15 +2359,12 @@ begin
 
     Result := InvFull();
 
-    if (not Result) and (Tree.Name <> 'Oak') then
+    if (not Result) then
       if (notFindTrees >= 20) or (notFindUptext > 5) then
-        if (FindSymbol(x, y, 'fish')) then
+        if (Chop_Relocate(tree)) then
         begin
           notFindTrees := 0;
           notFindUptext := 0;
-
-          Mouse(x + 5, y - 8, 4, 4, True);
-          FFlag(5);
         end;
 
     Find_Randoms(100, 300);
@@ -2468,10 +2491,8 @@ begin
       logsInInv := invCount - (integer(not Players[CurrentPlayer].Booleans[P_EQUIPPED]));
 
       if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
-      begin
-        MouseBox(386, 300, 409, 315, MOUSE_LEFT);
-        Result := True;
-      end else begin
+        Result := DepositAll
+      else begin
         Deposit(2, 28, True);
         Wait(RandomRange(200, 500));
         Result := (InvCount <= 1);
@@ -2648,6 +2669,7 @@ end;
 procedure Setup_Player;
 begin
   LoginPlayer;
+  Find_Randoms(0, 0);
 
   Players[CurrentPlayer].Loc := Find_PlayerLocation;
   SetAngle(SRL_ANGLE_HIGH);
@@ -2708,6 +2730,9 @@ begin
   for i := 0 to High(Players) do
   with Players[i] do
   begin
+    if (not Active) then
+      falseReason[i] := 'User set to false';
+
     BoxRewards := ['amp', 'mote', 'ostume', 'oins', 'unes', 're', 'ems'];
     Loc := 'Bank';
   end;
