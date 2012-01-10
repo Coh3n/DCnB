@@ -59,7 +59,7 @@ const
   DEBUG_SMART = True; // Draw TPA debugging on SMART
 
 const
-  SCRIPT_VERSION  = '73';
+  SCRIPT_VERSION  = '74';
   PATH_PLAYER = ScriptPath + 'DCnB_PlayerList.txt';
 
 { const Walk Constants;
@@ -946,7 +946,7 @@ begin
       Players[i].Nick := formPlayers[i].Nick;
       Players[i].Pin := formPlayers[i].Pin;
       Players[i].Member := Form_BoolToBool(tCombos[BOX_SMRT_MEM].Text);
-      Players[i].WorldInfo := [Players[i].Member, StrToInt(tEdits[EDIT_SMRT_WLD].Text), False];
+      Players[i].WorldInfo := [Players[i].Member, StrToIntDef(tEdits[EDIT_SMRT_WLD].Text, 1), False];
       Players[i].Strings[P_TREE] := formPlayers[i].Tree;
       Players[i].Booleans[P_TAKE_BREAKS] := Form_BoolToBool(formPlayers[i].Breaks);
 
@@ -959,7 +959,7 @@ begin
           Exit;
         end;
 
-      Players[i].Integers[P_TOTAL_LOGS] := StrToInt(formPlayers[i].Logs);
+      Players[i].Integers[P_TOTAL_LOGS] := StrToIntDef(formPlayers[i].Logs, -1);
       if (Players[i].Integers[P_TOTAL_LOGS] = -1) then
       begin
         frmHelp.Visible := True;
@@ -984,7 +984,7 @@ begin
 
   if (startReady) then
   begin
-    Smart_Server := StrToInt(tEdits[EDIT_SMRT_WLD].Text);
+    Smart_Server := StrToIntDef(tEdits[EDIT_SMRT_WLD].Text, 1);
     Smart_Members := Form_BoolToBool(tCombos[BOX_SMRT_MEM].Text);
     Smart_Signed := Form_BoolToBool(tCombos[BOX_SMRT_CLNT].Text);
     Smart_SuperDetail := Form_BoolToBool(tCombos[BOX_SMRT_DTL].Text);
@@ -992,7 +992,7 @@ begin
     statsID := tEdits[EDIT_STAT_ID].Text;
     statsPass := tEdits[EDIT_STAT_PASS].Text;
     playSnd := Form_BoolToBool(tCombos[BOX_SND].Text);
-    breakAfter := StrToInt(tEdits[EDIT_BRK_AFTER].Text);
+    breakAfter := StrToIntDef(tEdits[EDIT_BRK_AFTER].Text, 0);
   end;
 
   frmMain.ModalResult := mrOk;
@@ -2595,10 +2595,12 @@ begin
     Writeln('|                                                                                       |');
     Writeln('| False Reasons:                                                                        |');
     Writeln('| ──────────────                                                                        |');
-    for i := 0 to High(Players) do
-      if (not Players[i].Active) then
-        with Players[i] do
-          Writeln(PadR('|   ' + IntToStr(i) + ': ' + Nick + ' -> ' + falseReason[i], 88) + '|');
+
+    if (Length(Players) > 0) and (Length(falseReason) > 0) then
+      for i := 0 to High(Players) do
+        if (not Players[i].Active) then
+          with Players[i] do
+            Writeln(PadR('|   ' + IntToStr(i) + ': ' + Nick + ' -> ' + falseReason[i], 88) + '|');
   end;
 
   Writeln('|_______________________________________________________________________________________/');
@@ -2797,8 +2799,6 @@ end;
 procedure ScriptTerminate;
 begin
   Report_Print;
-  if (Length(Players) > 0) then
-    stats_Commit;
 end;
 
 begin
