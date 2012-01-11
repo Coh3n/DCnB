@@ -59,7 +59,7 @@ const
   DEBUG_SMART = True; // Draw TPA debugging on SMART
 
 const
-  SCRIPT_VERSION  = '74';
+  SCRIPT_VERSION  = '75';
   PATH_PLAYER = ScriptPath + 'DCnB_PlayerList.txt';
 
 { const Walk Constants;
@@ -2314,7 +2314,7 @@ begin
     // draw points on SMART if setting enabled
     {$IFDEF SMART}
     if (DEBUG_SMART) then
-      drawDotsMulti(true, boxesArr);
+      SMART_DrawDotsMulti(true, boxesArr);
     {$ENDIF}
 
     for i := 0 to h do
