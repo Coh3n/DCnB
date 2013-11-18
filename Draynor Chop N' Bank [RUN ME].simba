@@ -47,20 +47,14 @@
  \_____________________________________________________________________________}
 
 program DraynorChopNBank;
-{$DEFINE SMART} //Add '//' to the beginning of the line to disable SMART
-{$i SRL/SRL.simba}
-
-{$IFDEF SMART}
-  {$i SRL/SRL/Misc/PaintSmart.simba}
-{$ENDIF}
+{$DEFINE SMART}
+{$i SRL-6/SRL.simba}
 
 const
-  USE_FORM    = True; // <-- VERY IMPORTANT! True = use PlayerForm
   DEBUG_SMART = True; // Draw TPA debugging on SMART
 
 const
-  SCRIPT_VERSION  = '75';
-  PATH_PLAYER = ScriptPath + 'DCnB_PlayerList.txt';
+  SCRIPT_VERSION  = '76';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
@@ -90,7 +84,6 @@ const
 
    // Strings.
    P_TREE       = 0;
-   P_LAMP_SKILL = 1;
 
    // Progress report.
    P_LOADS  = 9;
@@ -110,7 +103,7 @@ type
     Sat    : Extended;
     Exp    : Extended;
     Tol    : Integer;
-    Symbol : String;
+    Symbol : Integer;
     OffsetX: Integer;
     OffsetY: Integer;
   end;
@@ -120,6 +113,7 @@ type
 var
   playerLoads: Integer;
   falseReason: Array of String; // holds reasons why players turned false
+  breakAfter: Integer;
 
 {==============================================================================\
 |                               Script Setup                                   |
@@ -133,1884 +127,21 @@ var
 const
   STATS_ID   = '';      // Your SRL Stats Username
   STATS_PASS = '';      // Your SRL Stats Password
-  RANDOM_SOUND = False; // True = a sound plays when a random is found
   BREAK_AFTER  = 15;    // Loads until break/switch player
 
 procedure DeclarePlayers; // Where all your players are to be setup
 begin
-  HowManyPlayers := 1;
-  NumberOfPlayers(HowManyPlayers);
+  Players.Setup(['Login name', 'or nickname'], 'ThePlayerFileName');
   CurrentPlayer := 0;
 
   with Players[0] do
   begin
-    Name   := '';
-    Pass   := '';
-    Nick   := '';   // 3-4 LOWERCASE letters from your username
-    Active := True; // True = use this player
-    Member := False;
-    Pin    := '';   // Leave blank if you don't have a bank pin
-    Integers[P_TOTAL_LOGS]  := 1000;  // Total logs to cut
+    Integers[P_TOTAL_LOGS]  := 0;    // Total logs to cut
     Booleans[P_TAKE_BREAKS] := True; // True = the player will take breaks
     Booleans[P_EQUIPPED]    := True; // True = your hatchet is equipped
-    Strings[P_TREE]         := 'willow';   // Either 'willow' or 'oak'
-  end;
-
-{ // <-- Remove the curly brace to use multiple players!
-
-  with Players[1] do
-  begin
-    Name   := '';
-    Pass   := '';
-    Nick   := '';
-    Active := True;
-    Member := False;
-    Pin    := '';
-    Integers[P_TOTAL_LOGS]  := 000;
-    Booleans[P_TAKE_BREAKS] := True;
-    Booleans[P_EQUIPPED]    := True;
-    Strings[P_TREE]         := '';
-  end;
-
-  with Players[2] do
-  begin
-    Name   := '';
-    Pass   := '';
-    Nick   := '';
-    Active := True;
-    Member := False;
-    Pin    := '';
-    Integers[P_TOTAL_LOGS]  := 000;
-    Booleans[P_TAKE_BREAKS] := True;
-    Booleans[P_EQUIPPED]    := True;
-    Strings[P_TREE]         := '';
-  end;
-
-  with Players[3] do
-  begin
-    Name   := '';
-    Pass   := '';
-    Nick   := '';
-    Active := True;
-    Member := False;
-    Pin    := '';
-    Integers[P_TOTAL_LOGS]  := 000;
-    Booleans[P_TAKE_BREAKS] := True;
-    Booleans[P_EQUIPPED]    := True;
-    Strings[P_TREE]         := '';
-  end;
-
-  with Players[4] do
-  begin
-    Name   := '';
-    Pass   := '';
-    Nick   := '';
-    Active := True;
-    Member := False;
-    Pin    := '';
-    Integers[P_TOTAL_LOGS]  := 000;
-    Booleans[P_TAKE_BREAKS] := True;
-    Booleans[P_EQUIPPED]    := True;
-    Strings[P_TREE]         := '';
-  end;
-
-  with Players[5] do
-  begin
-    Name   := '';
-    Pass   := '';
-    Nick   := '';
-    Active := True;
-    Member := False;
-    Pin    := '';
-    Integers[P_TOTAL_LOGS]  := 000;
-    Booleans[P_TAKE_BREAKS] := True;
-    Booleans[P_EQUIPPED]    := True;
-    Strings[P_TREE]         := '';
-  end;
-//}
-end;
-
-{==============================================================================\
-|                        Player form code starts here                          |
-|==============================================================================}
-
-const
-  TAB_TABS   = 0;
-  TAB_COMBOS = 1;
-  TAB_EDITS  = 2;
-  TAB_LABEL  = 3;
-
-  TAB_BOX_COUNT = 4;
-    BOX_ACTIVE    = 0;
-    BOX_TREE      = 1;
-    BOX_HATCHET   = 2;
-    BOX_BREAKS    = 3;
-
-  BOX_COUNT = 4;
-    BOX_SMRT_MEM  = 0;
-    BOX_SMRT_DTL  = 1;
-    BOX_SMRT_CLNT = 2;
-    BOX_SND       = 3;
-
-  TAB_EDIT_COUNT = 5;
-    EDIT_NAME = 0;
-    EDIT_PASS = 1;
-    EDIT_NICK = 2;
-    EDIT_PIN  = 3;
-    EDIT_LOGS = 4;
-
-  EDIT_COUNT = 4;
-    EDIT_SMRT_WLD  = 0;
-    EDIT_STAT_ID   = 1;
-    EDIT_STAT_PASS = 2;
-    EDIT_BRK_AFTER = 3;
-
-  IMG_COUNT = 27;
-    // Used in frmMain
-    IMG_BGND          = 0;
-    IMG_X_NORM        = 1;
-    IMG_Q_NORM        = 2;
-    IMG_STRT_NORM     = 3;
-    IMG_CRDTS_NORM    = 4;
-    IMG_REQUIRED      = 5;
-
-    // Used in the Script Setup tab
-    IMG_TAB_PLR_DRK   = 6;
-    IMG_TAB_SCPT_NORM = 7;
-    IMG_SCPT_HEAD     = 8;
-    IMG_SCPT_OTHR     = 9;
-    IMG_SMRT_USE      = 10;
-    IMG_SMRT_LBL      = 11;
-    IMG_STAT_LBL      = 12;
-    IMG_OTHR_LBL      = 13;
-    IMG_Q_SND         = 14;
-    IMG_Q_BRK         = 15;
-
-    // Used in the Player Setup tab
-    IMG_TAB_BDER      = 16;
-    IMG_TAB_ADD_NORM  = 17;
-    IMG_TAB_DLT_NORM  = 18;
-    IMG_TAB_LABELS    = 19;
-    IMG_TAB_SAVE_NORM = 20;
-    IMG_TAB_LOAD_NORM = 21;
-
-    // Used in frmHelp
-    IMG_FRM_HELP = 22;
-    IMG_X_SML    = 23;
-
-    // Used in frmIntro
-    IMG_FRM_INTRO = 24;
-    IMG_CLOSE     = 25;
-
-    // Used in frmCredits
-    IMG_FRM_CREDITS = 26;
-
-  BITMAP_COUNT = 41;
-    BGND          = 0;
-    INTRO         = 1;
-    X_NORM        = 2;
-    X_GLOW        = 3;
-    Q_NORM        = 4;
-    Q_GLOW        = 5;
-    STRT_NORM     = 6;
-    STRT_GLOW     = 7;
-    TAB_SCPT_NORM = 8;
-    TAB_SCPT_DRK  = 9;
-    TAB_PLR_NORM  = 10;
-    TAB_PLR_DRK   = 11;
-    TAB_BDER      = 12;
-    TAB_ACTIVE    = 13;
-    TAB_INACTIVE  = 14;
-    TAB_ADD_NORM  = 15;
-    TAB_ADD_GLOW  = 16;
-    TAB_DLT_NORM  = 17;
-    TAB_DLT_GLOW  = 18;
-    TAB_SAVE_NORM = 19;
-    TAB_SAVE_GLOW = 20;
-    TAB_LOAD_NORM = 21;
-    TAB_LOAD_GLOW = 22;
-    TAB_LABELS    = 23;
-    SCPT_HEAD     = 24;
-    SCPT_OTHR     = 25;
-    SMRT_USE      = 26;
-    SMRT_LBL      = 27;
-    STAT_LBL      = 28;
-    OTHR_LBL      = 29;
-    Q_GLOW_LBL    = 30;
-    Q_NORM_LBL    = 31;
-    FRM_HELP      = 32;
-    FRM_CREDITS   = 33;
-    X_SML_NORM    = 34;
-    X_SML_GLOW    = 35;
-    CLOSE_NORM    = 36;
-    CLOSE_GLOW    = 37;
-    CRDTS_NORM    = 38;
-    CRDTS_GLOW    = 39;
-    REQUIRED      = 40;
-
-  MAX_TAB_COUNT = 6;
-  MIN_TAB_COUNT = 1;
-
-  RECORD_COUNT = 9;
-    REC_NAME    = 0;
-    REC_PASS    = 1;
-    REC_NICK    = 2;
-    REC_PIN     = 3;
-    REC_ACTIVE  = 4;
-    REC_TREE    = 5;
-    REC_LOGS    = 6;
-    REC_HATCHET = 7;
-    REC_BREAKS  = 8;
-
-type
-  TPlayer = record
-    Name, Pass, Nick, Pin, Active, Tree, Logs, Hatchet, Breaks: String;
-  end;
-
-var
-  statsID, statsPass: String;
-  playSnd: Boolean;
-  breakAfter: Integer;
-
-  tabCount, currPlayer: Integer;
-  formPlayers: Array of TPlayer;
-  frmMain, frmHelp, frmIntro, frmCredits: TForm;
-  errorMessage: TLabel;
-  startReady, didLoad: Boolean;
-  useSmart: tCheckBox;
-
-  isActiveImage: Array[0..IMG_COUNT - 1] of Boolean;
-  isActiveTab: Array of Boolean;
-  frmBitmaps: Array [0..BITMAP_COUNT - 1] of Integer;
-
-  tImages: Array[0..IMG_COUNT - 1] of TImage;
-  tCombos: Array[0..BOX_COUNT - 1] of TComboBox;
-  tEdits: Array[0..EDIT_COUNT - 1] of TEdit;
-
-  tTabs: Array of TImage;
-  tTabLabels: Array of TLabel;
-  tTabCombos: Array[0..TAB_BOX_COUNT - 1] of TComboBox;
-  tTabEdits: Array[0..TAB_EDIT_COUNT - 1] of TEdit;
-
-procedure Form_Debug(Proc, s: String);
-begin
-  Writeln('-> [Form_Debug]: ' + Proc + ': ' + s);
-end;
-
-procedure Form_PlayerInfo(whichPlayer: Integer; saveInfo: Boolean);
-begin
-  if (saveInfo) then
-    with formPlayers[currPlayer] do
-    begin
-      Name := tTabEdits[EDIT_NAME].Text;
-      Pass := tTabEdits[EDIT_PASS].Text;
-      Nick := tTabEdits[EDIT_NICK].Text;
-      Pin  := tTabEdits[EDIT_PIN].Text;
-      Active := tTabCombos[BOX_ACTIVE].Text;
-      Tree := tTabCombos[BOX_TREE].Text;
-      Logs := tTabEdits[EDIT_LOGS].Text;
-      Hatchet := tTabCombos[BOX_HATCHET].Text;
-      Breaks := tTabCombos[BOX_BREAKS].Text;
-    end;
-
-  currPlayer := whichPlayer;
-  with formPlayers[currPlayer] do
-  begin
-    tTabEdits[EDIT_NAME].Text := Name;
-    tTabEdits[EDIT_PASS].Text := Pass;
-    tTabEdits[EDIT_NICK].Text := Nick;
-    tTabEdits[EDIT_PIN].Text := Pin;
-    tTabCombos[BOX_ACTIVE].Text := Active;
-    tTabCombos[BOX_TREE].Text := Tree;
-    tTabEdits[EDIT_LOGS].Text := Logs;
-    tTabCombos[BOX_HATCHET].Text := Hatchet;
-    tTabCombos[BOX_BREAKS].Text := Breaks;
+    Strings[P_TREE]         := '';   // Either 'willow' or 'oak'
   end;
 end;
-
-procedure Tab_ManageLabels(i: Integer);
-begin
-  if (formPlayers[i].Name = '') then
-    tTabLabels[i].Caption := 'Player ' + IntToStr(i + 1)
-  else
-    if (Length(formPlayers[i].Name) <= 7) then
-      tTabLabels[i].Caption := formPlayers[i].Name
-    else
-      tTabLabels[i].Caption := Copy(formPlayers[i].Name, 1, 6) + '...';
-end;
-
-procedure Tab_CreateObject(theSender: Integer; useHigh: Boolean);
-var
-  bmp, w, h, i: Integer;
-begin
-  if (not useHigh) then
-    i := 0;
-
-  case theSender of
-    TAB_TABS:
-      begin
-        SetLength(tTabs, tabCount);
-        SetLength(isActiveTab, tabCount);
-        if (useHigh) then
-          i := High(tTabs);
-
-        tTabs[i] := TImage.Create(frmMain);
-        with tTabs[i] do
-        begin
-          Parent := frmMain;
-          bmp := frmBitmaps[TAB_ACTIVE];
-          GetBitmapSize(bmp, w, h);
-          SetBounds({L} 50 + (i * 74), {T} 161, {W} w, {H} h);
-          DrawBitmap(Bmp,canvas,0,0);
-          isActiveTab[i] := True;
-
-          if (isActiveImage[IMG_TAB_SCPT_NORM]) then
-            Visible := False
-          else
-            Visible := True;
-        end;
-      end;
-
-    TAB_LABEL:
-      begin
-        SetLength(tTabLabels, tabCount);
-        if (useHigh) then
-          i := High(tTabLabels);
-
-        tTabLabels[i] := TLabel.Create(frmMain);
-        with tTabLabels[i] do
-        begin
-          Parent := frmMain;
-          SetBounds({L} 62 + (i * 74), {T} 163, {W} w, {H} h);
-          Font.Name := 'Verdana';
-          Font.Size := 8;
-          Font.Color := 2070783;
-          Caption := 'Player ' + IntToStr(i + 1);
-
-          if (isActiveImage[IMG_TAB_SCPT_NORM]) then
-            Visible := False
-          else
-            Visible := True;
-        end;
-      end;
-
-    else begin
-      Form_Debug('Tab_CreateObject', 'Invalid theSender parameter!');
-      Exit;
-    end;
-  end;
-end;
-
-function Tab_GetActive: Integer;
-var
-  hi, i: Integer;
-begin
-  Result := -1;
-  if (Length(tTabs) <= 0) then
-    Exit;
-
-  hi := High(tTabs);
-  for i := 0 to hi do
-    if (isActiveTab[i]) then
-    begin
-      Result := i;
-      Exit;
-    end;
-end;
-
-procedure Tab_OnHover(Sender: TObject; Shift: TShiftState; X, Y: Integer);
-var
-  i, w, h: Integer;
-  intArr: TIntegerArray;
-begin
-  for i := IMG_TAB_ADD_NORM to IMG_TAB_DLT_NORM do
-  begin
-    if (i = IMG_TAB_ADD_NORM) then
-      intArr := [IMG_TAB_ADD_NORM, frmBitmaps[TAB_ADD_NORM]]
-    else
-      intArr := [IMG_TAB_DLT_NORM, frmBitmaps[TAB_DLT_NORM]];
-
-    if (tImages[i].Visible) then
-    begin
-      if (not isActiveImage[intArr[0]]) then
-        Exit;
-      GetBitmapSize(intArr[1], w, h);
-      DrawBitmap(intarr[1],tImages[intArr[0]].Canvas,0,0);
-      isActiveImage[intArr[0]] := False;
-    end;
-  end;
-end;
-
-const
-  ACTIVE   = 0;
-  INACTIVE = 1;
-procedure Tab_Activate(Sender: TObject);
-var
-  intArr: TIntegerArray;
-  theSender, currTab, bmp, i, w, h: Integer;
-begin
-  currTab := Tab_GetActive;
-  theSender := -1;
-  if ((Length(tTabs) = 1) or (Sender = tTabs[currTab])) then
-    Exit;
-
-  for i := 0 to tabCount - 1 do
-    if (Sender = tTabLabels[i]) or (Sender = tTabs[i]) then
-    begin
-      //Writeln('Sender: ' + IntToStr(i));
-      theSender := i;
-      Break;
-    end;
-
-  if (theSender = -1) then
-  begin
-    Form_Debug('Tab_Activate', 'Invalid Sender: theSender = -1');
-    Exit;
-  end;
-
-  intArr := [frmBitmaps[TAB_ACTIVE], frmBitmaps[TAB_INACTIVE]];
-  {
-    Replaces the active tab with the inactive tab bitmap, and sets that tab
-    inactive.
-  }
-  if (currTab > -1) then
-  begin
-    bmp := intArr[INACTIVE];
-    GetBitmapSize(bmp, w, h);
-    DrawBitmap(bmp,tTabs[currTab].Canvas,0,0);
-    tTabLabels[currTab].Font.Color := 1068418;
-    isActiveTab[currTab] := False;
-    Form_PlayerInfo(currTab, True);
-    Tab_ManageLabels(currTab);
-    //Form_Debug('Tab_Activate', 'Tab ' + IntToStr(currTab + 1) + ' is now inactive.');
-  end;
-  {
-    Replaces the inactive tab clicked with the active tab bitmap, and sets that
-    tab to active.
-  }
-  bmp := intArr[ACTIVE];
-  GetBitmapSize(bmp, w, h);
-  DrawBitmap(bmp,tTabs[theSender].Canvas,0,0);
-  tTabLabels[theSender].Font.Color := 2070783;
-  isActiveTab[theSender] := True;
-  Form_PlayerInfo(theSender, True);
-  Tab_ManageLabels(theSender);
-
-  //Form_Debug('Tab_Activate', 'Tab ' + IntToStr(theSender + 1) + ' is now active.');
-end;
-
-const
-  FROM_LEFT = 0;
-  IF_LEFT   = 1;
-  ELSE_LEFT = 2;
-procedure Tab_ShiftButtons(Add: Boolean);
-var
-  shRight: Integer;
-  intArr: TIntegerArray;
-begin
-  if (Add) then
-    intArr := [127, 82, 74]
-  else
-    intArr := [209, -82, -74];
-  {
-    Shifts the add tab and delete tab buttons according to current position
-    from the left of the main form.
-  }
-  with tImages[IMG_TAB_ADD_NORM] do
-  begin
-    if (Left = intArr[FROM_LEFT]) then
-      shRight := intArr[IF_LEFT]
-    else
-      shRight := intArr[ELSE_LEFT];
-
-    Left := Left + shRight;
-    {
-      If 6 tabs exists, the add tab button won't be visible.
-    }
-    if (Left >= 127 + (74 * 5)) then
-      Visible := False
-    else
-      Visible := True;
-  end;
-
-  with tImages[IMG_TAB_DLT_NORM] do
-  begin
-    Left := Left + intArr[ELSE_LEFT];
-    {
-      If one tabs exists, the delete tab button won't be visible.
-    }
-    if (Left > 127) then
-      Visible := True
-    else
-      Visible := False;
-  end;
-end;
-
-procedure Tab_Add(loaded: Boolean);
-var
-  bmp, hi, w, h, i: Integer;
-begin
-  Tab_ShiftButtons(True);
-
-  if (tabCount > MAX_TAB_COUNT) then
-  begin
-    Form_Debug('Tab_Add', 'Maximum tab number has been reached.');
-    Exit;
-  end;
-
-  Inc(tabCount);
-
-  if (not loaded) then
-    SetLength(formPlayers, tabCount);
-  {
-    Creates the TImage for the index just added to the tTabs array.
-  }
-  Tab_CreateObject(TAB_TABS, True);
-  Tab_CreateObject(TAB_LABEL, True);
-
-  if (not loaded) then
-    Form_PlayerInfo(High(formPlayers), True);
-  {
-    Finds all the tabs that are active, and replaces the active tab bitmap
-    with the inactive bitmap. Also sets the active tabs to inactive.
-  }
-  hi := High(tTabs);
-  if (Length(tTabs) > 1) then
-    for i := 0 to (hi - 1) do
-      with tTabs[i] do
-      begin
-        if (not isActiveTab[i]) then
-          Continue;
-
-        bmp := frmBitmaps[TAB_INACTIVE];
-        GetBitmapSize(bmp, w, h);
-        DrawBitmap(bmp,canvas,0,0);
-        isActiveTab[i] := False;
-        //Form_Debug('Tab_Add', 'Tab ' + IntToStr(i + 1) + ' is now inactive.');
-      end;
-
-  for i := 0 to hi do
-  begin
-    tTabs[i].OnClick := @Tab_Activate;
-    tTabs[i].OnMouseMove := @Tab_OnHover;
-  end;
-
-  hi := High(tTabLabels);
-  for i := 0 to hi do
-  begin
-    tTabLabels[i].OnClick := @Tab_Activate;
-    tTabLabels[i].OnMouseMove := @Tab_OnHover;
-  end;
-
-  Tab_ManageLabels(hi - 1);
-
-  //Form_Debug('Tab_Add', 'There are ' + IntToStr(Length(tTabs)) + ' tabs.');
-end;
-
-procedure Tab_Delete;
-var
-  bmp, hi, w, h: Integer;
-begin
-  Tab_ShiftButtons(False);
-
-  if (tabCount < MIN_TAB_COUNT) then
-  begin
-    Form_Debug('Tab_Delete', 'Minimum tab number has been reached.');
-    Exit;
-  end;
-
-  hi := High(tTabs);
-  if (Length(tTabs) > 1) then
-    with tTabs[hi - 1] do
-      if (isActiveTab[hi]) then
-      begin
-        Form_PlayerInfo(hi - 1, False);
-        bmp := frmBitmaps[TAB_ACTIVE];
-        GetBitmapSize(bmp, w, h);
-        DrawBitmap(bmp,canvas,0,0);
-        tTabLabels[hi - 1].Font.Color := 2070783;
-        isActiveTab[hi - 1] := True;
-        //Form_Debug('Tab_Delete', 'Tab ' + IntToStr(hi - 1) + ' is now active.');
-      end;
-
-  if (Length(tTabs) > 0) then
-  begin
-    tTabs[hi].Visible := False;
-    isActiveTab[hi] := False;
-    tTabs[hi].Free;
-
-    tTabLabels[hi].Visible := False;
-    tTabLabels[hi].Free;
-
-    Dec(tabCount);
-    SetLength(tTabs, tabCount);
-    SetLength(isActiveTab, tabCount);
-    SetLength(formPlayers, tabCount);
-  end;
-
-  //Form_Debug('Tab_Delete', 'There are ' + IntToStr(Length(tTabs)) + ' tabs.');
-end;
-
-procedure Form_ShowMessage(s: String; l, t, w, h: Integer);
-begin
-  frmHelp.Visible := True;
-
-  errorMessage := TLabel.Create(frmHelp);
-  with errorMessage do
-  begin
-    Parent := frmHelp;
-    SetBounds({L} l, {T} t, {W} w, {H} h);
-    Font.Name := 'Verdana';
-    Font.Color := clWhite;
-    Font.Style := [fsBold];
-    Font.Size := 9;
-    Caption := s;
-  end;
-end;
-
-procedure Form_SavePlayers(Sender: TObject);
-var
-  i: Integer;
-begin
-  DeleteINI('Player List', '', PATH_PLAYER);
-  WriteINI('Player List', 'NumberOfPlayers',
-           ' ' + IntToStr(Length(formPlayers)), PATH_PLAYER);
-
-  for i := 0 to High(formPlayers) do
-    with formPlayers[i] do
-    begin
-      if (isActiveTab[i]) then
-        if (i = High(formPlayers)) then
-        begin
-          Name := tTabEdits[EDIT_NAME].Text;
-          Pass := tTabEdits[EDIT_PASS].Text;
-          Nick := tTabEdits[EDIT_NICK].Text;
-          Pin  := tTabEdits[EDIT_PIN].Text;
-          Active := tTabCombos[BOX_ACTIVE].Text;
-          Tree := tTabCombos[BOX_TREE].Text;
-          Logs := tTabEdits[EDIT_LOGS].Text;
-          Hatchet := tTabCombos[BOX_HATCHET].Text;
-          Breaks := tTabCombos[BOX_BREAKS].Text;
-        end;
-
-      WriteINI('Player List', 'Name' + IntToStr(i), ' ' + Name, PATH_PLAYER);
-      WriteINI('Player List', 'Pass' + IntToStr(i), ' ' + Pass, PATH_PLAYER);
-      WriteINI('Player List', 'Nick' + IntToStr(i), ' ' + Nick, PATH_PLAYER);
-      WriteINI('Player List', 'Pin' + IntToStr(i), ' ' + Pin, PATH_PLAYER);
-      WriteINI('Player List', 'Active' + IntToStr(i), ' ' + Active, PATH_PLAYER);
-      WriteINI('Player List', 'Tree' + IntToStr(i), ' ' + Tree, PATH_PLAYER);
-      WriteINI('Player List', 'Logs' + IntToStr(i), ' ' + Logs, PATH_PLAYER);
-      WriteINI('Player List', 'Hatchet' + IntToStr(i), ' ' + Hatchet, PATH_PLAYER);
-      WriteINI('Player List', 'Breaks' + IntToStr(i), ' ' + Breaks, PATH_PLAYER);
-    end;
-
-  WriteINI('Setup Info', 'Play Sound', tCombos[BOX_SND].Text, PATH_PLAYER);
-  WriteINI('Setup Info', 'Break After', tEdits[EDIT_BRK_AFTER].Text, PATH_PLAYER);
-  WriteINI('Setup Info', 'Stats ID', tEdits[EDIT_STAT_ID].Text, PATH_PLAYER);
-  WriteINI('Setup Info', 'Stats PAss', tEdits[EDIT_STAT_PASS].Text, PATH_PLAYER);
-
-  Form_ShowMessage('Successfully saved players! The ' + #10 +
-                  'file can be found in your DCnB ' + #10 + 'folder.', 20, 35, 100, 20);
-end;
-
-procedure Form_LoadPlayers(Sender: TObject);
-var
-  records: Array of Array of String;
-  i: Integer;
-  s: String;
-begin
-  if (not FileExists(PATH_PLAYER)) then
-    Exit;
-
-  if (didLoad) then
-  begin
-    Form_ShowMessage('You''ve already loaded a player ' + #10 + 'list!', 22, 43, 100, 20);
-    Exit;
-  end;
-
-  didLoad := True;
-  s := ReadINI('Player List', 'NumberOfPlayers', PATH_PLAYER);
-  SetLength(formPlayers, StrToInt(s));
-
-  SetLength(records, Length(formPlayers));
-  for i := 0 to High(records) do
-  begin
-    SetLength(records[i], RECORD_COUNT);
-
-    records[i][REC_NAME] := ReadINI('Player List', 'Name' + IntToStr(i), PATH_PLAYER);
-    records[i][REC_PASS] := ReadINI('Player List', 'Pass' + IntToStr(i), PATH_PLAYER);
-    records[i][REC_NICK] := ReadINI('Player List', 'Nick' + IntToStr(i), PATH_PLAYER);
-    records[i][REC_PIN] := ReadINI('Player List', 'Pin' + IntToStr(i), PATH_PLAYER);
-    records[i][REC_ACTIVE] := ReadINI('Player List', 'Active' + IntToStr(i), PATH_PLAYER);
-    records[i][REC_TREE] := ReadINI('Player List', 'Tree' + IntToStr(i), PATH_PLAYER);
-    records[i][REC_LOGS] := ReadINI('Player List', 'Logs' + IntToStr(i), PATH_PLAYER);
-    records[i][REC_HATCHET] := ReadINI('Player List', 'Hatchet' + IntToStr(i), PATH_PLAYER);
-    records[i][REC_BREAKS] := ReadINI('Player List', 'Breaks' + IntToStr(i), PATH_PLAYER);
-  end;
-
-  for i := 0 to High(formPlayers) do
-  begin
-    with formPlayers[i] do
-    begin
-      Name := records[i][REC_NAME];
-      Pass := records[i][REC_PASS];
-      Nick := records[i][REC_NICK];
-      Pin := records[i][REC_PIN];
-      Active := records[i][REC_ACTIVE];
-      Tree := records[i][REC_TREE];
-      Logs := records[i][REC_LOGS];
-      Hatchet := records[i][REC_HATCHET];
-      Breaks := records[i][REC_BREAKS];
-
-      if (i = High(formPlayers)) then
-      begin
-        tTabEdits[EDIT_NAME].Text := Name;
-        tTabEdits[EDIT_PASS].Text := Pass;
-        tTabEdits[EDIT_NICK].Text := Nick;
-        tTabEdits[EDIT_PIN].Text := Pin;
-        tTabCombos[BOX_ACTIVE].Text := Active;
-        tTabCombos[BOX_TREE].Text := Tree;
-        tTabEdits[EDIT_LOGS].Text := Logs;
-        tTabCombos[BOX_HATCHET].Text := Hatchet;
-        tTabCombos[BOX_BREAKS].Text := Breaks;
-        currPlayer := i;
-      end;
-    end;
-
-    if (i > 0) then
-      Tab_Add(True);
-
-    if (i = High(formPlayers)) then
-      tTabLabels[i].Font.Color := 2070783
-    else
-      tTabLabels[i].Font.Color := 1068418;
-
-    Tab_ManageLabels(i);
-  end;
-
-  Form_ShowMessage('Successfully loaded players!', 35, 50, 100, 20);
-end;
-
-function Form_BoolToBool(s: String): Boolean;
-var
-  boolOptions: TStringArray;
-begin
-  boolOptions := ['Yes', 'Equipped', 'Members', 'High', 'Signed'];
-  Result := InStrArr(s, boolOptions, False);
-end;
-
-procedure Form_StartScript;
-var
-  hi, i: Integer;
-begin
-  Form_PlayerInfo(currPlayer, True);
-  SetLength(Players, Length(formPlayers));
-  HowManyPlayers := Length(Players);
-  NumberOfPlayers(HowManyPlayers);
-  {
-    Checks all the script-specific info, and gives a warning message when
-    necessary.
-  }
-  hi := High(tCombos);
-  for i := 0 to hi - 1 do
-    if (tCombos[i].Text = '') then
-      if (not useSMART.Checked) then
-      begin
-        Form_ShowMessage('Please fill out all S.M.A.R.T. ' + #10 + 'fields!', 38, 42, 100, 20);
-        Exit;
-      end;
-  {
-    Checks all the player-specific info, and gives a warning message when
-    necessary.
-  }
-  hi := High(formPlayers);
-  for i := 0 to hi do
-    with formPlayers[i] do
-    begin
-      SetLength(Players[i].Integers, 14);
-      SetLength(Players[i].Strings, 2);
-      SetLength(Players[i].Booleans, 2);
-
-      if (Name = '') or (Pass = '') or (Nick = '') or (Active = '') or
-         (Tree = '') or (Logs = '') or (Hatchet = '') then
-      begin
-        frmHelp.Visible := True;
-        Form_ShowMessage('Please fill out all required ' + #10 +
-                        'fields for Player ' + IntToStr(i + 1) + '.', 42, 42, 100, 20);
-        Exit;
-      end;
-
-      Players[i].Name := formPlayers[i].Name;
-      Players[i].Pass := formPlayers[i].Pass;
-      Players[i].Nick := formPlayers[i].Nick;
-      Players[i].Pin := formPlayers[i].Pin;
-      Players[i].Member := Form_BoolToBool(tCombos[BOX_SMRT_MEM].Text);
-      Players[i].WorldInfo := [Players[i].Member, StrToIntDef(tEdits[EDIT_SMRT_WLD].Text, 1), False];
-      Players[i].Strings[P_TREE] := formPlayers[i].Tree;
-      Players[i].Booleans[P_TAKE_BREAKS] := Form_BoolToBool(formPlayers[i].Breaks);
-
-      Players[i].Active := Form_BoolToBool(formPlayers[i].Active);
-      if (not Players[i].Active) then
-        if (Lowercase(formPlayers[i].Active) <> 'no') then
-        begin
-          frmHelp.Visible := True;
-          Form_ShowMessage('Invalid use player for Player' + IntToStr(i + 1) + '.', 29, 48, 100, 20);
-          Exit;
-        end;
-
-      Players[i].Integers[P_TOTAL_LOGS] := StrToIntDef(formPlayers[i].Logs, -1);
-      if (Players[i].Integers[P_TOTAL_LOGS] = -1) then
-      begin
-        frmHelp.Visible := True;
-        Form_ShowMessage('Invalid number of logs for ' + #10 +
-                        'Player ' + IntToStr(i + 1) + '. Be sure to use numbers'
-                        + #10 + 'only.', 19, 35, 100, 20);
-        Exit;
-      end;
-
-      Players[i].Booleans[P_EQUIPPED] := Form_BoolToBool(formPlayers[i].Hatchet);
-      if (not Players[i].Booleans[P_EQUIPPED]) then
-        if (Lowercase(formPlayers[i].Hatchet) <> '1st inventory slot') then
-        begin
-          frmHelp.Visible := True;
-          Form_ShowMessage('Invalid hatchet status for ' + #10 +
-                          'Player' + IntToStr(i + 1) + '.', 29, 42, 100, 20);
-          Exit;
-        end;
-    end;
-
-  startReady := True;
-
-  if (startReady) then
-  begin
-    Smart_Server := StrToIntDef(tEdits[EDIT_SMRT_WLD].Text, 1);
-    Smart_Members := Form_BoolToBool(tCombos[BOX_SMRT_MEM].Text);
-    Smart_Signed := Form_BoolToBool(tCombos[BOX_SMRT_CLNT].Text);
-    Smart_SuperDetail := Form_BoolToBool(tCombos[BOX_SMRT_DTL].Text);
-
-    statsID := tEdits[EDIT_STAT_ID].Text;
-    statsPass := tEdits[EDIT_STAT_PASS].Text;
-    playSnd := Form_BoolToBool(tCombos[BOX_SND].Text);
-    breakAfter := StrToIntDef(tEdits[EDIT_BRK_AFTER].Text, 0);
-  end;
-
-  frmMain.ModalResult := mrOk;
-end;
-
-procedure Form_OnClick(Sender: TObject);
-var
-  hi, w, h, i, k: Integer;
-  bmpArr, imgArr: TIntegerArray;
-begin
-  case Sender of
-    tImages[IMG_X_NORM]:
-      frmMain.ModalResult := mrOk; // Closes the main form (frmMain).
-
-    tImages[IMG_STRT_NORM]:
-      Form_StartScript;
-
-    tImages[IMG_TAB_PLR_DRK], tImages[IMG_TAB_SCPT_NORM]:
-      begin
-        if (Sender = tImages[IMG_TAB_PLR_DRK]) then
-        begin
-          bmpArr := [ frmBitmaps[TAB_SCPT_DRK], frmBitmaps[TAB_PLR_NORM] ];
-          imgArr := [ IMG_TAB_SCPT_NORM, IMG_TAB_PLR_DRK ];
-
-          isActiveImage[IMG_TAB_SCPT_NORM] := False;
-          isActiveImage[IMG_TAB_PLR_DRK] := True;
-
-          for i := IMG_SCPT_HEAD to IMG_Q_BRK do
-            tImages[i].Visible := False;
-
-          for i := BOX_SMRT_MEM to BOX_SND do
-            tCombos[i].Visible := False;
-
-          for i := EDIT_SMRT_WLD to EDIT_BRK_AFTER do
-            tEdits[i].Visible := False;
-
-          for i := IMG_TAB_BDER to IMG_TAB_LOAD_NORM do
-            tImages[i].Visible := True;
-
-          for i := BOX_ACTIVE to BOX_BREAKS do
-            tTabCombos[i].Visible := True;
-
-          for i := EDIT_NAME to EDIT_LOGS do
-            tTabEdits[i].Visible := True;
-
-          tImages[IMG_TAB_LABELS].Visible := True;
-          useSmart.Visible := False;
-
-          if (tImages[IMG_TAB_ADD_NORM].Left >= 127 + (74 * 5)) then
-            tImages[IMG_TAB_ADD_NORM].Visible := False;
-
-          if (tImages[IMG_TAB_DLT_NORM].Left > 127) then
-            tImages[IMG_TAB_DLT_NORM].Visible := True
-          else
-            tImages[IMG_TAB_DLT_NORM].Visible := False;
-
-          if (not didLoad) then
-            Form_LoadPlayers(Sender);
-
-          tImages[IMG_TAB_LOAD_NORM].Visible := False;
-        end else
-
-        begin
-          bmpArr := [ frmBitmaps[TAB_PLR_DRK], frmBitmaps[TAB_SCPT_NORM] ];
-          imgArr := [ IMG_TAB_PLR_DRK, IMG_TAB_SCPT_NORM ];
-
-          isActiveImage[IMG_TAB_SCPT_NORM] := True;
-          isActiveImage[IMG_TAB_PLR_DRK] := False;
-
-          for i := IMG_SCPT_HEAD to IMG_Q_BRK do
-            tImages[i].Visible := True;
-
-          for i := BOX_SMRT_MEM to BOX_SND do
-            tCombos[i].Visible := True;
-
-          for i := EDIT_SMRT_WLD to EDIT_BRK_AFTER do
-            tEdits[i].Visible := True;
-
-          for i := IMG_TAB_BDER to IMG_TAB_LOAD_NORM do
-            tImages[i].Visible := False;
-
-          for i := BOX_ACTIVE to BOX_BREAKS do
-            tTabCombos[i].Visible := False;
-
-          for i := EDIT_NAME to EDIT_LOGS do
-            tTabEdits[i].Visible := False;
-
-          tImages[IMG_TAB_LABELS].Visible := False;
-          useSmart.Visible := True;
-        end;
-
-        hi := High(bmpArr);
-        for i := 0 to hi do
-        begin
-          GetBitmapSize(bmpArr[i], w, h);
-          DrawBitmap(bmpArr[i],tImages[imgArr[i]].Canvas,0,0);
-        end;
-
-        hi := High(tTabs);
-        for k := 0 to hi do
-          if (isActiveImage[IMG_TAB_SCPT_NORM]) then
-          begin
-            tTabs[k].Visible := False;
-            tTabLabels[k].Visible := False;
-          end else
-          begin
-            tTabs[k].Visible := True;
-            tTabLabels[k].Visible := True;
-          end;
-      end;
-
-    tImages[IMG_Q_SND], tImages[IMG_Q_BRK]:
-      begin
-        frmHelp.Visible := True;
-
-        if (Sender = tImages[IMG_Q_SND]) then
-          Form_ShowMessage('Do you want the script to play' + #10 +
-                          'a sound when a random event' + #10 + 'is found?', 28, 37, 100, 20)
-        else
-          Form_ShowMessage('How many loads do you want' + #10 +
-                          'to bank before breaking/switching' + #10 +
-                          'players? Leave blank if you ' + #10 +
-                          'don''t want to take breaks.', 15, 30, 100, 20);
-      end;
-
-    tImages[IMG_X_SML]:
-      begin
-        frmHelp.Visible := False;
-        errorMessage.Free;
-      end;
-
-    tImages[IMG_Q_NORM], tImages[IMG_CRDTS_NORM]:
-      begin
-        if (Sender = tImages[IMG_Q_NORM]) then
-        begin
-          tImages[IMG_CLOSE].Parent := frmIntro;
-          frmIntro.Visible := True
-        end else
-        begin
-          tImages[IMG_CLOSE].Parent := frmCredits;
-          frmCredits.Visible := True;
-        end;
-
-        tImages[IMG_CLOSE].Visible := True;
-      end;
-
-    tImages[IMG_CLOSE]:
-      begin
-        if (frmIntro.Visible) then
-          frmIntro.Visible := False;
-
-        if (frmCredits.Visible) then
-          frmCredits.Visible := False;
-
-        tImages[IMG_CLOSE].Visible := False;
-      end;
-
-    tImages[IMG_TAB_ADD_NORM]:
-      begin
-        Tab_Add(False);
-
-        hi := High(tTabs);
-        for i := 0 to hi do
-          if (not isActiveTab[i]) then
-            tTabLabels[i].Font.Color := 1068418;
-      end;
-
-    tImages[IMG_TAB_DLT_NORM]:
-      Tab_Delete;
-
-    useSMART:
-      if (useSmart.Checked) then
-      begin
-        for i := BOX_SMRT_MEM to BOX_SMRT_CLNT do
-          tCombos[i].Enabled := False;
-
-        tEdits[EDIT_SMRT_WLD].Enabled := False;
-      end else
-      begin
-        for i := BOX_SMRT_MEM to BOX_SMRT_CLNT do
-          tCombos[i].Enabled := True;
-
-        tEdits[EDIT_SMRT_WLD].Enabled := True;
-      end;
-
-    else begin
-      Form_Debug('Form_OnClick', 'Invalid Sender!');
-      Exit;
-    end;
-  end;
-end;
-
-{******************************************************************************}
-{ Name: Form_OnKeyPress                                                        }
-{ By: SKy Scripter                                                             }
-{ Description: Keeps stupid people from typing in the combobox                 }
-{******************************************************************************}
-procedure Form_OnKeyPress(Sender: TObject; var Key: Char);
-begin
-  Key := Chr(VK_CANCEL);
-end;
-
-procedure Form_OnMouseMove(Sender: TObject; Shift: TShiftState; x, y: Integer);
-var
-  bmp, hi, w, h, i: Integer;
-  bmpArr, imgArr, intArr: TIntegerArray;
-begin
-  case Sender of
-    tImages[IMG_BGND]:
-      begin
-        bmpArr := [ X_NORM, Q_NORM, BGND, STRT_NORM, Q_GLOW_LBL, Q_GLOW_LBL,
-                    X_SML_NORM, CLOSE_NORM, CRDTS_NORM, TAB_ADD_NORM,
-                    TAB_DLT_NORM, TAB_SAVE_NORM, TAB_LOAD_NORM, TAB_LABELS ];
-
-        imgArr := [ IMG_X_NORM, IMG_Q_NORM, IMG_BGND, IMG_STRT_NORM, IMG_Q_SND,
-                    IMG_Q_BRK, IMG_X_SML, IMG_CLOSE, IMG_CRDTS_NORM,
-                    IMG_TAB_ADD_NORM, IMG_TAB_DLT_NORM, IMG_TAB_SAVE_NORM,
-                    IMG_TAB_LOAD_NORM, IMG_TAB_LABELS ];
-
-        hi := High(bmpArr);
-        for i := 0 to hi do
-        begin
-          if (not isActiveImage[imgArr[i]]) then
-            Continue;
-
-          bmp := frmBitmaps[bmpArr[i]];
-          GetBitmapSize(bmp, w, h);
-          DrawBitmap(bmp,tImages[imgArr[i]].Canvas,0,0);
-          isActiveImage[imgArr[i]] := False;
-        end;
-
-        hi := High(tImages);
-        for i := 0 to hi do
-          case i of
-            IMG_BGND..IMG_TAB_SCPT_NORM:
-              tImages[i].Visible := True;
-
-            IMG_SCPT_HEAD..IMG_Q_BRK:
-              if (isActiveImage[IMG_TAB_SCPT_NORM]) then
-                tImages[i].Visible := True;
-          end;
-
-        hi := High(tCombos);
-        for i := 0 to hi do
-          case i of
-            BOX_SMRT_MEM..BOX_SND:
-              if (isActiveImage[IMG_TAB_SCPT_NORM]) then
-                tCombos[i].Visible := True;
-          end;
-
-        hi := High(tEdits);
-        for i := 0 to hi do
-          case i of
-            EDIT_SMRT_WLD..EDIT_BRK_AFTER:
-              if (isActiveImage[IMG_TAB_SCPT_NORM]) then
-                tEdits[i].Visible := True;
-          end;
-      end;
-
-    tImages[IMG_FRM_HELP], tImages[IMG_FRM_INTRO], tImages[IMG_FRM_CREDITS]:
-      begin
-        if (Sender = tImages[IMG_FRM_HELP]) then
-          intArr := [IMG_X_SML, frmBitmaps[X_SML_NORM]]
-        else
-          intArr := [IMG_CLOSE, frmBitmaps[CLOSE_NORM]];
-
-        if (not isActiveImage[intArr[0]]) then
-          Exit;
-        GetBitmapSize(intArr[1], w, h);
-        DrawBitmap(intArr[1],tImages[intArr[0]].Canvas,0,0);
-        isActiveImage[intArr[0]] := False;
-      end;
-
-    tImages[IMG_X_NORM], tImages[IMG_Q_NORM], tImages[IMG_STRT_NORM],
-    tImages[IMG_X_SML], tImages[IMG_Q_SND], tImages[IMG_Q_BRK],
-    tImages[IMG_CLOSE], tImages[IMG_CRDTS_NORM], tImages[IMG_TAB_ADD_NORM],
-    tImages[IMG_TAB_DLT_NORM]:
-      begin
-        case Sender of
-          tImages[IMG_X_NORM]:
-            intArr := [IMG_X_NORM, frmBitmaps[X_GLOW]];
-
-          tImages[IMG_Q_NORM]:
-            intArr := [IMG_Q_NORM, frmBitmaps[Q_GLOW]];
-
-          tImages[IMG_STRT_NORM]:
-            intArr := [IMG_STRT_NORM, frmBitmaps[STRT_GLOW]];
-
-          tImages[IMG_CRDTS_NORM]:
-            intArr := [IMG_CRDTS_NORM, frmBitmaps[CRDTS_GLOW]];
-
-          tImages[IMG_X_SML]:
-            intArr := [IMG_X_SML, frmBitmaps[X_SML_GLOW]];
-
-          tImages[IMG_Q_SND]:
-            intArr := [IMG_Q_SND, frmBitmaps[Q_NORM_LBL]];
-
-          tImages[IMG_Q_BRK]:
-            intArr := [IMG_Q_BRK, frmBitmaps[Q_NORM_LBL]];
-
-          tImages[IMG_CLOSE]:
-            intArr := [IMG_CLOSE, frmBitmaps[CLOSE_GLOW]];
-
-          tImages[IMG_TAB_ADD_NORM]:
-            intArr := [IMG_TAB_ADD_NORM, frmBitmaps[TAB_ADD_GLOW]];
-
-          tImages[IMG_TAB_DLT_NORM]:
-            intArr := [IMG_TAB_DLT_NORM, frmBitmaps[TAB_DLT_GLOW]];
-
-          else
-            Exit;
-        end;
-
-        if (isActiveImage[intArr[0]]) then
-          Exit;
-        GetBitmapSize(intArr[1], w, h);
-        DrawBitmap(intArr[1],tImages[intArr[0]].Canvas,0,0);
-        isActiveImage[intArr[0]] := True;
-      end;
-
-    tImages[IMG_TAB_LABELS], tImages[IMG_TAB_SAVE_NORM], tImages[IMG_TAB_LOAD_NORM]:
-      begin
-        case Sender of
-          tImages[IMG_TAB_LABELS]:
-            begin
-              bmpArr := [ TAB_SAVE_NORM, TAB_LOAD_NORM ];
-              imgArr := [ IMG_TAB_SAVE_NORM, IMG_TAB_LOAD_NORM, IMG_TAB_LABELS ];
-            end;
-
-          tImages[IMG_TAB_SAVE_NORM]:
-            begin
-              bmpArr := [ TAB_SAVE_GLOW, TAB_LOAD_NORM ];
-              imgArr := [ IMG_TAB_SAVE_NORM, IMG_TAB_LOAD_NORM, IMG_TAB_SAVE_NORM ];
-            end;
-
-          tImages[IMG_TAB_LOAD_NORM]:
-            begin
-              bmpArr := [ TAB_LOAD_GLOW, TAB_SAVE_NORM ];
-              imgArr := [ IMG_TAB_LOAD_NORM, IMG_TAB_SAVE_NORM, IMG_TAB_LOAD_NORM ];
-            end;
-        end;
-
-        for i := 0 to 1 do
-        begin
-          if (not isActiveImage[imgArr[i]]) then
-            Continue;
-
-          bmp := frmBitmaps[bmpArr[i]];
-          GetBitmapSize(bmp, w, h);
-          DrawBitmap(bmp,tImages[imgArr[i]].Canvas,0,0);
-          if (Sender = tImages[IMG_TAB_LABELS]) then
-          begin
-            isActiveImage[imgArr[i]] := False;
-          end;
-        end;
-
-        isActiveImage[imgArr[2]] := True;
-      end;
-
-    else begin
-      Form_Debug('Form_OnMouseMove', 'Invalid Sender!');
-      Exit;
-    end;
-  end;
-end;
-
-procedure Form_InitForm;
-var
-  mainImage, mainCombo, mainEdit, helpImage, introImage, tabCombo, tabEdit: Integer;
-  bmp, hi, h, i, w: Integer;
-  bmpArr: Array [0..BITMAP_COUNT - 1] of String;
-  comboItems: TStringArray;
-  intArr: TIntegerArray;
-begin
-  bmpArr[BGND]   := 'BGND.png';   bmpArr[Q_NORM_LBL] := 'Q_NORM_LBL.png';
-  bmpArr[INTRO]  := 'INTRO.png';  bmpArr[Q_GLOW_LBL] := 'Q_GLOW_LBL.png';
-  bmpArr[X_NORM] := 'X_NORM.png'; bmpArr[STRT_NORM]  := 'STRT_NORM.png';
-  bmpArr[X_GLOW] := 'X_GLOW.png'; bmpArr[STRT_GLOW]  := 'STRT_GLOW.png';
-  bmpArr[Q_NORM] := 'Q_NORM.png'; bmpArr[SCPT_HEAD]  := 'SCPT_HEAD.png';
-  bmpArr[Q_GLOW] := 'Q_GLOW.png'; bmpArr[SCPT_OTHR]  := 'SCPT_HEAD_OTHR.png';
-
-  bmpArr[OTHR_LBL] := 'OTHR_LBL.png'; bmpArr[REQUIRED] := 'REQUIRED.png';
-  bmpArr[SMRT_LBL] := 'SMRT_LBL.png'; bmpArr[SMRT_USE] := 'SMRT_USE.png';
-  bmpArr[STAT_LBL] := 'STAT_LBL.png'; bmpArr[CLOSE_NORM] := 'CLOSE_NORM.png';
-  bmpArr[FRM_HELP] := 'FRM_HELP.png'; bmpArr[CLOSE_GLOW] := 'CLOSE_GLOW.png';
-
-  bmpArr[TAB_SCPT_NORM] := 'TAB_SCPT.png';     bmpArr[TAB_SAVE_NORM] := 'TAB_SAVE_NORM.png';
-  bmpArr[TAB_SCPT_DRK]  := 'TAB_SCPT_DRK.png'; bmpArr[TAB_SAVE_GLOW] := 'TAB_SAVE_GLOW.png';
-  bmpArr[TAB_PLR_DRK]   := 'TAB_PLR_DRK.png';  bmpArr[TAB_LOAD_NORM] := 'TAB_LOAD_NORM.png';
-  bmpArr[TAB_PLR_NORM]  := 'TAB_PLR.png';      bmpArr[TAB_LOAD_GLOW] := 'TAB_LOAD_GLOW.png';
-  bmpArr[TAB_ADD_NORM]  := 'TAB_ADD_NORM.png'; bmpArr[FRM_CREDITS] := 'FRM_CREDITS.png';
-  bmpArr[TAB_ADD_GLOW]  := 'TAB_ADD_GLOW.png';
-  bmpArr[TAB_INACTIVE]  := 'TAB_INACTIVE.png';
-  bmpArr[TAB_ACTIVE]    := 'TAB_ACTIVE.png';
-  bmpArr[TAB_DLT_NORM]  := 'TAB_DLT_NORM.png';
-  bmpArr[TAB_DLT_GLOW]  := 'TAB_DLT_GLOW.png';
-  bmpArr[TAB_BDER]      := 'TAB_BDER.png';
-  bmpArr[TAB_LABELS]    := 'TAB_LABELS.png';
-
-  bmpArr[X_SML_NORM] := 'X_SML_NORM.png'; bmpArr[CRDTS_NORM] := 'CRDTS_NORM.png';
-  bmpArr[X_SML_GLOW] := 'X_SML_GLOW.png'; bmpArr[CRDTS_GLOW] := 'CRDTS_GLOW.png';
-
-  hi := High(frmBitmaps);
-  for i := 0 to hi do
-    frmBitmaps[i] := LoadBitmap(ScriptPath + 'Bitmaps\' + bmpArr[i]);
-  {
-    Everything to do with the main form (frmMain) begins here.
-  }
-  frmMain := CreateForm;
-  with frmMain do
-  begin
-    SetBounds({L} 100, {T} 100, {W} 555, {H} 433);
-    BorderStyle := bsNone;
-  end;
-
-  useSmart := TCheckBox.Create(frmMain);
-  with useSmart do
-  begin
-    Parent := frmMain;
-    SetBounds({L} 73, {T} 319, {W} 20, {H} 20);
-    OnClick := @Form_OnClick;
-  end;
-
-  for mainImage := 0 to IMG_TAB_LOAD_NORM do
-  begin
-    tImages[mainImage] := TImage.Create(frmMain);
-    with tImages[mainImage] do
-    begin
-      Parent := frmMain;
-
-      case mainImage of
-        IMG_BGND:
-          begin
-            SetBounds({L} 0, {T} 0, {W} 555, {H} 433);
-            bmp := frmBitmaps[BGND];
-            OnMouseMove := @Form_OnMouseMove;
-            isActiveImage[IMG_BGND] := False;
-          end;
-
-        IMG_X_NORM:
-          begin
-            SetBounds({L} 518, {T} 7, {W} 28, {H} 34);
-            bmp := frmBitmaps[X_NORM];
-            OnMouseMove := @Form_OnMouseMove;
-            OnClick := @Form_OnClick;
-            isActiveImage[IMG_X_NORM] := False;
-          end;
-
-        IMG_Q_NORM:
-          begin
-            SetBounds({L} 518, {T} 390, {W} 28, {H} 33);
-            bmp := frmBitmaps[Q_NORM];
-            OnMouseMove := @Form_OnMouseMove;
-            OnClick := @Form_OnClick;
-            isActiveImage[IMG_Q_NORM] := False;
-          end;
-
-        IMG_STRT_NORM:
-          begin
-            SetBounds({L} 345, {T} 363, {W} 150, {H} 21);
-            bmp := frmBitmaps[STRT_NORM];
-            OnMouseMove := @Form_OnMouseMove;
-            OnClick := @Form_OnClick;
-            isActiveImage[IMG_STRT_NORM] := False;
-          end;
-
-        IMG_CRDTS_NORM:
-          begin
-            SetBounds({L} 157, {T} 363, {W} 150, {H} 21);
-            bmp := frmBitmaps[CRDTS_NORM];
-            OnClick := @Form_OnClick;
-            OnMouseMove := @Form_OnMouseMove;
-            isActiveImage[IMG_STRT_NORM] := False;
-          end;
-
-        IMG_TAB_PLR_DRK:
-          begin
-            SetBounds({L} 276, {T} 133, {W} 217, {H} 26);
-            bmp := frmBitmaps[TAB_PLR_DRK];
-            OnClick := @Form_OnClick;
-            isActiveImage[IMG_TAB_PLR_DRK] := False;
-          end;
-
-        IMG_TAB_SCPT_NORM:
-          begin
-            SetBounds({L} 59, {T} 133, {W} 217, {H} 26);
-            bmp := frmBitmaps[TAB_SCPT_NORM];
-            OnClick := @Form_OnClick;
-            isActiveImage[IMG_TAB_SCPT_NORM] := True;
-          end;
-
-        IMG_SCPT_HEAD:
-          begin
-            SetBounds({L} 85, {T} 159, {W}381, {H}25);
-            bmp := frmBitmaps[SCPT_HEAD];
-            isActiveImage[IMG_SCPT_HEAD] := False;
-          end;
-
-        IMG_SCPT_OTHR:
-          begin
-            SetBounds({L} 313, {T} 252, {W} 154, {H} 24);
-            bmp := frmBitmaps[SCPT_OTHR];
-            isActiveImage[IMG_SCPT_OTHR] := False;
-          end;
-
-        IMG_SMRT_USE:
-          begin
-            SetBounds({L} 88, {T} 319, {W} 177, {H} 23);
-            bmp := frmBitmaps[SMRT_USE];
-          end;
-
-        IMG_SMRT_LBL:
-          begin
-            SetBounds({L} 60, {T} 187, {W} 105, {H} 120);
-            bmp := frmBitmaps[SMRT_LBL];
-            isActiveImage[IMG_SMRT_LBL] := False;
-          end;
-
-        IMG_STAT_LBL:
-          begin
-            SetBounds({L} 295, {T} 189, {W} 66, {H} 54);
-            bmp := frmBitmaps[STAT_LBL];
-            isActiveImage[IMG_STAT_LBL] := False;
-          end;
-
-        IMG_OTHR_LBL:
-          begin
-            SetBounds({L} 295, {T} 285, {W} 79, {H} 55);
-            bmp := frmBitmaps[OTHR_LBL];
-            isActiveImage[IMG_OTHR_LBL] := False;
-          end;
-
-        IMG_Q_SND, IMG_Q_BRK:
-          begin
-            if (mainImage = IMG_Q_BRK) then
-              SetBounds({L} 488, {T} 319, {W} 16, {H} 19)
-            else
-              SetBounds({L} 488, {T} 287, {W} 16, {H} 19);
-
-            bmp := frmBitmaps[Q_GLOW_LBL];
-            OnMouseMove := @Form_OnMouseMove;
-            OnClick := @Form_OnClick;
-            isActiveImage[mainImage] := False;
-          end;
-
-        IMG_TAB_BDER:
-          begin
-            SetBounds({L} 38, {T} 178, {W} 478, {H} 7);
-            bmp := frmBitmaps[TAB_BDER];
-            Visible := False;
-            isActiveImage[IMG_TAB_BDER] := False;
-          end;
-
-        IMG_TAB_LABELS:
-          begin
-            SetBounds({L} 50, {T} 194, {W} 340, {H} 151);
-            bmp := frmBitmaps[TAB_LABELS];
-            OnMouseMove := @Form_OnMouseMove;
-            Visible := False;
-            isActiveImage[IMG_TAB_LABELS] := False;
-          end;
-
-        IMG_TAB_ADD_NORM, IMG_TAB_DLT_NORM, IMG_TAB_SAVE_NORM, IMG_TAB_LOAD_NORM:
-          begin
-            case mainImage of
-              IMG_TAB_ADD_NORM:
-                begin
-                  SetBounds({L} 127, {T} 165, {W} 7, {H} 7);
-                  intArr := [TAB_ADD_NORM, IMG_TAB_ADD_NORM];
-                  OnClick := @Form_OnClick;
-                end;
-
-              IMG_TAB_DLT_NORM:
-                begin
-                  SetBounds({L} 127, {T} 166, {W} 5, {H} 5);
-                  intArr := [TAB_DLT_NORM, IMG_TAB_ADD_NORM];
-                  OnClick := @Form_OnClick;
-                end;
-
-              IMG_TAB_SAVE_NORM:
-                begin
-                  SetBounds({L} 279, {T} 320, {W} 93, {H} 20);
-                  intArr := [TAB_SAVE_NORM, IMG_TAB_SAVE_NORM];
-                  OnClick := @Form_SavePlayers;
-                end;
-
-              IMG_TAB_LOAD_NORM:
-                begin
-                  SetBounds({L} 395, {T} 321, {W} 94, {H} 19);
-                  intArr := [TAB_LOAD_NORM, IMG_TAB_LOAD_NORM];
-                  OnClick := @Form_LoadPlayers;
-                end;
-            end;
-
-            bmp := frmBitmaps[intArr[0]];
-            Visible := False;
-            OnMouseMove := @Form_OnMouseMove;
-            isActiveImage[intArr[1]] := False;
-          end;
-
-
-        IMG_REQUIRED:
-          begin
-            SetBounds({L} 50, {T} 363, {W} 81, {H} 22);
-            bmp := frmBitmaps[REQUIRED];
-          end;
-
-        else begin
-          Form_Debug('Form_InitForm', 'Invalid mainImage!');
-          Exit;
-        end;
-      end;
-
-      GetBitmapSize(bmp, w, h);
-      DrawBitmap(bmp,Canvas,0,0);
-    end;
-  end;
-
-  hi := High(tCombos);
-  for mainCombo := 0 to hi do
-  begin
-    tCombos[mainCombo] := TComboBox.Create(frmMain);
-    with tCombos[mainCombo] do
-    begin
-      Parent := frmMain;
-      Color  := 5334130;
-      Font.Color := clWhite;
-      Font.Name  := 'Arial';
-      Font.Size  := 10;
-      OnKeyPress := @Form_OnKeyPress;
-      ShowHint := True;
-
-      case mainCombo of
-        BOX_SND:
-          begin
-            SetBounds({L} 382, {T} 285, {W} 100, {H} 15);
-            MaxLength := 3;
-            comboItems := ['Yes', 'No'];
-            Hint := 'Do you want to play a sound when a random event is found?';
-
-            if (FileExists(PATH_PLAYER)) then
-              Text := ReadINI('Setup Info', 'Play Sound', PATH_PLAYER);
-          end;
-
-        BOX_SMRT_MEM..BOX_SMRT_CLNT:
-          begin
-            SetBounds({L} 175, {T} 221 + (mainCombo * 32), {W} 100, {H} 15);
-
-            case mainCombo of
-              BOX_SMRT_MEM:
-                begin
-                  comboItems := ['Free', 'Members'];
-                  Text := 'Free';
-                  Hint := 'Are you players members or free-to-play?';
-                end;
-
-              BOX_SMRT_DTL:
-                begin
-                  comboItems := ['Low', 'High'];
-                  Text := 'Low';
-                  Hint := 'Low detail recommended';
-                end;
-
-              BOX_SMRT_CLNT:
-                begin
-                  comboItems := ['Signed', 'Unsigned'];
-                  Text := 'Signed';
-                  Hint := 'Signed recommended.  Unsigned loads much slower, but may be safer.';
-                end;
-            end;
-          end;
-        else begin
-          Form_Debug('Form_InitForm', 'Invalid mainCombo!');
-          Exit;
-        end;
-      end;
-
-      for i := 0 to High(comboItems) do
-        Items.Add(comboItems[i]);
-    end;
-  end;
-
-  hi := High(tEdits);
-  for mainEdit := 0 to hi do
-  begin
-    tEdits[mainEdit] := TEdit.Create(frmMain);
-    with tEdits[mainEdit] do
-    begin
-      Parent := frmMain;
-      Color  := 5334130;
-      Font.Color := clWhite;
-      Font.Name  := 'Arial';
-      Font.Size  := 10;
-      ShowHint := True;
-
-      case mainEdit of
-        EDIT_SMRT_WLD:
-          begin
-            SetBounds({L} 175, {T} 189, {W} 100, {H} 15);
-            Text := '10';
-            MaxLength := 3;
-            Hint := 'Which world to log your players in to';
-          end;
-
-        EDIT_STAT_ID, EDIT_STAT_PASS:
-          begin
-            SetBounds({L} 382, {T} 157 + (mainEdit * 32), {W} 100, {H} 15);
-
-            if (mainEdit = EDIT_STAT_PASS) then
-            begin
-              PasswordChar := '*';
-              if (FileExists(PATH_PLAYER)) then
-                Text := ReadINI('Setup Info', 'Stats Pass', PATH_PLAYER);
-            end else
-              if (FileExists(PATH_PLAYER)) then
-                Text := ReadINI('Setup Info', 'Stats ID', PATH_PLAYER);
-
-            Hint := 'Your stats username (ID) & password';
-          end;
-
-        EDIT_BRK_AFTER:
-          begin
-            SetBounds({L} 382, {T} 317, {W} 100, {H} 15);
-            Hint := 'How many loads to do before breaking or switching players';
-            if (FileExists(PATH_PLAYER)) then
-              Text := ReadINI('Setup Info', 'Break After', PATH_PLAYER);
-          end;
-
-        else begin
-          Form_Debug('Form_InitForm', 'Invalid mainEdit!');
-          Exit;
-        end;
-      end;
-    end;
-  end;
-  {
-    Everything to do with the main form (frmMain) ends here, and everything to
-    do with the help form (frmHelp) starts here.
-  }
-  frmHelp := CreateForm;
-  with frmHelp do
-  begin
-    SetBounds({L} Round(frmMain.Left + (frmMain.Width div 2) - (259 div 2)),
-              {T} Round(frmMain.Top + (frmMain.Height div 2) - (105 div 2)),
-              {W} 259, {H} 105);
-    BorderStyle := bsNone;
-    Visible := False;
-  end;
-
-  for helpImage := IMG_FRM_HELP to IMG_X_SML do
-  begin
-    tImages[helpImage] := TImage.Create(frmHelp);
-    with tImages[helpImage] do
-    begin
-      Parent := frmHelp;
-
-      case helpImage of
-        IMG_FRM_HELP:
-          begin
-            SetBounds({L} 0, {T} 0, {W} 259, {H} 105);
-            bmp := frmBitmaps[FRM_HELP];
-          end;
-
-        IMG_X_SML:
-          begin
-            SetBounds({L} 236, {T} 3, {W} 16, {H} 16);
-            bmp := frmBitmaps[X_SML_NORM];
-            OnClick := @Form_OnClick;
-          end;
-
-        else begin
-          Form_Debug('Form_InitForm', 'Invalid helpImage!');
-          Exit;
-        end;
-      end;
-
-      isActiveImage[helpImage] := False;
-      OnMouseMove := @Form_OnMouseMove;
-      GetBitmapSize(bmp, w, h);
-      DrawBitmap(bmp,Canvas,0,0);
-    end;
-  end;
-  {
-    Everything to do with the help form (frmHelp) ends here, and everything to
-    do with the introduntion form (frmIntro) and the credits form (frmCredits)
-    starts here.
-  }
-  frmIntro := CreateForm;
-  with frmIntro do
-  begin
-    SetBounds({L} frmMain.Left + 34, {T} frmMain.Top + 43, {W} 486, {H} 345);
-    BorderStyle := bsNone;
-    Visible := False;
-  end;
-
-  for introImage := IMG_FRM_INTRO to IMG_CLOSE do
-  begin
-    tImages[introImage] := TImage.Create(frmIntro);
-    with tImages[introImage] do
-    begin
-
-
-      case introImage of
-        IMG_FRM_INTRO:
-          begin
-            Parent := frmIntro;
-            SetBounds({L} 0, {T} 0, {W} 486, {H} 345);
-            bmp := frmBitmaps[INTRO];
-          end;
-
-        IMG_CLOSE:
-          begin
-            SetBounds({L} 423, {T} 16, {W} 23, {H} 11);
-            bmp := frmBitmaps[CLOSE_NORM];
-            OnClick := @Form_OnClick;
-            Visible := False;
-          end;
-
-        else begin
-          Form_Debug('Form_InitForm', 'Invalid introImage!');
-          Exit;
-        end;
-      end;
-
-      isActiveImage[introImage] := False;
-      OnMouseMove := @Form_OnMouseMove;
-      GetBitmapSize(bmp, w, h);
-      DrawBitmap(bmp,Canvas,0,0);
-    end;
-  end;
-
-  frmCredits := CreateForm;
-  with frmCredits do
-  begin
-    SetBounds({L} frmMain.Left + 34, {T} frmMain.Top + 43, {W} 486, {H} 345);
-    BorderStyle := bsNone;
-    Visible := False;
-  end;
-
-  tImages[IMG_FRM_CREDITS] := TImage.Create(frmCredits);
-  with tImages[IMG_FRM_CREDITS] do
-  begin
-    Parent := frmCredits;
-    SetBounds({L} 0, {T} 0, {W} 486, {H} 345);
-    bmp := frmBitmaps[FRM_CREDITS];
-
-    isActiveImage[IMG_FRM_CREDITS] := False;
-    OnMouseMove := @Form_OnMouseMove;
-    GetBitmapSize(bmp, w, h);
-    DrawBitmap(bmp,Canvas,0,0);
-  end;
-  {
-    Everything to do with the intro form (frmIntro) ends here, and everything
-    to do with the tabs starts here.
-  }
-  Tab_CreateObject(TAB_TABS, False);
-  Tab_CreateObject(TAB_LABEL, False);
-
-  hi := High(tTabCombos);
-  for tabCombo := 0 to hi do
-  begin
-    tTabCombos[tabCombo] := TComboBox.Create(frmMain);
-    with tTabCombos[tabCombo] do
-    begin
-      Parent := frmMain;
-      Color  := 5334130;
-      Font.Color := clWhite;
-      Font.Name  := 'Arial';
-      Font.Size  := 10;
-      OnKeyPress := @Form_OnKeyPress;
-      ShowHint := True;
-
-      if (isActiveImage[IMG_TAB_SCPT_NORM]) then
-        Visible := False
-      else
-        Visible := True;
-
-      case tabCombo of
-        BOX_ACTIVE:
-          begin
-            SetBounds({L} 152, {T} 319, {W} 100, {H} 15);
-            comboItems := ['Yes', 'No'];
-            Hint := 'Do you want to use this player?';
-          end;
-
-        BOX_TREE:
-          begin
-            SetBounds({L} 395, {T} 195, {W} 100, {H} 15);
-            comboItems := ['Willow', 'Oak'];
-            Hint := 'Which tree do you want this player to cut?';
-          end;
-
-        BOX_HATCHET:
-          begin
-            SetBounds({L} 395, {T} 257, {W} 100, {H} 15);
-            comboItems := ['Equipped', '1st Inventory Slot'];
-            Hint := 'Is your hatchet equipped or in the 1st inventory slot?';
-          end;
-
-        BOX_BREAKS:
-          begin
-            SetBounds({L} 395, {T} 288, {W} 100, {H} 15);
-            comboItems := ['Yes', 'No'];
-            Hint := 'Do you want this player to take breaks?';
-          end;
-
-        else begin
-          Form_Debug('Form_InitForm', 'Invalid tabComboBox!');
-          Exit;
-        end;
-      end;
-
-      for i := 0 to High(comboItems) do
-        Items.Add(comboItems[i]);
-    end;
-  end;
-
-  hi := High(tTabEdits);
-  for tabEdit := 0 to hi do
-  begin
-    tTabEdits[tabEdit] := TEdit.Create(frmMain);
-    with tTabEdits[tabEdit] do
-    begin
-      Parent := frmMain;
-      Color  := 5334130;
-      Font.Color := clWhite;
-      Font.Name  := 'Arial';
-      Font.Size  := 10;
-      ShowHint := True;
-
-      if (isActiveImage[IMG_TAB_SCPT_NORM]) then
-        Visible := False
-      else
-        Visible := True;
-
-      case tabEdit of
-        EDIT_NAME, EDIT_PASS, EDIT_NICK, EDIT_PIN:
-          begin
-            if (tabEdit = EDIT_NICK) then
-              Hint := 'A 3-4 letter abbreviation of your username';
-
-            if (tabEdit = EDIT_PASS) or (tabEdit = EDIT_PIN) then
-              tTabEdits[tabEdit].PasswordChar := '*';
-
-            if (tabEdit = EDIT_PIN) or (tabEdit = EDIT_NICK) then
-              MaxLength := 4;
-
-            SetBounds({L} 152, {T} 195 + (tabEdit * 31), {W} 100, {H} 15);
-          end;
-
-        EDIT_LOGS:
-          begin
-            SetBounds({L} 395, {T} 226, {W} 100, {H} 15);
-            Hint := 'How many logs do you want this player to cut?';
-          end;
-
-        else begin
-          Form_Debug('Form_InitForm', 'Invalid tabEditBox!');
-          Exit;
-        end;
-      end;
-    end;
-  end;
-
-  Form_PlayerInfo(0, False);
-  {
-    Everything to do with the tabs ends here.
-  }
-end;
-
-procedure Form_SafeInitForm;
-var
-  varArr: TVariantArray;
-begin
-  SetArrayLength(varArr, 0);
-  ThreadSafeCall('Form_InitForm', varArr);
-end;
-
-procedure Form_ShowModal;
-begin
-  frmMain.ShowModal;
-end;
-
-procedure Form_SafeShowModal;
-var
-  varArr: TVariantArray;
-begin
-  SetArrayLength(varArr, 0);
-  ThreadSafeCall('Form_ShowModal', varArr);
-end;
-
-procedure Form_KillForm;
-var
-  i: Integer;
-begin
-  for i := 0 to BITMAP_COUNT - 1 do
-    FreeBitmap(frmBitmaps[i]);
-
-  for i := IMG_COUNT - 1 downto 0 do
-    try
-      tImages[i].Free;
-    except
-      Form_Debug('Form_KillForm', 'Image[' + IntToStr(i) + '] was not freed.');
-    end;
-
-  FreeForm(frmMain);
-  FreeForm(frmHelp);
-  FreeForm(frmIntro);
-end;
-
-procedure Form_Show;
-begin
-  Form_SafeInitForm;
-  Form_SafeShowModal;
-end;
-
-{==============================================================================\
-|                         Player form code ends here                           |
-|==============================================================================}
 
 procedure DCnB_Signature;
 begin
@@ -2051,7 +182,7 @@ begin
       Writeln('DETAIL: ' + proc + ': ' + msg);
 
     DEBUG_PLAYER:
-      Writeln('PLAYER: ' + proc + ': ' + Capitalize(Players[CurrentPlayer].Name) + ': ' + msg);
+      Writeln('PLAYER: ' + proc + ': ' + Capitalize(Players[CurrentPlayer].nickname) + ': ' + msg);
 
     else
       DCnB_Debug('DCnB_Debug', 'Invalid debug choice', DEBUG_ERROR);
@@ -2060,6 +191,7 @@ end;
 
 procedure Load_Antiban;
 begin
+{
   case Random(100) of
     10: BoredHuman;
     20: HoverSkill('random', False);
@@ -2070,6 +202,7 @@ begin
     70: SleepAndMoveMouse(200 + Random(50));
     90: ExamineInv;
   end;
+}
 end;
 
 function Load_TreeRecords: TTree;
@@ -2085,7 +218,7 @@ begin
         Sat    := 2.43;
         Exp    := 37.5;
         Tol    := 2;
-        Symbol := 'bank';
+        Symbol := MM_SYMBOL_BANK;
         OffsetX := 30;
         OffsetY := 0;
       end;
@@ -2100,7 +233,7 @@ begin
         Sat    := 0.92;
         Exp    := 67.5;
         Tol    := 5;
-        Symbol := 'fish';
+        Symbol := MM_SYMBOL_FISHING;
         OffsetX := 5;
         OffsetY := -10;
       end;
@@ -2110,36 +243,16 @@ begin
   end;
 end;
 
-procedure Find_Randoms(waitFrom, waitTo: Integer);
-begin
-  if (not LoggedIn) then
-    Exit;
-
-  LampSkill := 'Woodcutting';
-  DCnB_Debug('Find_Randoms', 'Scanning for random events...', DEBUG_DETAILS);
-
-  if (LevelUp) then
-  begin
-    Inc(Players[CurrentPlayer].Integers[P_LEVELS]);
-    stats_IncVariable('Total Levels Gained', 1);
-  end;
-
-  if (FindNormalRandoms) then
-    if (playSnd) then
-      PlaySound(ScriptPath + 'RandomSound.wav');
-
-  Wait(RandomRange(waitFrom, waitTo));
-end;
-
 function Find_PlayerLocation: String;
 var
-  dist, x, y: Integer;
+  dist: Integer;
+  p: TPoint;
 begin
   if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow') then
   begin
-    if (FindSymbolIn(x, y, 'fish', MMX1, MMY1, MMX2, MMY2)) then
+    if (minimap.findSymbol(p, MM_SYMBOL_FISHING, minimap.getBounds())) then
     begin
-      dist := Distance(x, y, MMCX, MMCY);
+      dist := Distance(p, minimap.getCenterPoint());
       DCnB_Debug('Find_PlayerLocation', 'Symbol Distance = ' + IntToStr(dist), DEBUG_DETAILS);
 
       if (dist > 50) then
@@ -2151,7 +264,7 @@ begin
       Result := 'Bank';
 
   end else
-    if (FindSymbolIn(x, y, 'dungeon', MMX1, MMY1, MMX2, MMY2)) then
+    if (minimap.findSymbol(p, MM_SYMBOL_DUNGEON, minimap.getBounds())) then
       Result := 'Oaks'
     else
       Result := 'Bank';
@@ -2161,89 +274,89 @@ end;
 
 function Find_Hatchet: Boolean;
 begin
-  if (not LoggedIn) then
+  if (not isLoggedIn()) then
     Exit;
 
   if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
   begin
-    GameTab(Tab_Equip);
-    Result := (CountColor(SRL_OUTLINE_BLACK, 570, 289, 603, 320) > 0);
+    result := true;
+    {if (tabEquipment.open()) then
+      Result := (CountColor(SRL_OUTLINE_BLACK, 570, 289, 603, 320) > 0);}
   end else begin
-    GameTab(Tab_Inv);
-    Result := ExistsItem(1);
+    if (tabBackpack.open()) then
+      Result := tabBackpack.isItemInSlot(1);
   end;
 end;
 
 procedure Next_Player(active: Boolean; proc, msg: String);
 begin
-  if (BankScreen) then
-    CloseBank();
+  if (bankscreen.isOpen()) then
+    bankscreen.close()();
 
   if (not active) then
   begin
     DCnB_Debug(proc, msg, DEBUG_ERROR);
-    Players[CurrentPlayer].Loc := 'Lost';
+    Players[CurrentPlayer].location := 'Lost';
     falseReason[CurrentPlayer] := msg;
   end else
     DCnB_Debug(proc, msg, DEBUG_DETAILS);
 
-  if (Players[CurrentPlayer].Rand <> '') then
-    falseReason[CurrentPlayer] := Players[CurrentPlayer].Rand;
-
-  if (AllPlayersInactive) then
+  if (players.getActive() <= 0) then
   begin
     DCnB_Debug('Next_Player', 'All players inactive', DEBUG_SUCCESS);
     TerminateScript;
   end;
 
-  NextPlayer(active);
-  Players[CurrentPlayer].Loc := Find_PlayerLocation;
+  players.next(active);
+  Players[CurrentPlayer].location := Find_PlayerLocation;
   playerLoads := 0;
 end;
 
 procedure Next_Break;
 begin
-  if (not LoggedIn) then
+  if (not isLoggedIn()) then
     Exit;
 
-  if (BankScreen) then
-    CloseBank();
+  if (bankscreen.isOpen()) then
+    bankscreen.close();
 
-  with Players[CurrentPlayer] do
-    Integers[P_BREAKS] := Integers[P_BREAKS] + 1;
+  Inc(Players[CurrentPlayer].Integers[P_BREAKS]);
 
-  if (HowManyPlayers > 1) and (PlayersActive > 1) then
+  if (length(players) > 1) and (players.getActive() > 1) then
     Next_Player(True, 'Next_Break', 'Switching players...')
-  else
-  begin
+  else begin
     DCnB_Debug('Next_Break', 'Taking a short break...', DEBUG_DETAILS);
-    Logout;
+    players[currentPlayer].logout();
     Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
 
     DCnB_Debug('Next_Break', 'Break over, logging back in...', DEBUG_DETAILS);
-    LoginPlayer;
+    players[currentPlayer].login();
   end;
 end;
 
 function Chop_Relocate(tree: TTree): boolean;
 var
-  x, y: integer;
+  p: TPoint;
 begin
-  if (FindSymbol(x, y, tree.symbol)) then
+  if (minimap.findSymbol(p, tree.symbol, minimap.getBounds())) then
   begin
-    Mouse(x + tree.offsetX, y + tree.offsetY, 4, 4, True);
-    Result := FFlag(5);
+    p.offset(point(tree.offsetX, tree.offsetY));
+    Mouse(p.rand(4), MOUSE_RIGHT);
+    Result := minimap.waitFlag(5);
   end;
 end;
 
 function Chop_Finished: Boolean;
 var
   avg: integer;
+  c: TPoint;
 begin
-  if not LoggedIn or InvFull then
+  if not isLoggedIn() or tabBackpack.isFull() then
     Exit;
 
-  avg := AveragePixelShift(IntToBox(MSCX - 10, MSCY - 25, MSCX + 15, MSCY + 15), 25, 125);
+  c := minimap.getCenterPoint();
+
+  avg := getPixelShiftAverage(IntToBox(c.x - 10, c.y - 25, c.x + 15, c.y + 15), 25, 125);
   DCnB_Debug('Chop_IsTreeDown', 'Average pixel shift: ' + intToStr(avg), DEBUG_DETAILS);
 
   if (inRange(avg, 0, 30)) then
@@ -2257,38 +370,35 @@ function Chop_Trees: Boolean;
 var
   notFindTrees, notFindUptext, i, h, t, x, y, c: Integer;
   colorsArr: TPointArray;
-  cP: TPoint;
+  cP, mmc: TPoint;
   boxesArr, tmpATPA: T2DPointArray;
   Tree: TTree;
   doneChopping: Boolean;
 begin
-  if (not LoggedIn) then
+  if (not isLoggedIn()) then
     Exit;
 
   Tree := Load_TreeRecords;
 
-  ColorToleranceSpeed(2);
-  SetColorSpeed2Modifiers(Tree.Hue, Tree.Sat);
+  SetColorToleranceSpeed(2);
+  SetToleranceSpeed2Modifiers(Tree.Hue, Tree.Sat);
 
   repeat
-    if (InvFull) then
+    if (tabBackpack.isFull()) then
       Break;
 
-    FindColorsSpiralTolerance(MSCX, MSCY, colorsArr, Tree.Color, MSX1, MSY1, MSX2, MSY2, Tree.Tol);
+    mmc := minimap.getCenterPoint();
+    FindColorsSpiralTolerance(mmc.x, mmc.y, colorsArr, Tree.Color, mainscreen.getBounds(), Tree.Tol);
     tmpATPA := TPAToATPAEx(colorsArr, 60, 60);
     DCnB_Debug('Chop_Trees', 'Boxes Found: ' + IntToStr(Length(boxesArr)), DEBUG_DETAILS);
 
     if (Length(tmpATPA) = 0) then
     begin
       DCnB_Debug('Chop_Trees', 'Failed to find tree', DEBUG_ERROR);
-      Find_Randoms(2000, 4000);
       Inc(notFindTrees);
-
-      if (notFindTrees >= 50) then
-        Find_Randoms(0, 0);
     end;
 
-    SortATPAFrom(tmpATPA, Point(MSCX, MSCY));
+    SortATPAFrom(tmpATPA, mainscreen.getCenterPoint());
     SetLength(boxesArr, Length(tmpATPA));
     h := High(tmpATPA);
     c := 0;
@@ -2298,39 +408,36 @@ begin
       DCnB_Debug('Chop_Trees', 'Length tmpATPA[' + IntToStr(i) + ']: ' + IntToStr(Length(tmpATPA[i])), DEBUG_DETAILS);
 
       if (Length(tmpATPA[i]) < 50) then
-      begin
-        Find_Randoms(100, 300);
         Continue;
-      end;
 
       boxesArr[c] := tmpATPA[i];
       Inc(c);
     end;
 
     SetLength(boxesArr, c);
-    SortATPAFrom(boxesArr, point(MSCX, MSCY));
+    SortATPAFrom(boxesArr, mainscreen.getCenterPoint());
     h := high(boxesArr);
 
     // draw points on SMART if setting enabled
     {$IFDEF SMART}
     if (DEBUG_SMART) then
-      SMART_DrawDotsMulti(true, boxesArr);
+      smartImage.drawATPA(boxesArr);
     {$ENDIF}
 
     for i := 0 to h do
     begin
       cP := MiddleTPA(boxesArr[i]);
-      MMouse(cP.x, cP.y, 4, 4);
+      mouse(cP.rand(4), MOUSE_MOVE);
       notFindTrees := 0;
 
-      if (WaitUpTextMulti(Tree.UpText, 200)) then
+      if (isMouseOverText(Tree.UpText)) then
       begin
         DCnB_Debug('Chop_Trees', 'Uptext found!', DEBUG_DETAILS);
         notFindUptext := 0;
 
         GetMousePos(x, y);
-        Mouse(x, y, 0, 0, True);
-        if (not DidRedClick()) then
+        Mouse(point(x, y), MOUSE_RIGHT);
+        if (not didClick(true)) then
           Continue;
 
         Wait(RandomRange(2000, 3000));
@@ -2343,20 +450,18 @@ begin
             Break;
 
           Load_Antiban;
-          Find_Randoms(250, 500);
-        until(InvFull or (not LoggedIn));
+        until(tabBackpack.isFull() or (not isLoggedIn()));
 
-        if (InvFull or doneChopping) then
+        if (tabBackpack.isFull() or doneChopping) then
           Break;
 
       end else begin
         DCnB_Debug('Chop_Tree', 'Failed to find uptext', DEBUG_ERROR);
-        Find_Randoms(500, 1000);
         Inc(notFindUptext);
       end;
     end; // end of TPA loop.
 
-    Result := InvFull();
+    Result := tabBackpack.isFull();
 
     if (not Result) then
       if (notFindTrees >= 20) or (notFindUptext > 5) then
@@ -2366,9 +471,7 @@ begin
           notFindUptext := 0;
         end;
 
-    Find_Randoms(100, 300);
-
-  until(Result or (not LoggedIn) or (notFindTrees >= 60) or (notFindUptext >= 60));
+  until(Result or (not isLoggedIn()) or (notFindTrees >= 60) or (notFindUptext >= 60));
 
   if (notFindTrees >= 60) then
     Next_Player(False, 'Chop_Trees', 'Failed to find trees 60 times');
@@ -2376,8 +479,8 @@ begin
   if (notFindUptext >= 120) then
     Next_Player(False, 'Chop_Trees', 'Failed to find uptext 120 times');
 
-  SetColorSpeed2Modifiers(0.2, 0.2);
-  ColorToleranceSpeed(1);
+  SetToleranceSpeed2Modifiers(0.2, 0.2);
+  SetColorToleranceSpeed(1);
 end;
 
 function Walk_ConstToLoc(which: Integer): String;
@@ -2399,36 +502,38 @@ end;
 
 function Walk_ToLoc(which: Integer): Boolean;
 begin
-  if (not LoggedIn) then
+  if (not isLoggedIn()) then
     Exit;
 
-  RunEnergy(20);
-  if (InRange(Round(rs_GetCompassAngleDegrees), 10, 350)) then
-    ClickNorth(SRL_ANGLE_HIGH);
-
-  if (Players[CurrentPlayer].Loc = Walk_ConstToLoc(which)) then
+  minimap.toggleRun(20);
+  if (InRange(minimap.getAngleDegrees(), 10.0, 350.0)) then
   begin
-    Writeln('Yep');
+    minimap.clickCompass();
+    mainscreen.setAngle(MS_ANGLE_HIGH)
+  end;
+
+  if (Players[CurrentPlayer].location = Walk_ConstToLoc(which)) then
+  begin
     Result := True;
     Exit;
   end else
     case which of
       WALK_TREES_WILLOWS:
-        MouseBox(590, 120, 610, 135, MOUSE_LEFT);
+        MouseBox(intToBox(590, 120, 610, 135), MOUSE_LEFT);
 
       WALK_TREES_OAKS:
         begin
-          MouseBox(656, 90, 665, 105, MOUSE_LEFT);
-          SetAngle(SRL_ANGLE_LOW);
+          MouseBox(intToBox(656, 90, 665, 105), MOUSE_LEFT);
+          mainscreen.setAngle(MS_ANGLE_LOW);
         end;
 
       WALK_BANK_WILLOWS:
-        MouseBox(645, 44, 656, 53, MOUSE_LEFT);
+        MouseBox(intToBox(645, 44, 656, 53), MOUSE_LEFT);
 
       WALK_BANK_OAKS:
         begin
-          MouseBox(583, 78, 607, 87, MOUSE_LEFT);
-          SetAngle(SRL_ANGLE_HIGH);
+          MouseBox(intToBox(583, 78, 607, 87), MOUSE_LEFT);
+          mainscreen.setAngle(MS_ANGLE_HIGH);
         end;
 
       else
@@ -2436,42 +541,41 @@ begin
     end;
 
   Wait(RandomRange(2000, 3000));
-  Flag();
+  minimap.waitFlag();
   Wait(500 + Random(500));
   Result := True;
-  Players[CurrentPlayer].Loc := Walk_ConstToLoc(which);
+  Players[CurrentPlayer].location := Walk_ConstToLoc(which);
   DCnB_Debug('Walk_ToLoc', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS);
 end;
 
 function Bank_Logs: Boolean;
 var
-  logsInInv, Tries, sX, sY, t: Integer;
+  logsInInv, Tries, t, x, y: Integer;
+  sP: TPoint;
   Tree: TTree;
 begin
-  if (not LoggedIn) or (InvCount <= 1) then
+  if (not isLoggedIn()) or (tabBackpack.count() <= 1) then
     Exit;
 
   t := GetSystemTime + RandomRange(8000, 12000);
   Tree := Load_TreeRecords;
-  Find_Randoms(0, 0);
 
   repeat
-    if (not OpenBankFast('db')) then
+    if (not mainscreen.findObject(x, y, [1234567], [5], colorSetting(2, 0.00, 0.00), mainscreen.getCenterPoint(), 40, 40, 30, ['Bank'], mainscreen.getBounds(), MOUSE_RIGHT)) then
     begin
-      Find_Randoms(250, 500);
       DCnB_Debug('Bank_Logs', 'Failed to open bank, retrying...', DEBUG_ERROR);
       Inc(Tries);
 
       if (Tries >= 20) then
       begin
-        SymbolAccuracy := 0.5;
+        minimap.symbolAccuracy := 0.5;
 
-        if FindSymbol(sX, sY, 'bank') then
+        if minimap.findSymbol(sP, MM_SYMBOL_BANK, minimap.getBounds()) then
         begin
           DCnB_Debug('Bank_Logs', 'Found bank symbol! Relocating...', DEBUG_SUCCESS);
-          Mouse(sX, sY, 4, 4, True);
+          Mouse(sP.rand(4), MOUSE_RIGHT);
 
-          while (IsMoving and (GetSystemTime < t)) do
+          while (minimap.isPlayerMoving() and (GetSystemTime < t)) do
             Wait(RandomRange(100, 300));
         end else
           DCnB_Debug('Bank_Logs', 'Failed to find bank symbol', DEBUG_ERROR);
@@ -2480,27 +584,30 @@ begin
       end;
     end;
 
-    if (PinScreen) then
-      InPin(Players[CurrentPlayer].Pin);
+    if (pinscreen.isOpen()) then
+      pinscreen.enter(Players[CurrentPlayer].bankPin);
 
-    if (BankScreen) then
+    if (bankscreen.isOpen()) then
     begin
       DCnB_Debug('Bank_Logs', 'Successfully opened bank!', DEBUG_SUCCESS);
 
-      logsInInv := invCount - (integer(not Players[CurrentPlayer].Booleans[P_EQUIPPED]));
+      if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
+        logsInInv := tabBackpack.count() - 1
+      else
+        logsInInv := tabBackpack.count();
 
       if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
-        Result := DepositAll
+        Result := bankscreen.quickDeposit(QUICK_DEPOSIT_INVENTORY)
       else begin
-        Deposit(2, 28, True);
+        //Deposit(2, 28, True);
         Wait(RandomRange(200, 500));
-        Result := (InvCount <= 1);
+        Result := (tabBackpack.count() <= 1);
       end;
 
     end else
       DCnB_Debug('Bank_Logs', 'Failed to find bank screen', DEBUG_ERROR);
 
-  until(Result or (not LoggedIn) or (Tries >= 40));
+  until(Result or (not isLoggedIn()) or (Tries >= 40));
 
   if (Tries >= 40) then
     Next_Player(True, 'Bank_Logs', 'Failed to open bank after 40 tries');
@@ -2518,11 +625,11 @@ begin
     end;
 
     if (Tree.Name = 'Willow') then
-      stats_IncVariable('Willow Logs Chopped', logsInInv)
+      statsIncVariable('Willow Logs Chopped', logsInInv)
     else
-      stats_IncVariable('Oak Logs Chopped', logsInInv);
+      statsIncVariable('Oak Logs Chopped', logsInInv);
 
-    stats_IncVariable('Total EXP Gained', Round(logsInInv * Tree.Exp));
+    statsIncVariable('Total EXP Gained', Round(logsInInv * Tree.Exp));
 
     with Players[CurrentPlayer] do
       if (Integers[P_LOGS] >= Integers[P_TOTAL_LOGS]) then
@@ -2570,8 +677,8 @@ begin
 
   for i := 0 to High(Players) do
     with Players[i] do
-      Writeln('| ' + PadR(Nick, 5) + '| ' + PadR(BoolToStr(Active), 7) + '| '
-                        + PadR(Loc, 11) + '|  ' + PadR(GroupDigits(Integers[P_LOADS], ','), 5) + '| '
+      Writeln('| ' + PadR(nickname, 5) + '| ' + PadR(BoolToStr(isActive), 7) + '| '
+                        + PadR(location, 11) + '|  ' + PadR(GroupDigits(Integers[P_LOADS], ','), 5) + '| '
                         + PadR(Capitalize(Strings[P_TREE]), 7) + '|  ' + PadR(GroupDigits(Integers[P_LOGS], ','), 8) + '|   '
                         + PadR(IntToStr(Integers[P_LEVELS]), 5) + '|  ' + PadR(GroupDigits(Integers[P_EXP], ','), 10) + '|   '
                         + PadR(IntToStr(Integers[P_BREAKS]), 5) + '|');
@@ -2583,7 +690,7 @@ begin
 
   // checks to see if at least one player is false
   for i := 0 to High(Players) do
-    if (not Players[i].Active) then
+    if (not Players[i].isActive) then
     begin
       playerFalse := True;
       Break;
@@ -2597,9 +704,9 @@ begin
 
     if (Length(Players) > 0) and (Length(falseReason) > 0) then
       for i := 0 to High(Players) do
-        if (not Players[i].Active) then
+        if (not Players[i].isActive) then
           with Players[i] do
-            Writeln(PadR('|   ' + IntToStr(i) + ': ' + Nick + ' -> ' + falseReason[i], 88) + '|');
+            Writeln(PadR('|   ' + IntToStr(i) + ': ' + nickname + ' -> ' + falseReason[i], 88) + '|');
   end;
 
   Writeln('|_______________________________________________________________________________________/');
@@ -2618,15 +725,15 @@ begin
     with Players[CurrentPlayer] do
     begin
       Writeln(PadR('|    Player:   ' + ToStr(CurrentPlayer), 53) + '|');
-      Writeln(PadR('|    Location: ' + Capitalize(Loc), 53) + '|');
-      Writeln(PadR('|    Active:   ' + BoolToStr(Active), 53) + '|');
-      if (not Active) then
+      Writeln(PadR('|    Location: ' + Capitalize(location), 53) + '|');
+      Writeln(PadR('|    Active:   ' + BoolToStr(isActive), 53) + '|');
+      if (not isActive) then
         Writeln(PadR('|    Reason:   ' + falseReason[CurrentPlayer], 53) + '|');
 
       Writeln(PadR('|      Tree Type:  ' + Capitalize(Strings[P_TREE]), 53) + '|');
       Writeln(PadR('|      Loads Done: ' + GroupDigits(Integers[P_LOADS], ','), 53) + '|');
       Writeln(PadR('|      Logs Cut:   ' + GroupDigits(Integers[P_LOGS], ','), 53) + '|');
-      Writeln(PadR('|      Logs P/H:   ' + GroupDigits((Integers[P_LOGS] * 60 * 60) / (GetTimeRunning / 1000), ','), 53) + '|');
+      Writeln(PadR('|      Logs P/H:   ' + GroupDigits(Round((Integers[P_LOGS] * 60 * 60) / (GetTimeRunning / 1000)), ','), 53) + '|');
       Writeln(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
       Writeln(PadR('|      Experience: ' + GroupDigits(Integers[P_EXP], ','), 53) + '|');
       Writeln(PadR('|      Breaks:     ' + IntToStr(Integers[P_BREAKS]), 53) + '|');
@@ -2643,15 +750,13 @@ begin
   SetScriptProp(SP_WriteTimeStamp, [False]);
   ClearDebug();
 
-  SRLRandomsReport();
-
-  if (HowManyPlayers = 1) then
+  if (length(players) = 1) then
     Report_SinglePlayer
   else
-    if (HowManyPlayers > 1) then
+    if (length(players) > 1) then
       Report_MultiPlayer
     else
-      if (HowManyPlayers < 1) then
+      if (length(players) < 1) then
       begin
         Report_SinglePlayer;
         Report_MultiPlayer;
@@ -2669,13 +774,12 @@ end;
 
 procedure Setup_Player;
 begin
-  LoginPlayer;
-  Find_Randoms(0, 0);
+  players[currentPlayer].login();
 
-  Players[CurrentPlayer].Loc := Find_PlayerLocation;
-  SetAngle(SRL_ANGLE_HIGH);
+  Players[CurrentPlayer].location := Find_PlayerLocation;
+  minimap.setAngle(MS_ANGLE_HIGH);
 
-  DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(GetSkillLevel('woodcutting')), DEBUG_PLAYER);
+  DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(tabStats.getSkillLevel(SKILL_WOODCUTTING)), DEBUG_PLAYER);
 
   if (Find_Hatchet) then
     DCnB_Debug('Setup_Player', 'Found hatchet!', DEBUG_SUCCESS)
@@ -2691,51 +795,28 @@ begin
   SetScriptProp(SP_WriteTimeStamp, [True]);
   DCnB_Signature;
 
-  if (USE_FORM) then
-  begin
-    tabCount := 1;
-    SetLength(formPlayers, tabCount);
-
-    Form_Show;
-    Form_KillForm;
-
-    sName := statsID;
-    sPass := statsPass;
-
-    if (not startReady) then
-      TerminateScript;
-  end else begin
-    Smart_Server := 152;
-    Smart_Members := False;
-    Smart_Signed := True;
-    Smart_SuperDetail := False;
-
-    sName := STATS_ID;
-    sPass := STATS_PASS;
-    playSnd := RANDOM_SOUND;
-    breakAfter := BREAK_AFTER;
-  end;
+  sName := STATS_ID;
+  sPass := STATS_PASS;
+  breakAfter := BREAK_AFTER;
 
   SetupSRL;
   ActivateClient;
-  SetupSRLStats(34, sName, sPass);
+  statsSetup(34, sName, sPass);
 
-  if (not USE_FORM) then
-    DeclarePlayers;
+  DeclarePlayers;
 
   Disguise('Logs Chopped: 0');
   Writeln('Loading, please wait...');
-  SymbolAccuracy := 0.5;
+  minimap.symbolAccuracy := 0.5;
 
-  SetLength(falseReason, HowManyPlayers);
+  SetLength(falseReason, length(players));
   for i := 0 to High(Players) do
   with Players[i] do
   begin
-    if (not Active) then
+    if (not isActive) then
       falseReason[i] := 'User set to false';
 
-    BoxRewards := ['amp', 'mote', 'ostume', 'oins', 'unes', 're', 'ems'];
-    Loc := 'Bank';
+    location := 'Bank';
   end;
 end;
 
@@ -2754,10 +835,10 @@ begin
       else
         Walk_ToLoc(WALK_TREES_OAKS);
 
-      while (not InvFull) and (LoggedIn) do
+      while (not tabBackpack.isFull()) and (isLoggedIn()) do
         Chop_Trees;
 
-      if (InvFull) then
+      if (tabBackpack.isFull()) then
       begin
         if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow') then
           Walk_ToLoc(WALK_BANK_WILLOWS)
@@ -2783,16 +864,16 @@ begin
             end;
         end;
 
-        stats_Commit;
+        statsCommit;
       end;
-    until((Players[CurrentPlayer].Integers[P_LOGS] >= Players[CurrentPlayer].Integers[P_TOTAL_LOGS]) or (not LoggedIn));
+    until((Players[CurrentPlayer].Integers[P_LOGS] >= Players[CurrentPlayer].Integers[P_TOTAL_LOGS]) or (not isLoggedIn()));
 
-    if (not LoggedIn) then
+    if (not isLoggedIn()) then
     begin
-      LoginPlayer();
+      players[currentPlayer].login();
       Continue;
     end;
-  until(AllPlayersInactive);
+  until(players.getActive() <= 0);
 end;
 
 procedure ScriptTerminate;
@@ -2806,5 +887,5 @@ begin
 end.
 
 {==============================================================================\
-|                    Copyright 09-11 Coh3n @ SRL-Forums                        |
+|                  Copyright 2009-2013 Coh3n @ SRL-Forums                      |
 |==============================================================================}
