@@ -138,7 +138,7 @@ begin
   begin
     Integers[P_TOTAL_LOGS]  := 0;    // Total logs to cut
     Booleans[P_TAKE_BREAKS] := True; // True = the player will take breaks
-    Booleans[P_EQUIPPED]    := True; // True = your hatchet is equipped
+    Booleans[P_EQUIPPED]    := True; // True = your hatchet is equipped (if not equipped, must be in first backpack slot)
     Strings[P_TREE]         := '';   // Either 'willow' or 'oak'
   end;
 end;
@@ -270,22 +270,6 @@ begin
       Result := 'Bank';
 
   DCnB_Debug('Find_PlayerLocation', 'Location = ' + Result, DEBUG_PLAYER);
-end;
-
-function Find_Hatchet: Boolean;
-begin
-  if (not isLoggedIn()) then
-    Exit;
-
-  if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
-  begin
-    result := true;
-    {if (tabEquipment.open()) then
-      Result := (CountColor(SRL_OUTLINE_BLACK, 570, 289, 603, 320) > 0);}
-  end else begin
-    if (tabBackpack.open()) then
-      Result := tabBackpack.isItemInSlot(1);
-  end;
 end;
 
 procedure Next_Player(active: Boolean; proc, msg: String);
@@ -599,7 +583,7 @@ begin
       if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
         Result := bankscreen.quickDeposit(QUICK_DEPOSIT_INVENTORY)
       else begin
-        //Deposit(2, 28, True);
+        bankscreen.deposit([2..28]);
         Wait(RandomRange(200, 500));
         Result := (tabBackpack.count() <= 1);
       end;
@@ -780,11 +764,6 @@ begin
   minimap.setAngle(MS_ANGLE_HIGH);
 
   DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(tabStats.getSkillLevel(SKILL_WOODCUTTING)), DEBUG_PLAYER);
-
-  if (Find_Hatchet) then
-    DCnB_Debug('Setup_Player', 'Found hatchet!', DEBUG_SUCCESS)
-  else
-    Next_Player(False, 'Find_Hatchet', 'Failed to find hatchet');
 end;
 
 procedure Setup_Script;
@@ -799,6 +778,7 @@ begin
   sPass := STATS_PASS;
   breakAfter := BREAK_AFTER;
 
+  smartEnableDrawing := true;
   SetupSRL;
   ActivateClient;
   statsSetup(34, sName, sPass);
