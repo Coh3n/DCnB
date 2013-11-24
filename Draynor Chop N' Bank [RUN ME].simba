@@ -228,6 +228,10 @@ begin
     mouse(p, MOUSE_LEFT);
   end;
 
+  // in case the Task Tab is accidentally opened
+  if (getColor(100, 358) = 1010650) then
+    gameTabs.openTab(TAB_TASK);
+
   closeAdWindow();
 end;
 
@@ -540,7 +544,7 @@ begin
   end else
     case which of
       WALK_TREES_WILLOWS:
-        MouseBox(intToBox(660, 150, 680, 175), MOUSE_LEFT);
+        MouseBox(intToBox(660, 140, 680, 165), MOUSE_LEFT);
 
       WALK_BANK_WILLOWS:
         MouseBox(intToBox(700, 55, 720, 75), MOUSE_LEFT);
@@ -789,6 +793,7 @@ end;
 procedure Event_OnLogin();
 begin
   exitSquealOfFortune();
+  Find_Randoms();
 end;
 
 procedure Setup_Player;
