@@ -57,9 +57,7 @@ const
   Description: Constants representing different types of walks }
 const
   WALK_TREES_WILLOWS = 0;
-  WALK_TREES_OAKS    = 1;
   WALK_BANK_WILLOWS  = 3;
-  WALK_BANK_OAKS     = 4;
 
 { const Debug Constants;
   Description: Constants representing the different forms of debugging }
@@ -78,9 +76,6 @@ const
    // Booleans.
    P_TAKE_BREAKS = 0;
    P_EQUIPPED    = 1;
-
-   // Strings.
-   P_TREE       = 0;
 
    // Progress report.
    P_LOADS  = 9;
@@ -142,7 +137,6 @@ begin
     Integers[P_TOTAL_LOGS]  := 1000;    // Total logs to cut
     Booleans[P_TAKE_BREAKS] := True; // True = the player will take breaks
     Booleans[P_EQUIPPED]    := False; // True = your hatchet is equipped (if not equipped, must be in first backpack slot)
-    Strings[P_TREE]         := 'Willow';   // Either 'willow' or 'oak'
   end;
 end;
 
@@ -207,41 +201,20 @@ begin
   end;
 end;
 
-function Load_TreeRecords: TTree;
+function Load_TreeRecord: TTree;
 begin
-  case Lowercase(Players[CurrentPlayer].Strings[P_TREE]) of
-    'oak':
-      with Result do
-      begin
-        Name   := 'Oak';
-        UpText := ['Oak'];
-        Color  := 1450785;
-        Hue    := 1.29;
-        Sat    := 2.43;
-        Exp    := 37.5;
-        Tol    := 2;
-        Symbol := MM_SYMBOL_BANK;
-        OffsetX := 30;
-        OffsetY := 0;
-      end;
-
-    'willow':
-      with Result do
-      begin
-        Name   := 'Willow';
-        UpText := ['Willow', 'Wil', 'llow', 'low'];
-        Color  := 2441281;
-        Hue    := 0.36;
-        Sat    := 1.01;
-        Exp    := 67.5;
-        Tol    := 6;
-        Symbol := MM_SYMBOL_FISHING;
-        OffsetX := 5;
-        OffsetY := -10;
-      end;
-
-    else
-      DCnB_Debug('Load_TreeRecords', 'Invalid tree type in DeclarePlayers', DEBUG_ERROR);
+  with Result do
+  begin
+    Name   := 'Willow';
+    UpText := ['Willow', 'Wil', 'llow', 'low'];
+    Color  := 2441281;
+    Hue    := 0.36;
+    Sat    := 1.01;
+    Exp    := 67.5;
+    Tol    := 6;
+    Symbol := MM_SYMBOL_FISHING;
+    OffsetX := 5;
+    OffsetY := -10;
   end;
 end;
 
@@ -263,26 +236,18 @@ var
   dist: Integer;
   p: TPoint;
 begin
-  if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow') then
+  if (minimap.findSymbol(p, MM_SYMBOL_FISHING, minimap.getBounds())) then
   begin
-    if (minimap.findSymbol(p, MM_SYMBOL_FISHING, minimap.getBounds())) then
-    begin
-      dist := Distance(p, minimap.getCenterPoint());
-      DCnB_Debug('Find_PlayerLocation', 'Symbol Distance = ' + IntToStr(dist), DEBUG_DETAILS);
+    dist := Distance(p, minimap.getCenterPoint());
+    DCnB_Debug('Find_PlayerLocation', 'Symbol Distance = ' + IntToStr(dist), DEBUG_DETAILS);
 
-      if (dist > 50) then
-        Result := 'Bank'
-      else
-        Result := 'Willows';
-
-    end else
-      Result := 'Bank';
+    if (dist > 50) then
+      Result := 'Bank'
+    else
+      Result := 'Willows';
 
   end else
-    if (minimap.findSymbol(p, MM_SYMBOL_DUNGEON, minimap.getBounds())) then
-      Result := 'Oaks'
-    else
-      Result := 'Bank';
+    Result := 'Bank';
 
   DCnB_Debug('Find_PlayerLocation', 'Location = ' + Result, DEBUG_PLAYER);
 end;
@@ -415,7 +380,7 @@ begin
   if (not isLoggedIn()) then
     Exit;
 
-  Tree := Load_TreeRecords;
+  Tree := Load_TreeRecord;
 
   SetColorToleranceSpeed(2);
   SetToleranceSpeed2Modifiers(Tree.Hue, Tree.Sat);
@@ -548,10 +513,7 @@ begin
     WALK_TREES_WILLOWS:
       Result := 'Willows';
 
-    WALK_TREES_OAKS:
-      Result := 'Oaks';
-
-    WALK_BANK_WILLOWS, WALK_BANK_OAKS:
+    WALK_BANK_WILLOWS:
       Result := 'Bank';
 
     else
@@ -580,20 +542,8 @@ begin
       WALK_TREES_WILLOWS:
         MouseBox(intToBox(660, 150, 680, 175), MOUSE_LEFT);
 
-      WALK_TREES_OAKS:
-        begin
-          MouseBox(intToBox(656, 90, 665, 105), MOUSE_LEFT);
-          mainscreen.setAngle(MS_ANGLE_LOW);
-        end;
-
       WALK_BANK_WILLOWS:
         MouseBox(intToBox(700, 55, 720, 75), MOUSE_LEFT);
-
-      WALK_BANK_OAKS:
-        begin
-          MouseBox(intToBox(583, 78, 607, 87), MOUSE_LEFT);
-          mainscreen.setAngle(MS_ANGLE_HIGH);
-        end;
 
       else
         DCnB_Debug('Walk_ToLoc', 'Invalid walk point', DEBUG_ERROR);
@@ -616,7 +566,7 @@ begin
     Exit;
 
   t := GetSystemTime + RandomRange(8000, 12000);
-  Tree := Load_TreeRecords;
+  Tree := Load_TreeRecord;
 
   repeat
     if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
@@ -743,7 +693,7 @@ begin
     with Players[i] do
       Writeln('| ' + PadR(nickname, 5) + '| ' + PadR(BoolToStr(isActive), 7) + '| '
                         + PadR(location, 11) + '|  ' + PadR(GroupDigits(Integers[P_LOADS], ','), 5) + '| '
-                        + PadR(Capitalize(Strings[P_TREE]), 7) + '|  ' + PadR(GroupDigits(Integers[P_LOGS], ','), 8) + '|   '
+                        + PadR(Capitalize('Willow'), 7) + '|  ' + PadR(GroupDigits(Integers[P_LOGS], ','), 8) + '|   '
                         + PadR(IntToStr(Integers[P_LEVELS]), 5) + '|  ' + PadR(GroupDigits(Integers[P_EXP], ','), 10) + '|   '
                         + PadR(IntToStr(Integers[P_BREAKS]), 5) + '|');
 
@@ -794,7 +744,7 @@ begin
       if (not isActive) then
         Writeln(PadR('|    Reason:   ' + falseReason[CurrentPlayer], 53) + '|');
 
-      Writeln(PadR('|      Tree Type:  ' + Capitalize(Strings[P_TREE]), 53) + '|');
+      Writeln(PadR('|      Tree Type:  ' + Capitalize('Willow'), 53) + '|');
       Writeln(PadR('|      Loads Done: ' + GroupDigits(Integers[P_LOADS], ','), 53) + '|');
       Writeln(PadR('|      Logs Cut:   ' + GroupDigits(Integers[P_LOGS], ','), 53) + '|');
       Writeln(PadR('|      Logs P/H:   ' + GroupDigits(Round((Integers[P_LOGS] * 60 * 60) / (GetTimeRunning / 1000)), ','), 53) + '|');
@@ -900,20 +850,14 @@ begin
     Setup_Player;
 
     repeat
-      if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow') then
-        Walk_ToLoc(WALK_TREES_WILLOWS)
-      else
-        Walk_ToLoc(WALK_TREES_OAKS);
+      Walk_ToLoc(WALK_TREES_WILLOWS)
 
       while (not tabBackpack.isFull()) and (isLoggedIn()) do
         Chop_Trees;
 
       if (tabBackpack.isFull()) then
       begin
-        if (Lowercase(Players[CurrentPlayer].Strings[P_TREE]) = 'willow') then
-          Walk_ToLoc(WALK_BANK_WILLOWS)
-        else
-          Walk_ToLoc(WALK_BANK_OAKS);
+        Walk_ToLoc(WALK_BANK_WILLOWS)
 
         if (Bank_Logs) then
         begin
@@ -948,7 +892,7 @@ end;
 
 procedure ScriptTerminate;
 begin
-  //Report_Print;
+  Report_Print;
 end;
 
 begin
