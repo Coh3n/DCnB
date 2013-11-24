@@ -51,9 +51,6 @@ program DraynorChopNBank;
 {$i SRL-6/SRL.simba}
 
 const
-  DEBUG_SMART = True; // Draw TPA debugging on SMART
-
-const
   SCRIPT_VERSION  = '76';
 
 { const Walk Constants;
@@ -119,27 +116,33 @@ var
 |                               Script Setup                                   |
 |==============================================================================|
 |                                                                              |
-|    * To setup the script if you decided NOT to use the player form           |
+|    * To setup the script and your players.                                   |
  \_____________________________________________________________________________}
 
 { const Setup;
   Description: Constants used to setup the script }
 const
-  STATS_ID   = '';      // Your SRL Stats Username
-  STATS_PASS = '';      // Your SRL Stats Password
-  BREAK_AFTER  = 15;    // Loads until break/switch player
+  STATS_ID   = 'Coh3n';      // Your SRL Stats Username
+  STATS_PASS = '304002';      // Your SRL Stats Password
+  BREAK_AFTER  = 20;    // Loads until break/switch player
+  SMART_DRAWING = true; // Does some debugging on SMART
+  SRL_LOG = false;       // Saves SRL debug to a log file
+  SRL_DEBUG = true;     // Debugs SRL procedures in the debug box
+  IP_SCREEN = false;     // Takes a screenshot of your last IP in case of hacks
+  MAX_TIME_PER_TREE = 60; // Will move on to another tree after about X seconds not matter what
+  ANIMATION_SHIFT = 300; // The maximum player IDLE pixel shift. Can adjust value if player isn't moving between trees or moving too soon.
 
 procedure DeclarePlayers; // Where all your players are to be setup
 begin
-  Players.Setup(['Login name', 'or nickname'], 'ThePlayerFileName');
+  Players.Setup(['Kryptov'], 'Skillers');
   CurrentPlayer := 0;
 
   with Players[0] do
   begin
-    Integers[P_TOTAL_LOGS]  := 0;    // Total logs to cut
+    Integers[P_TOTAL_LOGS]  := 1000;    // Total logs to cut
     Booleans[P_TAKE_BREAKS] := True; // True = the player will take breaks
-    Booleans[P_EQUIPPED]    := True; // True = your hatchet is equipped (if not equipped, must be in first backpack slot)
-    Strings[P_TREE]         := '';   // Either 'willow' or 'oak'
+    Booleans[P_EQUIPPED]    := False; // True = your hatchet is equipped (if not equipped, must be in first backpack slot)
+    Strings[P_TREE]         := 'Willow';   // Either 'willow' or 'oak'
   end;
 end;
 
@@ -166,7 +169,7 @@ begin
   Wait(100);
   Writeln('                             \/___________________/      ');
   Wait(100);
-  Writeln(PadR('               Draynor Chop N'' Bank ~ Revision ' + SCRIPT_VERSION + '!', 57));
+  Writeln(PadR('               Draynor Chop N'' Bank ~ Version ' + SCRIPT_VERSION + '!', 57));
 end;
 
 procedure DCnB_Debug(proc, msg: String; debug: Integer);
@@ -191,18 +194,16 @@ end;
 
 procedure Load_Antiban;
 begin
-{
-  case Random(100) of
-    10: BoredHuman;
-    20: HoverSkill('random', False);
-    30: HoverSkill('woodcutting', False);
+  case Random(200) of
+    10: RandomRClickItem();
+    20: MouseOffClient(Random(5));
+    30: RandomCompass(0, 180, false);
     40: PickUpMouse;
-    50: RandomRClick;
-    60: RandomMovement;
+    50: RandomGameTab();
+    60: MouseMovingObject();
     70: SleepAndMoveMouse(200 + Random(50));
-    90: ExamineInv;
+    90: PickUpMouse();
   end;
-}
 end;
 
 function Load_TreeRecords: TTree;
@@ -228,11 +229,11 @@ begin
       begin
         Name   := 'Willow';
         UpText := ['Willow', 'Wil', 'llow', 'low'];
-        Color  := 1516577;
-        Hue    := 0.74;
-        Sat    := 0.92;
+        Color  := 2441281;
+        Hue    := 0.36;
+        Sat    := 1.01;
         Exp    := 67.5;
-        Tol    := 5;
+        Tol    := 6;
         Symbol := MM_SYMBOL_FISHING;
         OffsetX := 5;
         OffsetY := -10;
@@ -321,40 +322,77 @@ end;
 function Chop_Relocate(tree: TTree): boolean;
 var
   p: TPoint;
+  tmpAcc: extended = minimap.symbolAccuracy;
 begin
+  DcnB_Debug('Chop_Relocate', 'Relocating to trees', DEBUG_DETAILS);
+  minimap.symbolAccuracy := 0.6;
+
   if (minimap.findSymbol(p, tree.symbol, minimap.getBounds())) then
   begin
     p.offset(point(tree.offsetX, tree.offsetY));
-    Mouse(p.rand(4), MOUSE_RIGHT);
-    Result := minimap.waitFlag(5);
+    Mouse(p.rand(4), MOUSE_LEFT);
+    Result := minimap.waitFlag(0);
   end;
+
+  minimap.symbolAccuracy := tmpAcc;
 end;
 
 function Chop_Finished: Boolean;
 var
-  avg: integer;
-  c: TPoint;
+  avg, c: integer;
 begin
-  if not isLoggedIn() or tabBackpack.isFull() then
+  if not isLoggedIn() then
     Exit;
 
-  c := minimap.getCenterPoint();
-
-  avg := getPixelShiftAverage(IntToBox(c.x - 10, c.y - 25, c.x + 15, c.y + 15), 25, 125);
-  DCnB_Debug('Chop_IsTreeDown', 'Average pixel shift: ' + intToStr(avg), DEBUG_DETAILS);
-
-  if (inRange(avg, 0, 30)) then
+  if (tabBackpack.isFull()) then
   begin
-    Result := True;
-    DCnB_Debug('Chop_IsTreeDown', 'Player not animating', DEBUG_DETAILS);
+    result := true;
+    exit;
   end;
+
+  {$IFDEF SMART}
+  if (SMART_DRAWING) then
+    smartImage.drawBox(mainscreen.playerBox, false, clRed);
+  {$ENDIF}
+
+  repeat
+    avg := getPixelShiftAverage(mainscreen.playerBox, 100, 300);
+    DCnB_Debug('Chop_IsTreeDown', 'Average pixel shift: ' + intToStr(avg), DEBUG_DETAILS);
+
+    if (inRange(avg, 0, ANIMATION_SHIFT)) then
+    begin
+      Inc(c);
+
+      if (c = 1) then
+        Continue;
+    end else
+      c := 0;
+
+    if (c >= 2) or (tabBackpack.isFull()) then
+    begin
+      Result := True;
+      DCnB_Debug('Chop_IsTreeDown', 'Player not animating', DEBUG_DETAILS);
+      Break;
+    end;
+
+    Load_Antiban;
+  until(isLoggedIn() = false);
+end;
+
+// Returns the middle element of the TPA
+function Chop_MiddlePoint(TPA: TPointArray): TPoint;
+var
+  l := Length(TPA);
+begin
+  if (l > 0) then
+    Result := TPA[Round(Length(TPA) div 2)];
 end;
 
 function Chop_Trees: Boolean;
 var
   notFindTrees, notFindUptext, i, h, t, x, y, c: Integer;
   colorsArr: TPointArray;
-  cP, mmc: TPoint;
+  cP, msc: TPoint;
   boxesArr, tmpATPA: T2DPointArray;
   Tree: TTree;
   doneChopping: Boolean;
@@ -371,15 +409,16 @@ begin
     if (tabBackpack.isFull()) then
       Break;
 
-    mmc := minimap.getCenterPoint();
-    FindColorsSpiralTolerance(mmc.x, mmc.y, colorsArr, Tree.Color, mainscreen.getBounds(), Tree.Tol);
-    tmpATPA := TPAToATPAEx(colorsArr, 60, 60);
-    DCnB_Debug('Chop_Trees', 'Boxes Found: ' + IntToStr(Length(boxesArr)), DEBUG_DETAILS);
+    msc := mainscreen.getCenterPoint();
+    FindColorsSpiralTolerance(msc.x, msc.y, colorsArr, Tree.Color, mainscreen.getBounds(), Tree.Tol);
+    tmpATPA := TPAToATPA(colorsArr, 20);
+    //DCnB_Debug('Chop_Trees', 'Boxes Found: ' + IntToStr(Length(boxesArr)), DEBUG_DETAILS);
 
     if (Length(tmpATPA) = 0) then
     begin
       DCnB_Debug('Chop_Trees', 'Failed to find tree', DEBUG_ERROR);
       Inc(notFindTrees);
+      wait(500 + random(500));
     end;
 
     SortATPAFrom(tmpATPA, mainscreen.getCenterPoint());
@@ -389,47 +428,68 @@ begin
 
     for i := 0 to h do
     begin
-      DCnB_Debug('Chop_Trees', 'Length tmpATPA[' + IntToStr(i) + ']: ' + IntToStr(Length(tmpATPA[i])), DEBUG_DETAILS);
+      //DCnB_Debug('Chop_Trees', 'Length tmpATPA[' + IntToStr(i) + ']: ' + IntToStr(Length(tmpATPA[i])), DEBUG_DETAILS);
 
-      if (Length(tmpATPA[i]) < 50) then
+      if (Length(tmpATPA[i]) < 250) then
         Continue;
 
+      if (PointInBox(MiddleTPA(tmpATPA[i]), mainscreen.playerBox)) then
+        Continue;
+
+      //DCnB_Debug('Chop_Trees', 'Length tmpATPA[' + IntToStr(i) + ']: ' + IntToStr(Length(tmpATPA[i])), DEBUG_DETAILS);
       boxesArr[c] := tmpATPA[i];
       Inc(c);
     end;
 
     SetLength(boxesArr, c);
+
+    if (length(boxesArr) <= 0) then
+    begin
+      DCnB_Debug('Chop_Trees', 'Failed to find enough colors for tree', DEBUG_ERROR);
+      inc(notFindTrees);
+    end;
+
     SortATPAFrom(boxesArr, mainscreen.getCenterPoint());
     h := high(boxesArr);
 
     // draw points on SMART if setting enabled
     {$IFDEF SMART}
-    if (DEBUG_SMART) then
-      smartImage.drawATPA(boxesArr);
+    if (SMART_DRAWING) then
+    begin
+      smartImage.clear();
+
+      for i := 0 to high(boxesArr) do
+        smartImage.drawBox(boxesArr[i].getBounds(), false, clYellow);
+    end;
     {$ENDIF}
 
     for i := 0 to h do
     begin
-      cP := MiddleTPA(boxesArr[i]);
+      cP := Chop_MiddlePoint(boxesArr[i]);
       mouse(cP.rand(4), MOUSE_MOVE);
       notFindTrees := 0;
 
-      if (isMouseOverText(Tree.UpText)) then
+      if (isMouseOverText(Tree.UpText, 300)) then
       begin
-        DCnB_Debug('Chop_Trees', 'Uptext found!', DEBUG_DETAILS);
+        DCnB_Debug('Chop_Trees', 'MouseOverText found!', DEBUG_DETAILS);
         notFindUptext := 0;
 
         GetMousePos(x, y);
-        Mouse(point(x, y), MOUSE_RIGHT);
+        Mouse(point(x, y), MOUSE_LEFT);
+
         if (not didClick(true)) then
           Continue;
 
         Wait(RandomRange(2000, 3000));
 
-        t := GetSystemTime + RandomRange(15000, 20000);
+        t := GetSystemTime + (MAX_TIME_PER_TREE * 1000) + RandomRange(-10000, 10000);
         doneChopping := false;
+
+        DCnB_Debug('Chop_Trees', 'Waiting for player to finish animating...', DEBUG_DETAILS);
+
         repeat
           doneChopping := Chop_Finished;
+
           if (doneChopping or (GetSystemTime > t)) then
             Break;
 
@@ -440,7 +500,7 @@ begin
           Break;
 
       end else begin
-        DCnB_Debug('Chop_Tree', 'Failed to find uptext', DEBUG_ERROR);
+        DCnB_Debug('Chop_Tree', 'Failed to find mouseOverText', DEBUG_ERROR);
         Inc(notFindUptext);
       end;
     end; // end of TPA loop.
@@ -503,7 +563,7 @@ begin
   end else
     case which of
       WALK_TREES_WILLOWS:
-        MouseBox(intToBox(590, 120, 610, 135), MOUSE_LEFT);
+        MouseBox(intToBox(660, 150, 680, 175), MOUSE_LEFT);
 
       WALK_TREES_OAKS:
         begin
@@ -512,7 +572,7 @@ begin
         end;
 
       WALK_BANK_WILLOWS:
-        MouseBox(intToBox(645, 44, 656, 53), MOUSE_LEFT);
+        MouseBox(intToBox(700, 55, 720, 75), MOUSE_LEFT);
 
       WALK_BANK_OAKS:
         begin
@@ -525,9 +585,8 @@ begin
     end;
 
   Wait(RandomRange(2000, 3000));
-  minimap.waitFlag();
+  result := minimap.waitFlag(10) and (not minimap.isPlayerMoving());
   Wait(500 + Random(500));
-  Result := True;
   Players[CurrentPlayer].location := Walk_ConstToLoc(which);
   DCnB_Debug('Walk_ToLoc', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS);
 end;
@@ -545,7 +604,12 @@ begin
   Tree := Load_TreeRecords;
 
   repeat
-    if (not mainscreen.findObject(x, y, [1234567], [5], colorSetting(2, 0.00, 0.00), mainscreen.getCenterPoint(), 40, 40, 30, ['Bank'], mainscreen.getBounds(), MOUSE_RIGHT)) then
+    if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
+      logsInInv := tabBackpack.count()
+    else
+      logsInInv := tabBackpack.count() - 1;
+
+    if (not mainscreen.findObject(x, y, [4284262], [8], colorSetting(2, 0.10, 0.28), mainscreen.getCenterPoint(), 50, 200, 1000, ['Bank'], mainscreen.getBounds(), MOUSE_LEFT)) then
     begin
       DCnB_Debug('Bank_Logs', 'Failed to open bank, retrying...', DEBUG_ERROR);
       Inc(Tries);
@@ -557,7 +621,7 @@ begin
         if minimap.findSymbol(sP, MM_SYMBOL_BANK, minimap.getBounds()) then
         begin
           DCnB_Debug('Bank_Logs', 'Found bank symbol! Relocating...', DEBUG_SUCCESS);
-          Mouse(sP.rand(4), MOUSE_RIGHT);
+          Mouse(sP.rand(4), MOUSE_LEFT);
 
           while (minimap.isPlayerMoving() and (GetSystemTime < t)) do
             Wait(RandomRange(100, 300));
@@ -566,6 +630,11 @@ begin
 
         Continue;
       end;
+    end else begin
+      t := getSystemTime() + 10000;
+
+      while (getSystemTime() < t) and (not bankscreen.isOpen()) and (not pinscreen.isOpen()) do
+        wait(100);
     end;
 
     if (pinscreen.isOpen()) then
@@ -576,24 +645,18 @@ begin
       DCnB_Debug('Bank_Logs', 'Successfully opened bank!', DEBUG_SUCCESS);
 
       if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
-        logsInInv := tabBackpack.count() - 1
-      else
-        logsInInv := tabBackpack.count();
-
-      if (Players[CurrentPlayer].Booleans[P_EQUIPPED]) then
         Result := bankscreen.quickDeposit(QUICK_DEPOSIT_INVENTORY)
       else begin
-        bankscreen.deposit([2..28]);
-        Wait(RandomRange(200, 500));
-        Result := (tabBackpack.count() <= 1);
+        Result := bankscreen.deposit([2..28]);
+        bankscreen.close();
       end;
 
     end else
       DCnB_Debug('Bank_Logs', 'Failed to find bank screen', DEBUG_ERROR);
 
-  until(Result or (not isLoggedIn()) or (Tries >= 40));
+  until(Result or (not isLoggedIn()) or (Tries >= 22));
 
-  if (Tries >= 40) then
+  if (Tries >= 22) then
     Next_Player(True, 'Bank_Logs', 'Failed to open bank after 40 tries');
 
   if (Result) then
@@ -756,12 +819,17 @@ begin
   SetScriptProp(SP_WriteTimeStamp, [True]);
 end;
 
+procedure Event_OnLogin();
+begin
+  exitSquealOfFortune();
+end;
+
 procedure Setup_Player;
 begin
   players[currentPlayer].login();
 
   Players[CurrentPlayer].location := Find_PlayerLocation;
-  minimap.setAngle(MS_ANGLE_HIGH);
+  mainscreen.setAngle(MS_ANGLE_HIGH);
 
   DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(tabStats.getSkillLevel(SKILL_WOODCUTTING)), DEBUG_PLAYER);
 end;
@@ -778,9 +846,14 @@ begin
   sPass := STATS_PASS;
   breakAfter := BREAK_AFTER;
 
-  smartEnableDrawing := true;
+  smartEnableDrawing := SMART_DRAWING;
+  disableSRLLog := (not SRL_LOG);
+  disableIPScreenshots := (not IP_SCREEN);
+  disableSRLDebug := (not SRL_DEBUG);
+
+  SRL_Events[EVENT_LOGIN] := @Event_OnLogin;
   SetupSRL;
-  ActivateClient;
+  {$IFNDEF SMART}ActivateClient;{$ENDIF}
   statsSetup(34, sName, sPass);
 
   DeclarePlayers;
@@ -858,7 +931,7 @@ end;
 
 procedure ScriptTerminate;
 begin
-  Report_Print;
+  //Report_Print;
 end;
 
 begin
