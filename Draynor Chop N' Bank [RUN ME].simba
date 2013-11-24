@@ -199,10 +199,11 @@ begin
     20: MouseOffClient(Random(5));
     30: RandomCompass(0, 180, false);
     40: PickUpMouse;
-    50: RandomGameTab();
+    50: ;
     60: MouseMovingObject();
     70: SleepAndMoveMouse(200 + Random(50));
     90: PickUpMouse();
+    100: ;
   end;
 end;
 
@@ -242,6 +243,19 @@ begin
     else
       DCnB_Debug('Load_TreeRecords', 'Invalid tree type in DeclarePlayers', DEBUG_ERROR);
   end;
+end;
+
+procedure Find_Randoms();
+var
+  p: TPoint;
+begin
+  if (findSpinTicket(p)) then
+  begin
+    DCnB_Debug('Find_Randoms', 'Claiming spin ticket', DEBUG_DETAILS);
+    mouse(p, MOUSE_LEFT);
+  end;
+
+  closeAdWindow();
 end;
 
 function Find_PlayerLocation: String;
@@ -376,6 +390,7 @@ begin
     end;
 
     Load_Antiban;
+    Find_Randoms;
   until(isLoggedIn() = false);
 end;
 
@@ -608,6 +623,8 @@ begin
       logsInInv := tabBackpack.count()
     else
       logsInInv := tabBackpack.count() - 1;
+
+    Find_Randoms();
 
     if (not mainscreen.findObject(x, y, [4284262], [8], colorSetting(2, 0.10, 0.28), mainscreen.getCenterPoint(), 50, 200, 1000, ['Bank'], mainscreen.getBounds(), MOUSE_LEFT)) then
     begin
