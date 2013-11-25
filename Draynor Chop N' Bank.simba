@@ -229,9 +229,9 @@ begin
   begin
     Name   := 'Willow';
     UpText := ['Willow', 'Wil', 'llow', 'low'];
-    Color  := 2441281;
-    Hue    := 0.36;
-    Sat    := 1.01;
+    Color  := 2836294;
+    Hue    := 0.27;
+    Sat    := 0.87;
     Exp    := 67.5;
     Tol    := 6;
     Symbol := MM_SYMBOL_FISHING;
