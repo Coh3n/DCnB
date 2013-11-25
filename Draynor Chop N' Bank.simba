@@ -16,17 +16,16 @@
 |                                                                              |
 |       1. Have hatchet in FIRST inventory slot or equipped                    |
 |       2. Start in Draynor bank OR at the trees                               |
-|       3. Hit run in Simba                                                    |
-|       4. Setup script from lines 108-163                                     |
-|       5. Save your changes and hit Run (F9)                                  |
-|       6. Post any progress reports and/or bugs!                              |
+|       3. Setup script from lines 108-163                                     |
+|       4. Save your changes and hit Run (F9)                                  |
+|       5. Post any progress reports and/or bugs!                              |
  \_____________________________________________________________________________}
 
 {==============================================================================\
 |                                   Features                                   |
 |==============================================================================|
 |                                                                              |
-|     * Unlimited players             * AntiRandoms/Antiban                    |
+|     * Unlimited players             * Antiban                                |
 |     * Custom signature              * Supports ANY hatchet                   |
 |     * Detailed progress report      * Efficient tree finding/banking         |
 |     * Breaking/player switching     * Detects and records levels gained      |
