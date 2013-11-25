@@ -120,7 +120,7 @@ const
   SRL_DEBUG = true;       // Debugs SRL procedures in the debug box
   IP_SCREEN = true;       // Takes a screenshot of your last IP in case of hacks
   MAX_TIME_PER_TREE = 60; // Will move on to another tree after about X seconds not matter what
-  ANIMATION_SHIFT = 300;  // The maximum player IDLE pixel shift. Can adjust value if player isn't moving between trees or moving too soon.
+  ANIMATION_SHIFT = 300;  // The maximum player IDLE pixel shift. Can adjust value if player isn't moving between trees or moving too soon. WILL vary depending on player's clothing.
 
 procedure DeclarePlayers; // Where all your players are to be setup
 begin
@@ -755,7 +755,8 @@ begin
   Writeln('|                  - Revision ' + SCRIPT_VERSION + ' -                   |');
   Writeln('|====================================================|');
   Writeln(PadR('|        ' + TimeRunning, 53) + '|');
-  Writeln('|────────────────────────────────────────────────────|');
+  //Writeln('|────────────────────────────────────────────────────|');
+  Writeln('|----------------------------------------------------|');
 
   if (Length(Players) > 0) then
     with Players[CurrentPlayer] do
