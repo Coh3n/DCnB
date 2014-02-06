@@ -49,7 +49,7 @@ program DraynorChopNBank;
 {$i SRL-6/SRL.simba}
 
 const
-  SCRIPT_VERSION  = '77';
+  SCRIPT_VERSION  = '78';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
@@ -325,11 +325,16 @@ end;
 
 function Chop_Relocate(tree: TTree): boolean;
 var
+  e: extended;
   p: TPoint;
   tmpAcc: extended = minimap.symbolAccuracy;
 begin
   DcnB_Debug('Chop_Relocate', 'Relocating to trees', DEBUG_DETAILS);
   minimap.symbolAccuracy := 0.6;
+
+  e := minimap.getAngleDegrees();
+  if ((e > 10) and (e < 350)) then
+    minimap.clickCompass();
 
   if (minimap.findSymbol(p, tree.symbol, minimap.getBounds())) then
   begin
@@ -692,7 +697,7 @@ begin
     begin
       IncEx(temp[0], Integers[P_LOADS]);
       IncEx(temp[1], Integers[P_LOGS]);
-      IncEx(temp[2], Integers[P_LEVELS]);
+      //IncEx(temp[2], Integers[P_LEVELS]);
       IncEx(temp[3], Integers[P_EXP]);
       IncEx(temp[4], Integers[P_BREAKS]);
     end;
@@ -722,12 +727,12 @@ begin
       Writeln('| ' + PadR(nickname, 5) + '| ' + PadR(BoolToStr(isActive), 7) + '| '
                         + PadR(location, 11) + '|  ' + PadR(GroupDigits(Integers[P_LOADS], ','), 5) + '| '
                         + PadR(Capitalize('Willow'), 7) + '|  ' + PadR(GroupDigits(Integers[P_LOGS], ','), 8) + '|   '
-                        + PadR(IntToStr(Integers[P_LEVELS]), 5) + '|  ' + PadR(GroupDigits(Integers[P_EXP], ','), 10) + '|   '
+                        + PadR(IntToStr(-1{Integers[P_LEVELS]}), 5) + '|  ' + PadR(GroupDigits(Integers[P_EXP], ','), 10) + '|   '
                         + PadR(IntToStr(Integers[P_BREAKS]), 5) + '|');
 
   Writeln('|───────────────────────────────────────────────────────────────────────────────────────|');
-  Writeln(PadR('| Totals:', 29) + '|  ' + PadR(s[0], 5) + '|        |  ' + PadR(s[1], 8) + '|   '
-                    + PadR(s[2], 5) + '|  ' + PadR(s[3], 10) + '|   ' + PadR(s[4], 5) + '|');
+  Writeln(PadR('| Totals:', 29) + '|  ' + PadR(s[0], 5) + '|        |  ' + PadR(s[1], 8) + '|  '
+                    + PadR('N/A'{s[2]}, 6) + '|  ' + PadR(s[3], 10) + '|   ' + PadR(s[4], 5) + '|');
   Writeln('|_______________________________________________________________________________________|');
 
   // checks to see if at least one player is false
@@ -777,7 +782,7 @@ begin
       Writeln(PadR('|      Loads Done: ' + GroupDigits(Integers[P_LOADS], ','), 53) + '|');
       Writeln(PadR('|      Logs Cut:   ' + GroupDigits(Integers[P_LOGS], ','), 53) + '|');
       Writeln(PadR('|      Logs P/H:   ' + GroupDigits(Round((Integers[P_LOGS] * 60 * 60) / (GetTimeRunning / 1000)), ','), 53) + '|');
-      Writeln(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
+      //Writeln(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
       Writeln(PadR('|      Experience: ' + GroupDigits(Integers[P_EXP], ','), 53) + '|');
       Writeln(PadR('|      Breaks:     ' + IntToStr(Integers[P_BREAKS]), 53) + '|');
     end;
