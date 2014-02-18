@@ -16,7 +16,7 @@
 |                                                                              |
 |       1. Have hatchet in FIRST inventory slot or equipped                    |
 |       2. Start in Draynor bank OR at the trees                               |
-|       3. Setup script from lines 108-163                                     |
+|       3. Setup script from lines 114-158                                     |
 |       4. Save your changes and hit Run (F9)                                  |
 |       5. Post any progress reports and/or bugs!                              |
  \_____________________________________________________________________________}
@@ -49,21 +49,21 @@ program DraynorChopNBank;
 {$i SRL-6/SRL.simba}
 
 const
-  SCRIPT_VERSION  = '78';
+  SCRIPT_VERSION  = '79';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
 const
-  WALK_TREES_WILLOWS = 0;
-  WALK_BANK_WILLOWS  = 3;
+  WALK_TO_WILLOWS = 0;
+  WALK_TO_BANK_FROM_WILLOWS = 3;
 
 { const Debug Constants;
   Description: Constants representing the different forms of debugging }
 const
-  DEBUG_ERROR   = 0;
+  DEBUG_ERROR = 0;
   DEBUG_SUCCESS = 1;
   DEBUG_DETAILS = 2;
-  DEBUG_PLAYER  = 3;
+  DEBUG_PLAYER = 3;
 
 { const Players.Integers Indexes;
   Description: Constants representing the DeclarePlayers integers. }
@@ -228,11 +228,11 @@ begin
   begin
     Name   := 'Willow';
     UpText := ['Willow', 'Wil', 'llow', 'low'];
-    Color  := 2836294;
-    Hue    := 0.27;
-    Sat    := 0.87;
+    Color  := 2964548;
+    Hue    := 0.51;
+    Sat    := 1.37;
     Exp    := 67.5;
-    Tol    := 6;
+    Tol    := 4;
     Symbol := MM_SYMBOL_FISHING;
     OffsetX := 5;
     OffsetY := -10;
@@ -322,16 +322,11 @@ end;
 
 function Chop_Relocate(tree: TTree): boolean;
 var
-  e: extended;
   p: TPoint;
   tmpAcc: extended = minimap.symbolAccuracy;
 begin
   DcnB_Debug('Chop_Relocate', 'Relocating to trees', DEBUG_DETAILS);
   minimap.symbolAccuracy := 0.6;
-
-  e := minimap.getAngleDegrees();
-  if ((e > 10) and (e < 350)) then
-    minimap.clickCompass();
 
   if (minimap.findSymbol(p, tree.symbol, minimap.getBounds())) then
   begin
@@ -534,10 +529,10 @@ end;
 function Walk_ConstToLoc(which: Integer): String;
 begin
   case which of
-    WALK_TREES_WILLOWS:
+    WALK_TO_WILLOWS:
       Result := 'Willows';
 
-    WALK_BANK_WILLOWS:
+    WALK_TO_BANK_FROM_WILLOWS:
       Result := 'Bank';
 
     else
@@ -545,7 +540,19 @@ begin
   end;
 end;
 
+function Walk_FindBankSymbol(var p: TPoint): Boolean;
+var
+  tmpAcc: extended = minimap.symbolAccuracy;
+begin
+  minimap.symbolAccuracy := 0.6;
+  Result := minimap.findSymbol(p, MM_SYMBOL_BANK, minimap.getBounds());
+  minimap.symbolAccuracy := tmpAcc;
+end;
+
+
 function Walk_ToLoc(which: Integer): Boolean;
+var
+  bankSymbolPoint: TPoint;
 begin
   if (not isLoggedIn()) then
     Exit;
@@ -560,7 +567,7 @@ begin
   if (InRange(minimap.getAngleDegrees(), 10.0, 350.0)) then
   begin
     minimap.clickCompass();
-    mainscreen.setAngle(MS_ANGLE_HIGH)
+    mainscreen.setAngle(MS_ANGLE_HIGH);
   end;
 
   if (Players[CurrentPlayer].location = Walk_ConstToLoc(which)) then
@@ -569,11 +576,14 @@ begin
     Exit;
   end else
     case which of
-      WALK_TREES_WILLOWS:
+      WALK_TO_WILLOWS:
         MouseBox(intToBox(660, 140, 680, 165), MOUSE_LEFT);
 
-      WALK_BANK_WILLOWS:
-        MouseBox(intToBox(700, 55, 720, 75), MOUSE_LEFT);
+      WALK_TO_BANK_FROM_WILLOWS:
+        if (Walk_FindBankSymbol(bankSymbolPoint)) then
+          Mouse(bankSymbolPoint.rand(RandomRange(-10, 10)), MOUSE_LEFT)
+        else
+          MouseBox(intToBox(700, 55, 720, 75), MOUSE_LEFT);
 
       else
         DCnB_Debug('Walk_ToLoc', 'Invalid walk point', DEBUG_ERROR);
@@ -766,7 +776,7 @@ begin
   Writeln(PadR('|           Coh3n''s Draynor Chop N'' Bank!', 53) + '|');
   Writeln('|                  - Revision ' + SCRIPT_VERSION + ' -                   |');
   Writeln('|====================================================|');
-  Writeln(PadR('|        ' + TimeRunning, 53) + '|');
+  Writeln(PadR('|    ' + TimeRunning, 53) + '|');
   //Writeln('|────────────────────────────────────────────────────|');
   Writeln('|----------------------------------------------------|');
 
@@ -859,7 +869,7 @@ begin
 
   DeclarePlayers;
 
-  Disguise('Logs Chopped: 0');
+  Disguise(TimeRunning + '(0 total logs)');
   Writeln('Loading, please wait...');
   minimap.symbolAccuracy := 0.5;
 
@@ -884,14 +894,14 @@ begin
     Setup_Player;
 
     repeat
-      Walk_ToLoc(WALK_TREES_WILLOWS)
+      Walk_ToLoc(WALK_TO_WILLOWS)
 
       while (not tabBackpack.isFull()) and (isLoggedIn()) do
         Chop_Trees;
 
       if (tabBackpack.isFull()) then
       begin
-        Walk_ToLoc(WALK_BANK_WILLOWS)
+        Walk_ToLoc(WALK_TO_BANK_FROM_WILLOWS);
 
         if (Bank_Logs) then
         begin
@@ -900,7 +910,7 @@ begin
           for i := 0 to High(Players) do
             totalLogs := totalLogs + Players[i].Integers[P_LOGS];
 
-          Disguise('Logs Chopped: ' + IntToStr(totalLogs));
+          Disguise(TimeRunning + '(' + IntToStr(totalLogs) + ' total logs)');
           totalLogs := 0;
 
           if (Players[CurrentPlayer].Booleans[P_TAKE_BREAKS]) then
@@ -935,5 +945,5 @@ begin
 end.
 
 {==============================================================================\
-|                  Copyright 2009-2013 Coh3n @ SRL-Forums                      |
+|                  Copyright 2009-2014 Coh3n @ SRL-Forums                      |
 |==============================================================================}
