@@ -243,11 +243,8 @@ procedure Find_Randoms();
 var
   p: TPoint;
 begin
-  if (findSpinTicket(p)) then
-  begin
+  if (claimSpinTicket()) then
     DCnB_Debug('Find_Randoms', 'Claiming spin ticket', DEBUG_DETAILS);
-    mouse(p, MOUSE_LEFT);
-  end;
 
   // in case the Task Tab is accidentally opened
   if (getColor(100, 358) = 1010650) then
@@ -651,6 +648,10 @@ begin
 
       bankscreen.close();
 
+      // in case an item (like a splin ticket) can't be claimed or deposited
+      if (not result) then
+        result := (bankscreen.getPackCount() <= 20);
+
     end else
       DCnB_Debug('Bank_Logs', 'Failed to find bank screen', DEBUG_ERROR);
 
@@ -784,6 +785,7 @@ begin
       Writeln(PadR('|      Logs P/H:   ' + GroupDigits(Round((Integers[P_LOGS] * 60 * 60) / (GetTimeRunning / 1000)), ','), 53) + '|');
       //Writeln(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
       Writeln(PadR('|      Experience: ' + GroupDigits(Integers[P_EXP], ','), 53) + '|');
+      Writeln(PadR('|      Exp P/H:    ' + GroupDigits(Round((Integers[P_EXP] * 60 * 60) / (GetTimeRunning / 1000)), ','), 53) + '|');
       Writeln(PadR('|      Breaks:     ' + IntToStr(Integers[P_BREAKS]), 53) + '|');
     end;
 
@@ -833,7 +835,7 @@ begin
   Players[CurrentPlayer].location := Find_PlayerLocation;
   mainscreen.setAngle(MS_ANGLE_HIGH);
 
-  DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(tabStats.getSkillLevel(SKILL_WOODCUTTING)), DEBUG_PLAYER);
+  //DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(tabStats.getSkillLevel(SKILL_WOODCUTTING)), DEBUG_PLAYER);
 end;
 
 procedure Setup_Script;
@@ -843,6 +845,8 @@ begin
   SetScriptProp(SP_WriteTimeStamp, [True]);
   DCnB_Signature;
 
+  smartPlugins := ['opengl32.dll', 'd3d9.dll'];
+  smartShowConsole := false;
   smartEnableDrawing := SMART_DRAWING;
   disableSRLLog := (not SRL_LOG);
   disableIPScreenshots := (not IP_SCREEN);
