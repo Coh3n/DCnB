@@ -55,7 +55,7 @@ const
   Description: Constants representing different types of walks }
 const
   WALK_TO_WILLOWS = 0;
-  WALK_TO_BANK_FROM_WILLOWS = 3;
+  WALK_TO_BANK = 3;
 
 { const Debug Constants;
   Description: Constants representing the different forms of debugging }
@@ -69,31 +69,31 @@ const
   Description: Constants representing the DeclarePlayers integers. }
 const
    // Integers.
-   P_TOTAL_LOGS  = 0;
+   P_TOTAL_LOGS = 0;
 
    // Booleans.
    P_TAKE_BREAKS = 0;
-   P_EQUIPPED    = 1;
+   P_EQUIPPED = 1;
 
    // Progress report.
-   P_LOADS  = 9;
-   P_LOGS   = 10;
+   P_LOADS = 9;
+   P_LOGS = 10;
    P_LEVELS = 11;
-   P_EXP    = 12;
+   P_EXP = 12;
    P_BREAKS = 13;
 
 { type TTree record;
   Description: A type used for loading different trees }
 type
   TTree = record
-    Name   : String;
-    UpText : TStringArray;
-    Color  : Integer;
-    Hue    : Extended;
-    Sat    : Extended;
-    Exp    : Extended;
-    Tol    : Integer;
-    Symbol : Integer;
+    Name: String;
+    UpText: TStringArray;
+    Color: Integer;
+    Hue: Extended;
+    Sat: Extended;
+    Exp: Extended;
+    Tol: Integer;
+    Symbol: Integer;
     OffsetX: Integer;
     OffsetY: Integer;
   end;
@@ -228,11 +228,11 @@ begin
   begin
     Name   := 'Willow';
     UpText := ['Willow', 'Wil', 'llow', 'low'];
-    Color  := 2964548;
-    Hue    := 0.51;
-    Sat    := 1.37;
+    Color  := 3030343;
+    Hue    := 0.63;
+    Sat    := 1.30;
     Exp    := 67.5;
-    Tol    := 4;
+    Tol    := 5;
     Symbol := MM_SYMBOL_FISHING;
     OffsetX := 5;
     OffsetY := -10;
@@ -532,7 +532,7 @@ begin
     WALK_TO_WILLOWS:
       Result := 'Willows';
 
-    WALK_TO_BANK_FROM_WILLOWS:
+    WALK_TO_BANK:
       Result := 'Bank';
 
     else
@@ -579,7 +579,7 @@ begin
       WALK_TO_WILLOWS:
         MouseBox(intToBox(660, 140, 680, 165), MOUSE_LEFT);
 
-      WALK_TO_BANK_FROM_WILLOWS:
+      WALK_TO_BANK:
         if (Walk_FindBankSymbol(bankSymbolPoint)) then
           Mouse(bankSymbolPoint.rand(RandomRange(-10, 10)), MOUSE_LEFT)
         else
@@ -869,7 +869,7 @@ begin
 
   DeclarePlayers;
 
-  Disguise(TimeRunning + '(0 total logs)');
+  Disguise(TimeRunning + ' (0 total logs)');
   Writeln('Loading, please wait...');
   minimap.symbolAccuracy := 0.5;
 
@@ -901,7 +901,7 @@ begin
 
       if (tabBackpack.isFull()) then
       begin
-        Walk_ToLoc(WALK_TO_BANK_FROM_WILLOWS);
+        Walk_ToLoc(WALK_TO_BANK);
 
         if (Bank_Logs) then
         begin
