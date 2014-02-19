@@ -243,7 +243,7 @@ procedure Find_Randoms();
 var
   p: TPoint;
 begin
-  if (claimSpinTicket()) then
+  if (claimTicket()) then
     DCnB_Debug('Find_Randoms', 'Claiming spin ticket', DEBUG_DETAILS);
 
   // in case the Task Tab is accidentally opened
@@ -406,15 +406,18 @@ begin
 
   Tree := Load_TreeRecord;
 
-  SetColorToleranceSpeed(2);
-  SetToleranceSpeed2Modifiers(Tree.Hue, Tree.Sat);
-
   repeat
     if (tabBackpack.isFull()) then
       Break;
 
     msc := mainscreen.getCenterPoint();
-    FindColorsSpiralTolerance(msc.x, msc.y, colorsArr, Tree.Color, mainscreen.getBounds(), Tree.Tol);
+    FindColorsSpiralTolerance(msc.x,
+                              msc.y,
+                              colorsArr,
+                              Tree.Color,
+                              mainscreen.getBounds(),
+                              Tree.Tol,
+                              ColorSetting(2, Tree.Hue, Tree.Sat));
     tmpATPA := TPAToATPA(colorsArr, 20);
 
     if (Length(tmpATPA) = 0) then
@@ -521,9 +524,6 @@ begin
 
   if (notFindUptext >= 120) then
     Next_Player(False, 'Chop_Trees', 'Failed to find uptext 120 times');
-
-  SetToleranceSpeed2Modifiers(0.2, 0.2);
-  SetColorToleranceSpeed(1);
 end;
 
 function Walk_ConstToLoc(which: Integer): String;
@@ -581,8 +581,10 @@ begin
 
       WALK_TO_BANK:
         if (Walk_FindBankSymbol(bankSymbolPoint)) then
-          Mouse(bankSymbolPoint.rand(RandomRange(-10, 10)), MOUSE_LEFT)
-        else
+        begin
+          bankSymbolPoint.offset(point(-8, 0));
+          Mouse(bankSymbolPoint.rand(5, RandomRange(-10, 10)), MOUSE_LEFT)
+        end else
           MouseBox(intToBox(700, 55, 720, 75), MOUSE_LEFT);
 
       else
@@ -591,6 +593,7 @@ begin
 
   Wait(RandomRange(2000, 3000));
   result := minimap.waitFlag(10) and (not minimap.isPlayerMoving());
+
   Wait(500 + Random(500));
   Players[CurrentPlayer].location := Walk_ConstToLoc(which);
   DCnB_Debug('Walk_ToLoc', 'Walked to location: ' + Walk_ConstToLoc(which), DEBUG_SUCCESS);
@@ -616,7 +619,18 @@ begin
 
     Find_Randoms();
 
-    if (not mainscreen.findObject(x, y, [4284262], [8], colorSetting(2, 0.10, 0.28), mainscreen.getCenterPoint(), 50, 200, 1000, ['Bank'], mainscreen.getBounds(), MOUSE_LEFT)) then
+    if (not mainscreen.findObject(x,                            // result x
+                                  y,                            // result y
+                                  [3952749],                    // colors
+                                  [5],                          // tolerances
+                                  colorSetting(2, 0.17, 0.41),  // color settings
+                                  mainscreen.getCenterPoint(),  // sorting point
+                                  50,                           // width
+                                  200,                          // height
+                                  1000,                         // minimum color count
+                                  ['Bank'],                     // mouseover text
+                                  mainscreen.getBounds(),       // search box
+                                  MOUSE_LEFT)) then             // mouse action
     begin
       DCnB_Debug('Bank_Logs', 'Failed to open bank, retrying...', DEBUG_ERROR);
       Inc(Tries);
@@ -855,9 +869,11 @@ begin
   SetScriptProp(SP_WriteTimeStamp, [True]);
   DCnB_Signature;
 
+  {$IFDEF SMART}
   smartPlugins := ['opengl32.dll', 'd3d9.dll'];
   smartShowConsole := false;
   smartEnableDrawing := SMART_DRAWING;
+  {$ENDIF}
   disableSRLLog := (not SRL_LOG);
   disableIPScreenshots := (not IP_SCREEN);
   disableSRLDebug := (not SRL_DEBUG);
@@ -871,7 +887,6 @@ begin
 
   Disguise(TimeRunning + ' (0 total logs)');
   Writeln('Loading, please wait...');
-  minimap.symbolAccuracy := 0.5;
 
   SetLength(falseReason, length(players));
   for i := 0 to High(Players) do
