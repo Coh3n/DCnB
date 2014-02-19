@@ -925,7 +925,7 @@ begin
           for i := 0 to High(Players) do
             totalLogs := totalLogs + Players[i].Integers[P_LOGS];
 
-          Disguise(TimeRunning + '(' + IntToStr(totalLogs) + ' total logs)');
+          Disguise(TimeRunning + ' (' + IntToStr(totalLogs) + ' total logs)');
           totalLogs := 0;
 
           if (Players[CurrentPlayer].Booleans[P_TAKE_BREAKS]) then
