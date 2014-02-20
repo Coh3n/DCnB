@@ -16,7 +16,7 @@
 |                                                                              |
 |       1. Have hatchet in FIRST inventory slot or equipped                    |
 |       2. Start in Draynor bank OR at the trees                               |
-|       3. Setup script from lines 114-158                                     |
+|       3. Setup script from lines 114-159                                     |
 |       4. Save your changes and hit Run (F9)                                  |
 |       5. Post any progress reports and/or bugs!                              |
  \_____________________________________________________________________________}
@@ -114,6 +114,7 @@ var
 const
   STATS_ID = '';          // Your SRL Stats Username
   STATS_PASS = '';        // Your SRL Stats Password
+  ENABLE_DEBUG = true;    // If true, will only print the progress report
   BREAK_AFTER  = 20;      // Loads until break/switch player
   SMART_DRAWING = true;   // Does some debugging on SMART
   SRL_LOG = true;         // Saves SRL debug to a log file
@@ -189,6 +190,9 @@ end;
 
 procedure DCnB_Debug(proc, msg: String; debug: Integer);
 begin
+  if (not ENABLE_DEBUG) then
+    Exit;
+
   case debug of
     DEBUG_ERROR:
       Writeln('ERROR: ' + proc + ': ' + msg);
@@ -313,7 +317,8 @@ begin
   else begin
     DCnB_Debug('Next_Break', 'Taking a short break...', DEBUG_DETAILS);
     players[currentPlayer].logout();
-    Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
+    //Wait(RandomRange(780000, 1020000)); // 15 +/- random 2 minutes
+    Wait(RandomRange(20 * 60000, 30 * 60000)); // 20-30 min
 
     DCnB_Debug('Next_Break', 'Break over, logging back in...', DEBUG_DETAILS);
     players[currentPlayer].login();
@@ -327,6 +332,12 @@ var
 begin
   DcnB_Debug('Chop_Relocate', 'Relocating to trees', DEBUG_DETAILS);
   minimap.symbolAccuracy := 0.6;
+
+  if (InRange(minimap.getAngleDegrees(), 10.0, 350.0)) then
+  begin
+    minimap.clickCompass();
+    mainscreen.setAngle(MS_ANGLE_HIGH);
+  end;
 
   if (minimap.findSymbol(p, tree.symbol, minimap.getBounds())) then
   begin
