@@ -720,6 +720,20 @@ begin
   end;
 end;
 
+function Report_PerHour(amt, time: integer): integer;
+begin
+  if (amt = -1) then
+  begin
+    result := -1;
+    exit;
+  end;
+
+  try
+    result := round((amt * 60) / (time / 60000));
+  except
+  end;
+end;
+
 function Report_GetTotals: TStringArray;
 var
   i: Integer;
@@ -817,10 +831,10 @@ begin
       Writeln(PadR('|      Tree Type:  ' + Capitalize('Willow'), 53) + '|');
       Writeln(PadR('|      Loads Done: ' + GroupDigits(Integers[P_LOADS], ','), 53) + '|');
       Writeln(PadR('|      Logs Cut:   ' + GroupDigits(Integers[P_LOGS], ','), 53) + '|');
-      Writeln(PadR('|      Logs P/H:   ' + GroupDigits(Round((Integers[P_LOGS] * 60 * 60) / (GetTimeRunning / 1000)), ','), 53) + '|');
+      Writeln(PadR('|      Logs P/H:   ' + GroupDigits(Report_PerHour(Integers[P_LOGS], GetTimeRunning), ','), 53) + '|');
       //Writeln(PadR('|      Levels Up:  ' + IntToStr(Integers[P_LEVELS]), 53) + '|');
       Writeln(PadR('|      Experience: ' + GroupDigits(Integers[P_EXP], ','), 53) + '|');
-      Writeln(PadR('|      Exp P/H:    ' + GroupDigits(Round((Integers[P_EXP] * 60 * 60) / (GetTimeRunning / 1000)), ','), 53) + '|');
+      Writeln(PadR('|      Exp P/H:    ' + GroupDigits(Report_PerHour(Integers[P_EXP], GetTimeRunning), ','), 53) + '|');
       Writeln(PadR('|      Breaks:     ' + IntToStr(Integers[P_BREAKS]), 53) + '|');
     end;
 
