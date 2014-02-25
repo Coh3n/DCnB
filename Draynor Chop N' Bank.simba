@@ -49,7 +49,7 @@ program DraynorChopNBank;
 {$i SRL-6/SRL.simba}
 
 const
-  SCRIPT_VERSION  = '79';
+  SCRIPT_VERSION  = '80';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
