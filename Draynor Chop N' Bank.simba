@@ -49,7 +49,7 @@ program DraynorChopNBank;
 {$i SRL-6/SRL.simba}
 
 const
-  SCRIPT_VERSION  = '80';
+  SCRIPT_VERSION  = '81';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
@@ -232,11 +232,11 @@ begin
   begin
     Name   := 'Willow';
     UpText := ['Willow', 'Wil', 'llow', 'low'];
-    Color  := 3162182;
-    Hue    := 0.76;
-    Sat    := 1.90;
+    Color  := 2834240;
+    Hue    := 0.60;
+    Sat    := 1.31;
     Exp    := 67.5;
-    Tol    := 8;
+    Tol    := 5;
     Symbol := MM_SYMBOL_FISHING;
     OffsetX := 5;
     OffsetY := -10;
@@ -884,7 +884,7 @@ begin
   DCnB_Signature;
 
   {$IFDEF SMART}
-  smartPlugins := ['opengl32.dll', 'd3d9.dll'];
+  smartPlugins := ['opengl32.dll'];
   smartShowConsole := false;
   smartEnableDrawing := SMART_DRAWING;
   {$ENDIF}
@@ -967,9 +967,21 @@ procedure ScriptTerminate;
 begin
   Report_Print;
 end;
+{
+procedure dump_bitmaps();
+var
+  i: integer;
+begin
+  forceDirectories(AppPath+'dump');
 
+  for i := 0 to 10000 do
+    if (bitmapExists(i)) then
+      saveBitmap(i,  AppPath+'dump/'+intToStr(i)+'.png');
+end;
+}
 begin
   AddOnTerminate('ScriptTerminate');
+  //addOnTerminate('dump_bitmaps');
   Setup_MainLoop;
 end.
 
