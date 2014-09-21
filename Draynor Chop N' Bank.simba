@@ -15,8 +15,10 @@
 |==============================================================================]
 |                                                                              |
 |       1. Have hatchet in FIRST inventory slot or equipped                    |
-|       2. Start in Draynor bank OR at the trees                               |
-|       3. Setup script from lines 114-159                                     |
+|       2. Start in Draynor bank                                               |
+|       3. Have camera zoomed all the way out                                  |
+|       4. I recommend wearing no clothing                                     |
+|       3. Setup script from lines 116-161                                     |
 |       4. Save your changes and hit Run (F9)                                  |
 |       5. Post any progress reports and/or bugs!                              |
  \_____________________________________________________________________________}
@@ -49,7 +51,7 @@ program DraynorChopNBank;
 {$i SRL-6/SRL.simba}
 
 const
-  SCRIPT_VERSION  = '81';
+  SCRIPT_VERSION  = '82';
 
 { const Walk Constants;
   Description: Constants representing different types of walks }
@@ -121,7 +123,7 @@ const
   SRL_DEBUG = true;       // Debugs SRL procedures in the debug box
   IP_SCREEN = true;       // Takes a screenshot of your last IP in case of hacks
   MAX_TIME_PER_TREE = 60; // Will move on to another tree after about X seconds not matter what
-  ANIMATION_SHIFT = 300;  // The maximum player IDLE pixel shift. Can adjust value if player isn't moving between trees or moving too soon. WILL vary depending on player's clothing.
+  ANIMATION_SHIFT = 150;  // The maximum player IDLE pixel shift. Can adjust value if player isn't moving between trees or moving too soon. WILL vary depending on player's clothing.
 
 procedure DeclarePlayers; // Where all your players are to be setup
 begin
@@ -232,11 +234,11 @@ begin
   begin
     Name   := 'Willow';
     UpText := ['Willow', 'Wil', 'llow', 'low'];
-    Color  := 2834240;
-    Hue    := 0.60;
-    Sat    := 1.31;
+    Color  := 2966076;
+    Hue    := 1.03;
+    Sat    := 1.00;
     Exp    := 67.5;
-    Tol    := 5;
+    Tol    := 8;
     Symbol := MM_SYMBOL_FISHING;
     OffsetX := 5;
     OffsetY := -10;
@@ -298,7 +300,8 @@ begin
   end;
 
   players.next(active);
-  Players[CurrentPlayer].location := Find_PlayerLocation;
+  //Players[CurrentPlayer].location := Find_PlayerLocation;
+  Players[CurrentPlayer].location := 'Bank';
   playerLoads := 0;
 end;
 
@@ -462,6 +465,8 @@ begin
     begin
       DCnB_Debug('Chop_Trees', 'Failed to find enough colors for tree', DEBUG_ERROR);
       inc(notFindTrees);
+      wait(3000 + random(2000));
+      randomCompass(20, 90, false);
     end;
 
     SortATPAFrom(boxesArr, mainscreen.getCenterPoint());
@@ -520,13 +525,13 @@ begin
 
     Result := tabBackpack.isFull();
 
-    if (not Result) then
+    {if (not Result) then
       if (notFindTrees >= 20) or (notFindUptext > 5) then
         if (Chop_Relocate(tree)) then
         begin
           notFindTrees := 0;
           notFindUptext := 0;
-        end;
+        end;}
 
   until(Result or (not isLoggedIn()) or (notFindTrees >= 60) or (notFindUptext >= 60));
 
@@ -591,11 +596,11 @@ begin
         MouseBox(intToBox(660, 140, 680, 165), MOUSE_LEFT);
 
       WALK_TO_BANK:
-        if (Walk_FindBankSymbol(bankSymbolPoint)) then
+        {if (Walk_FindBankSymbol(bankSymbolPoint)) then
         begin
           bankSymbolPoint.offset(point(-10, 0));
           Mouse(bankSymbolPoint.rand(5, RandomRange(-10, 10)), MOUSE_LEFT)
-        end else
+        end else}
           MouseBox(intToBox(700, 55, 720, 75), MOUSE_LEFT);
 
       else
@@ -635,7 +640,7 @@ begin
       DCnB_Debug('Bank_Logs', 'Failed to open bank, retrying...', DEBUG_ERROR);
       Inc(Tries);
 
-      if (Tries >= 20) then
+      {if (Tries >= 20) then
       begin
         minimap.symbolAccuracy := 0.5;
 
@@ -650,7 +655,7 @@ begin
           DCnB_Debug('Bank_Logs', 'Failed to find bank symbol', DEBUG_ERROR);
 
         Continue;
-      end;
+      end;}
     end else begin
       t := getSystemTime() + 10000;
 
@@ -870,7 +875,8 @@ procedure Setup_Player;
 begin
   players[currentPlayer].login();
 
-  Players[CurrentPlayer].location := Find_PlayerLocation;
+  //Players[CurrentPlayer].location := Find_PlayerLocation;
+  Players[CurrentPlayer].location := 'Bank';
   mainscreen.setAngle(MS_ANGLE_HIGH);
 
   //DCnB_Debug('Setup_Player', 'Current Woodcutting level: ' + IntToStr(tabStats.getSkillLevel(SKILL_WOODCUTTING)), DEBUG_PLAYER);
